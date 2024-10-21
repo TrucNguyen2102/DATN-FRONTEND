@@ -29,6 +29,7 @@ const Header = () => {
     <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
       <h1 className="text-xl font-bold">Trang Quản Trị</h1>
       <div className="flex items-center">
+        {/* {user && <h3 className="text-lg mr-4">Xin chào, {user.fullName}</h3>} */}
         {user && <h3 className="text-lg mr-4">Xin chào, {user.fullName}</h3>}
         <button 
           onClick={handleLogout} 
