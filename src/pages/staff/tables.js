@@ -1,7 +1,7 @@
 import ManagerHeader from "../components/Header/ManagerHeader";
 import React, { useEffect, useState } from 'react';
 import axios from "axios";
-import ManagerSidebar from "../components/Sidebar/ManagerSidebar";
+import StaffSidebar from "../components/Sidebar/StaffSidebar";
 
 const TablePlay = () => {
     const [tables, setTables] = useState([]);
@@ -92,6 +92,7 @@ const TablePlay = () => {
         }
     };
 
+    
     const handleEditTable = (table) => {
         setNewTable({
             tableNum: table.tableNum,
@@ -103,18 +104,18 @@ const TablePlay = () => {
         setShowForm(true);
     };
 
-    const handleDeleteTable = async (id) => {
-        if (window.confirm(`Bạn có chắc chắn muốn xóa bàn này không?`)) {
-            try {
-                await axios.delete(`/api/tables/delete/${id}`);
-                fetchTables();
-                alert('Xóa bàn thành công!'); // Thông báo thành công
-            } catch (error) {
-                setError('Lỗi khi xóa bàn! Hãy thử lại.');
-                console.error(error);
-            }
-        }
-    };
+    // const handleDeleteTable = async (id) => {
+    //     if (window.confirm(`Bạn có chắc chắn muốn xóa bàn này không?`)) {
+    //         try {
+    //             await axios.delete(`/api/tables/delete/${id}`);
+    //             fetchTables();
+    //             alert('Xóa bàn thành công!'); // Thông báo thành công
+    //         } catch (error) {
+    //             setError('Lỗi khi xóa bàn! Hãy thử lại.');
+    //             console.error(error);
+    //         }
+    //     }
+    // };
 
     const handleRefresh = () => {
         window.location.reload();
@@ -129,21 +130,21 @@ const TablePlay = () => {
         <div className="bg-gray-100 min-h-screen flex flex-col">
             <ManagerHeader />
             <div className="flex flex-1">
-                <ManagerSidebar className="w-1/4 bg-gray-200 p-4" />
+                <StaffSidebar className="w-1/4 bg-gray-200 p-4" />
                 <main className="flex-1 p-6">
                     <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Bàn</h1>
                     {error && <p className="text-red-500 text-center">{error}</p>}
                     
                     {loading ? <p>Đang tải...</p> : null}
 
-                    <button 
+                    {/* <button 
                         onClick={() => setShowForm(!showForm)} 
                         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 mb-4 mr-5"
                     >
                         {showForm ? 'Ẩn Form' : 'Thêm Bàn'}
-                    </button>
+                    </button> */}
 
-                    <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">
+                    <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mb-4">
                         Làm Mới
                     </button>
 
@@ -156,6 +157,7 @@ const TablePlay = () => {
                                     className="border border-gray-300 rounded px-4 py-2 w-full" 
                                     value={newTable.tableNum}
                                     onChange={e => setNewTable({ ...newTable, tableNum: e.target.value })}
+                                    disabled={!!newTable.tableNum}
                                 />
                             </div>
 
@@ -179,6 +181,7 @@ const TablePlay = () => {
                                     className="border border-gray-300 rounded px-4 py-2 w-full" 
                                     value={newTable.typeId}
                                     onChange={e => setNewTable({ ...newTable, typeId: e.target.value })}
+                                    disabled={!!newTable.typeId}
                                 >
                                     <option value="">Chọn loại bàn</option>
                                     {types.map(type => (
@@ -216,12 +219,15 @@ const TablePlay = () => {
                                         {types.find(type => type.id === table.type.id)?.name || 'Chưa xác định'}
                                     </td>
                                     <td className="py-2 px-4 border text-center">
+                                        {/* <button onClick={() => handleViewTable(table)} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-700">
+                                            Xem
+                                        </button> */}
                                         <button onClick={() => handleEditTable(table)} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-700">
                                             Sửa
                                         </button>
-                                        <button onClick={() => handleDeleteTable(table.id)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2">
+                                        {/* <button onClick={() => handleDeleteTable(table.id)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2">
                                             Xóa
-                                        </button>
+                                        </button> */}
                                     </td>
                                 </tr>
                             ))}

@@ -1,8 +1,9 @@
 import { useState, useEffect, useContext } from 'react';
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
+import ManagerHeader from '../components/Header/ManagerHeader';
 import AuthContext from '../contexts/AuthContext';
 import axios from 'axios';
+import { format } from 'date-fns'; // Import format từ date-fns
+import ManagerSidebar from '../components/Sidebar/ManagerSidebar';
 
 const ManagerCustomer = () => {
     const [customers, setCustomers] = useState([]);
@@ -43,10 +44,10 @@ const ManagerCustomer = () => {
 
     return (
         <div className="bg-gray-100 min-h-screen flex flex-col">
-            <Header/>
+            <ManagerHeader/>
 
             <div className="flex flex-1">
-                <Sidebar className="w-1/4 bg-gray-200 p-4" />
+                <ManagerSidebar className="w-1/4 bg-gray-200 p-4" />
 
                 <main className="flex-1 p-6">
                     <h1 className="text-3xl font-semibold mb-8 text-center">Danh Sách Khách Hàng</h1>
@@ -69,15 +70,50 @@ const ManagerCustomer = () => {
                             <th className="py-2 px-4 border-b border-r w-1/10">Số Điện Thoại</th>
                             <th className="py-2 px-4 border-b border-r w-1/10">Email</th>
                             <th className="py-2 px-4 border-b border-r w-1/10">Trạng Thái</th>
+                            <th className="py-2 px-4 border-b border-r w-1/10">Quyền Truy Cập</th>
                             <th className="py-2 px-4 border-b border-r w-1/10">Ngày Tạo</th>
-                            <th className="py-2 px-4 border-b border-r w-1/10">Ngày Cập Nhật</th>
-                            <th className="py-2 px-4 border-b border-r w-1/10">Ngày Tạo</th>
-                            <th className="py-2 px-4 border-b border-r w-1/10">Hành Động</th>
+                            <th className="py-2 px-4 border-b border-r w-1/10">Ngày Cập nhật</th>
+                            
                         </tr>
                         </thead>
 
                         <tbody>
+                            {customers.map(user => (
+                                <tr key={user.id}>
+                                    <td className="py-2 px-4 border-b border-r text-center">{user.id}</td>
+                                    <td className="py-2 px-4 border-b border-r text-center">{user.fullName}</td>
+                                    <td className="py-2 px-4 border-b border-r text-center">{user.phone}</td>
+                                    <td className="py-2 px-4 border-b border-r text-center">{user.email}</td>
+                                    
+                                    
+                                    {/* <td className="py-2 px-4 border-b text-center flex items-center justify-center"> */}
+                                    <td className="py-2 px-4 border-b border-r text-center ">
+                                        {/* Kiểm tra trạng thái và hiển thị màu */}
+                                        {user.status === "ACTIVE" ? (
+                                                <span className="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+                                            ) : (
+                                                <span className="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+                                            )}
+                                                <span className="ml-2">{user.status}</span>
+                                    </td>
 
+
+                                    <td className="py-2 px-4 border-b border-r text-center">
+                                        {user.roles && user.roles.length > 0 ? ( // Kiểm tra length nếu là mảng
+                                            <ul >
+                                                {user.roles.map((role, index) => (
+                                                    <li key={index}>{role}</li> // role là tên vai trò
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            'Không có vai trò'
+                                        )}
+                                    </td>
+
+                                    <td className="py-2 px-4 border-b border-r text-center">{format(new Date(user.createdAt), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                    <td className="py-2 px-4 border-b border-r text-center">{format(new Date(user.updatedAt), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
 

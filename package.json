@@ -16,7 +16,10 @@
     "next": "14.2.14",
     "react": "^18",
     "react-chartjs-2": "^5.2.0",
-    "react-dom": "^18"
+    "react-datepicker": "^7.5.0",
+    "react-dom": "^18",
+    "react-tabs": "^6.0.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "postcss": "^8",

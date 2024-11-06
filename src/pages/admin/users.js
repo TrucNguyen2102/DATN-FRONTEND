@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
-import Header from "../components/Header";
-import Sidebar from '../components/Sidebar';
+import AdminHeader from '../components/Header/AdminHeader';
 import AuthContext from '../contexts/AuthContext';
 import AddManagerForm from '../components/admin/AddManagerForm';
 import { format } from 'date-fns'; // Import format từ date-fns
+import AdminSidebar from '../components/Sidebar/AdminSidebar';
 
 const AdminUsers = () => {
     const [users, setUsers] = useState([]);
@@ -99,10 +99,10 @@ const AdminUsers = () => {
 
     return (
         <div className="bg-gray-100 min-h-screen flex flex-col">
-            <Header/>
+            <AdminHeader/>
 
             <div className="flex flex-1">
-                <Sidebar className="w-1/4 bg-gray-200 p-4" />
+                <AdminSidebar className="w-1/4 bg-gray-200 p-4" />
 
                 <main className="flex-1 p-6">
                     <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Người Dùng</h1>

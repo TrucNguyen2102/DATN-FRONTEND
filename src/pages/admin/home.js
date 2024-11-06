@@ -2,18 +2,20 @@ import { useEffect, useState, useContext } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
 import AuthContext from '../contexts/AuthContext';
-import Sidebar from '../components/Sidebar';
-import Header from '../components/Header';
+import AdminHeader from '../components/Header/AdminHeader';
+import AdminSidebar from '../components/Sidebar/AdminSidebar';
 
 const AdminPage = () => {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
   const router = useRouter();
 
+  const [greeting, setGreeting] = useState('');
   // Lấy thông tin người dùng từ AuthContext
   const { user } = useContext(AuthContext);
   console.log(user);
 
+  //hàm tải danh sách người dùng
   const fetchUsers = async () => {
     try {
         const token = localStorage.getItem('token');
@@ -38,67 +40,31 @@ const AdminPage = () => {
   useEffect(() => {
     
     fetchUsers();
+
+    const hours = new Date().getHours();
+        if (hours < 12) {
+            setGreeting('Chào buổi sáng');
+        } else if (hours < 18) {
+            setGreeting('Chào buổi chiều');
+        } else {
+            setGreeting('Chào buổi tối');
+        }
   }, []);
 
-//   const handleLogout = async () => {
-//     if (!user || !user.id) {
-//         console.error("User ID is undefined.");
-//         return;
-//     }
 
-//     try {
-//         const response = await axios.put(`/api/users/${user.id}/logout`);
-//         if (response.status === 200) {
-//             console.log("User status updated successfully.");
-//         }
-//     } catch (err) {
-//         console.error('Không thể cập nhật trạng thái người dùng trước khi đăng xuất.', err);
-//     }
-
-//     router.push('/login'); // Chuyển hướng về trang đăng nhập
-//     };
-
-  
     return (
         <div className="bg-gray-100 min-h-screen flex flex-col">
     
-        <Header/>
+        <AdminHeader/>
 
         <div className="flex flex-1">
 
-              <Sidebar className="w-1/4 bg-gray-200 p-4" />
-
-              {/* <main className="flex-1 p-6">
-                <h2 className="text-3xl font-semibold mb-8 text-center">Danh Sách Người Dùng</h2>
-                {error && <p className="text-red-500 text-center">{error}</p>}
-              
-                  <table className="min-w-full bg-white border border-gray-300 table-fixed">
-                      <thead>
-                      <tr>
-                          <th className="py-2 px-4 border-b border-r w-1/5">Họ Tên</th>
-                          <th className="py-2 px-4 border-b border-r w-1/5">Email</th>
-                          <th className="py-2 px-4 border-b border-r w-1/5">Số Điện Thoại</th>
-                          <th className="py-2 px-4 border-b border-r w-1/5">Quyền Truy Cập</th>
-                          <th className="py-2 px-4 border-b w-1/5">Trạng Thái</th>
-                      </tr>
-                      </thead>
-                      
-                      <tbody>
-                      {users.map(user => (
-                          <tr key={user.id}>
-                          <td className="py-2 px-4 border-b border-r text-center">{user.fullName}</td>
-                          <td className="py-2 px-4 border-b border-r text-center">{user.email}</td>
-                          <td className="py-2 px-4 border-b border-r text-center">{user.phone}</td>
-                          <td className="py-2 px-4 border-b border-r text-center">{user.authority.name}</td>
-                          <td className="py-2 px-4 border-b text-center flex items-center justify-center">
-                              <span className={`w-3 h-3 rounded-full ${user.status === "Đang hoạt động" ? "bg-green-500" : "bg-red-500"}`}></span>
-                              <span className="ml-2">{user.status}</span>
-                          </td>
-                          </tr>
-                      ))}
-                      </tbody>
-                  </table>
-              </main> */}
+              <AdminSidebar className="w-1/4 bg-gray-200 p-4" />
+              <div className="flex-1 p-6 text-center">
+                    <h1 className="text-2xl font-bold">{greeting}, {user?.fullName}!</h1>
+                    <p>Chào mừng bạn đến với giao diện của người quản trị.</p>
+                    
+                </div>
         </div>
         </div>
     );

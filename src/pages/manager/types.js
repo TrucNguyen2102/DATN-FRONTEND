@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Header from '../components/Header';
-import Sidebar from '../components/Sidebar';
+import ManagerHeader from '../components/Header/ManagerHeader';
+import ManagerSidebar from '../components/Sidebar/ManagerSidebar';
 
 const TypeTable = () => {
     const [types, setTypes] = useState([]);
     const [prices, setPrices] = useState([]);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
-    const [newType, setNewType] = useState({ name: '', priceId: '' });
+    const [newType, setNewType] = useState({id: '', name: '', priceId: '' });
     const [isEditing, setIsEditing] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(false); // State for loading
@@ -80,7 +80,12 @@ const TypeTable = () => {
                 name: newType.name,
                 priceIds: [newType.priceId], 
             });
-            setTypes([...types, response.data]);
+
+            // Lưu ID loại bàn được thêm vào
+            const addedType = { ...response.data, id: response.data.id }; // Giả sử ID được trả về từ server
+
+            setTypes([...types, addedType]);
+            // setTypes([...types, response.data]);
             setSuccessMessage('Thêm loại bàn thành công!');
             resetForm();
         } catch (error) {
@@ -104,7 +109,7 @@ const TypeTable = () => {
     };
     
     const resetForm = () => {
-        setNewType({ name: '', priceId: '' });
+        setNewType({id: '', name: '', priceId: '' });
         setIsEditing(false);
         setShowForm(false);
         setError('');
@@ -116,7 +121,7 @@ const TypeTable = () => {
     };
 
     const handleEditType = (type) => {
-        setNewType({ id: type.id, name: type.name, priceId: type.priceId });
+        setNewType({ id: type.id, name: type.name, priceId: type.priceIds[0] });
         setIsEditing(true);
         setShowForm(true);
     };
@@ -138,11 +143,16 @@ const TypeTable = () => {
         return acc;
     }, {});
 
+    const formatPrice = (price) => {
+        return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " VND";
+    };
+    
+
     return (
         <div className="bg-gray-100 min-h-screen flex flex-col">
-            <Header />
+            <ManagerHeader />
             <div className="flex flex-1">
-                <Sidebar className="w-1/4 bg-gray-200 p-4" />
+                <ManagerSidebar className="w-1/4 bg-gray-200 p-4" />
 
                 <main className="flex-1 p-6">
                     <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Loại Bàn</h1>
@@ -171,6 +181,7 @@ const TypeTable = () => {
                                     onChange={handleInputChange}
                                     className="border px-3 py-2"
                                     required
+                                    disabled={isEditing} // Vô hiệu hóa trường giá nếu đang trong chế độ chỉnh sửa
                                 />
                             </div>
 
@@ -182,11 +193,12 @@ const TypeTable = () => {
                                     onChange={handleInputChange}
                                     className="border px-3 py-2 w-full"
                                     required
+                                   
                                 >
                                     <option value="">Chọn một giá</option>
                                     {prices.map((price) => (
                                         <option key={price.id} value={price.id}>
-                                            {price.price} VND
+                                            {formatPrice(price.price)} (Áp dụng từ: {price.startDate} đến {price.endDate})
                                         </option>
                                     ))}
                                 </select>
@@ -217,8 +229,16 @@ const TypeTable = () => {
                                     <tr key={type.id}>
                                         <td className="py-2 px-4 border text-center">{type.id}</td>
                                         <td className="py-2 px-4 border text-center">{type.name}</td>
+                                        {/* <td className="py-2 px-4 border text-center">
+                                            {type.priceIds.length > 0 // Kiểm tra xem priceIds có tồn tại không
+                                                ? (priceMap[type.priceIds[0]] ? `${priceMap[type.priceIds[0]]} VND` : 'Giá không xác định') 
+                                                : 'Chưa có giá'}
+                                        </td> */}
+
                                         <td className="py-2 px-4 border text-center">
-                                            {type.priceId ? `${priceMap[type.priceId] || 'Chưa có giá'} VND` : 'Chưa có giá'}
+                                            {type.priceIds.length > 0 // Kiểm tra xem priceIds có tồn tại không 
+                                                ? (priceMap[type.priceIds[0]] ? formatPrice(priceMap[type.priceIds[0]]) : 'Giá không xác định') 
+                                                : 'Chưa có giá'}
                                         </td>
 
                                         <td className="py-2 px-4 border text-center">
@@ -232,6 +252,7 @@ const TypeTable = () => {
                                     </tr>
                                 ))}
                             </tbody>
+
 
                         </table>
                     )}

@@ -1,10 +1,7 @@
-
-
-
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import Header from '../components/Header';
-import Sidebar from '../components/Sidebar';
+import AdminHeader from '../components/Header/AdminHeader';
+import AdminSidebar from '../components/Sidebar/AdminSidebar';
 
 const PermissionManagement = () => {
     const [permissions, setPermissions] = useState([]);
@@ -175,9 +172,9 @@ const PermissionManagement = () => {
 
     return (
         <div className="bg-gray-100 min-h-screen flex flex-col">
-            <Header />
+            <AdminHeader />
             <div className="flex flex-1">
-                <Sidebar className="w-1/4 bg-gray-200 p-4" />
+                <AdminSidebar className="w-1/4 bg-gray-200 p-4" />
                 <main className="flex-1 p-6">
                     <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Quyền Hạn</h1>
                     {error && <p className="text-red-500 text-center">{error}</p>}

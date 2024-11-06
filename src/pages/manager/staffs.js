@@ -1,11 +1,11 @@
 import { useState, useContext, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
+import ManagerHeader from '../components/Header/ManagerHeader';
 import AuthContext from '../contexts/AuthContext';
 import axios from 'axios';
 import AddStaffForm from '../components/manager/AddStaffForm';
 import { format } from 'date-fns'; // Import format từ date-fns
+import ManagerSidebar from '../components/Sidebar/ManagerSidebar';
 
 
 const StaffsPage = () => {
@@ -21,16 +21,7 @@ const StaffsPage = () => {
     const { user } = useContext(AuthContext);
     console.log(user);
 
-    // Lấy danh sách người dùng từ API
-    // const fetchUsers = async () => {
-    //     try {
-    //         const response = await axios.get('/api/users/all'); // Thay đổi đường dẫn API tùy theo cấu trúc của bạn
-    //         setUsers(response.data);
-    //     } catch (err) {
-    //         setError('Không thể tải dữ liệu nhân viên.');
-    //         console.error(err);
-    //     }
-    // };
+    
 
     const fetchStaffs = async () => {
         try {
@@ -77,41 +68,44 @@ const StaffsPage = () => {
         setShowForm(true); // Mở form
     };
 
-    const handleLock = (id) => {
-        const confirmLock = window.confirm("Bạn có chắc chắn muốn khóa nhân viên này?");
-        if (confirmLock) {
-            // Thực hiện hành động khóa
-            console.log(`Khóa nhân viên với ID: ${id}`);
 
-            // Gọi API để khóa nhân viên (giả sử có API khóa nhân viên)
-            axios.put(`/api/users/staffs/lock/${id}`)
-                .then(response => {
-                    // Cập nhật lại danh sách người dùng nếu cần
-                    setUsers(users.map(user => user.id === id ? { ...user, status: "BLOCKED" } : user));
-                })
-                .catch(err => {
-                    alert('Không thể khóa nhân viên.');
-                    // console.error(err);
+    const handleLock = async (id) => {
+        try {
+            const confirmLock = window.confirm("Bạn có chắc chắn muốn khóa nhân viên này?");
+            if (confirmLock) {
+                const token = localStorage.getItem('token');
+                console.log("Token: ", token);  // Kiểm tra token trước khi gọi API
+                
+                if (!token) throw new Error('Chưa đăng nhập hoặc token không tồn tại.');
+
+                await axios.put(`/api/users/managers/staffs/lock/${id}`, {}, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
                 });
+                fetchStaffs(); // Cập nhật danh sách sau khi khóa thành công
+            }
+            
+        } catch (err) {
+            console.error('Không thể khóa nhân viên:', err);
         }
     };
 
-    const handleUnlock = (id) => {
-        const confirmUnlock = window.confirm("Bạn có chắc chắn muốn mở khóa nhân viên này?");
-        if (confirmUnlock) {
-            // Thực hiện hành động mở khóa
-            console.log(`Mở khóa nhân viên với ID: ${id}`) ;
-    
-            // Gọi API để mở khóa nhân viên (giả sử có API mở khóa nhân viên)
-            axios.put(`/api/users/staffs/unlock/${id}`)
-                .then(response => {
-                    // Cập nhật lại danh sách người dùng nếu cần
-                    setUsers(users.map(user => user.id === id ? { ...user, status: "OPENED" } : user));
-                })
-                .catch(err => {
-                    alert('Không thể mở khóa nhân viên.');
-                    console.error(err);
+
+    const handleUnlock = async (id) => {
+        try {
+            const confirmLock = window.confirm("Bạn có chắc chắn muốn mở khóa nhân viên này?");
+            if (confirmLock) {
+                await axios.put(`/api/users/managers/staffs/unlock/${id}`, {}, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
                 });
+                fetchStaffs(); // Cập nhật danh sách sau khi mở khóa thành công
+            }
+            
+        } catch (err) {
+            console.error('Không thể mở khóa nhân viên:', err);
         }
     };
 
@@ -123,10 +117,10 @@ const StaffsPage = () => {
 
     return (
         <div className="bg-gray-100 min-h-screen flex flex-col">
-            <Header/>
+            <ManagerHeader/>
 
             <div className="flex flex-1">
-                <Sidebar className="w-1/4 bg-gray-200 p-4" />
+                <ManagerSidebar className="w-1/4 bg-gray-200 p-4" />
 
                 <main className="flex-1 p-6">
                     <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Nhân Viên</h1>
@@ -162,57 +156,62 @@ const StaffsPage = () => {
                         </thead>
                         
                         <tbody>
-                        {staffs.map(user => (
-                            <tr key={user.id}>
-                                <td className="py-2 px-4 border-b border-r text-center">{user.id}</td>
-                                <td className="py-2 px-4 border-b border-r text-center">{user.fullName}</td>
-                                <td className="py-2 px-4 border-b border-r text-center">{user.phone}</td>
-                                <td className="py-2 px-4 border-b border-r text-center">{user.email}</td>
-                                
-                                
-                                {/* <td className="py-2 px-4 border-b text-center flex items-center justify-center"> */}
-                                <td className="py-2 px-4 border-b border-r text-center ">
-                                    <span className={`w-3 h-3 rounded-full ${user.status === "ACTIVE" ? "bg-green-500" : "bg-red-500"}`}></span>
-                                    <span className="ml-2">{user.status}</span>
-                                </td>
+                            {staffs.map(user => (
+                                <tr key={user.id}>
+                                    <td className="py-2 px-4 border-b border-r text-center">{user.id}</td>
+                                    <td className="py-2 px-4 border-b border-r text-center">{user.fullName}</td>
+                                    <td className="py-2 px-4 border-b border-r text-center">{user.phone}</td>
+                                    <td className="py-2 px-4 border-b border-r text-center">{user.email}</td>
+                                    
+                                    
+                                    {/* <td className="py-2 px-4 border-b text-center flex items-center justify-center"> */}
+                                    <td className="py-2 px-4 border-b border-r text-center ">
+                                        {/* Kiểm tra trạng thái và hiển thị màu */}
+                                        {user.status === "ACTIVE" ? (
+                                                <span className="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
+                                            ) : (
+                                                <span className="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+                                            )}
+                                                <span className="ml-2">{user.status}</span>
+                                    </td>
 
 
-                                <td className="py-2 px-4 border-b border-r text-center">
-                                    {user.roles && user.roles.length > 0 ? ( // Kiểm tra length nếu là mảng
-                                        <ul >
-                                            {user.roles.map((role, index) => (
-                                                <li key={index}>{role}</li> // role là tên vai trò
-                                            ))}
-                                        </ul>
-                                    ) : (
-                                        'Không có vai trò'
-                                    )}
-                                </td>
+                                    <td className="py-2 px-4 border-b border-r text-center">
+                                        {user.roles && user.roles.length > 0 ? ( // Kiểm tra length nếu là mảng
+                                            <ul >
+                                                {user.roles.map((role, index) => (
+                                                    <li key={index}>{role}</li> // role là tên vai trò
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            'Không có vai trò'
+                                        )}
+                                    </td>
 
-                                <td className="py-2 px-4 border-b border-r text-center">{format(new Date(user.createdAt), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                <td className="py-2 px-4 border-b border-r text-center">{format(new Date(user.updatedAt), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                    <td className="py-2 px-4 border-b border-r text-center">{format(new Date(user.createdAt), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                    <td className="py-2 px-4 border-b border-r text-center">{format(new Date(user.updatedAt), 'dd/MM/yyyy HH:mm:ss')}</td>
 
-                                <td className="py-2 px-4 border text-center">
-                                    {/* <button onClick={() => handleEdit(user.id)} className="bg-yellow-400 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-500 transition duration-200">
-                                        Sửa 
-                                    </button> */}
+                                    <td className="py-2 px-4 border text-center">
+                                        {/* <button onClick={() => handleEdit(user.id)} className="bg-yellow-400 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-500 transition duration-200">
+                                            Sửa 
+                                        </button> */}
 
-                                    <button onClick={() => handleEdit(user)} className="bg-yellow-400 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-500 transition duration-200">
-                                        Sửa 
-                                    </button>
-                                    {user.status === "BLOCKED" ? (
-                                        <button onClick={() => handleUnlock(user.id)} className="bg-green-400 text-white py-1 px-2 rounded hover:bg-green-500 transition duration-200">
-                                            Mở Khóa
+                                        <button onClick={() => handleEdit(user)} className="bg-yellow-400 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-500 transition duration-200">
+                                            Sửa 
                                         </button>
-                                    ) : (
-                                        <button onClick={() => handleLock(user.id)} className="bg-red-400 text-white py-1 px-2 rounded hover:bg-red-500 transition duration-200">
-                                            Khóa
-                                        </button>
-                                    )}
-                                </td>
+                                        {user.status === "BLOCKED" ? (
+                                            <button onClick={() => handleUnlock(user.id)} className="bg-green-400 text-white py-1 px-2 rounded hover:bg-green-500 transition duration-200">
+                                                Mở Khóa
+                                            </button>
+                                        ) : (
+                                            <button onClick={() => handleLock(user.id)} className="bg-red-400 text-white py-1 px-2 rounded hover:bg-red-500 transition duration-200">
+                                                Khóa
+                                            </button>
+                                        )}
+                                    </td>
 
-                            </tr>
-                        ))}
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </main>

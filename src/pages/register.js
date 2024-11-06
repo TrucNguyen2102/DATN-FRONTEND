@@ -1,4 +1,3 @@
-// pages/register.js
 import { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
@@ -11,8 +10,9 @@ const RegisterPage = () => {
     password: '',
     confirmPassword: '',
   });
-  
+
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // Trạng thái để hiện/ẩn mật khẩu
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -24,30 +24,30 @@ const RegisterPage = () => {
   };
 
   const validatePassword = (password) => {
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
     return passwordRegex.test(password);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     const { fullName, phone, email, password, confirmPassword } = formData;
-  
+
     // Kiểm tra mật khẩu và xác nhận mật khẩu khớp nhau
     if (password !== confirmPassword) {
       setError('Mật khẩu và xác nhận mật khẩu không khớp.');
       return;
     }
-  
+
     // Kiểm tra độ mạnh của mật khẩu
     if (!validatePassword(password)) {
       setError('Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.');
       return;
     }
-  
+
     // Nếu mật khẩu hợp lệ, tiếp tục gửi yêu cầu đăng ký
     try {
-      const response = await axios.post('/api/accounts/register', formData);
+      const response = await axios.post('/api/users/customers/register', formData);
       console.log('Register success:', response.data);
       alert("Đăng Ký Thành Công. Bạn có thể đăng nhập ngay.");
       router.push('/login');
@@ -56,7 +56,6 @@ const RegisterPage = () => {
       console.error(error);
     }
   };
-  
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
@@ -115,7 +114,7 @@ const RegisterPage = () => {
             Mật khẩu
           </label>
           <input
-            type="password"
+            type={showPassword ? 'text' : 'password'} // Hiển thị mật khẩu nếu showPassword là true
             name="password"
             id="password"
             value={formData.password}
@@ -132,13 +131,23 @@ const RegisterPage = () => {
             Xác nhận mật khẩu
           </label>
           <input
-            type="password"
+            type={showPassword ? 'text' : 'password'} // Hiển thị mật khẩu xác nhận nếu showPassword là true
             name="confirmPassword"
             id="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
           />
+        </div>
+
+        <div className="mb-4">
+          <input
+            type="checkbox"
+            id="showPassword"
+            checked={showPassword}
+            onChange={() => setShowPassword(!showPassword)} // Thay đổi trạng thái showPassword
+          />
+          <label className="ml-2 text-sm" htmlFor="showPassword">Hiển thị mật khẩu</label>
         </div>
 
         <button

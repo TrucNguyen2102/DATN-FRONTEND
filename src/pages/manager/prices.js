@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext } from 'react';
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar";
+import ManagerHeader from '../components/Header/ManagerHeader';
 import axios from 'axios';
 import AuthContext from '../contexts/AuthContext';
+import ManagerSidebar from '../components/Sidebar/ManagerSidebar';
 
 const PricesPage = () => {
     
@@ -82,26 +82,33 @@ const PricesPage = () => {
         window.location.reload(); // Tải lại trang
     };
 
-    
 
     const handleAddOrUpdatePrice = async (e) => {
         e.preventDefault();
         try {
-            if (newPrice.id) {
+            // Kiểm tra nếu endDate rỗng thì gán nó bằng null
+            const priceData = { 
+                ...newPrice,
+                endDate: newPrice.endDate === '' ? null : newPrice.endDate
+            };
+    
+            if (priceData.id) {
                 // Nếu có ID, thực hiện sửa
-                const response = await axios.put(`/api/tables/prices/update/${newPrice.id}`, newPrice);
+                const response = await axios.put(`/api/tables/prices/update/${priceData.id}`, priceData);
                 setPrices(prices.map(price => (price.id === response.data.id ? response.data : price))); // Cập nhật danh sách giá
             } else {
                 // Thêm mới
-                const response = await axios.post('/api/tables/prices/add', newPrice);
+                const response = await axios.post('/api/tables/prices/add', priceData);
                 setPrices([...prices, response.data]); // Cập nhật danh sách giá sau khi thêm mới
             }
+    
             setNewPrice({ id: null, price: '', startDate: '', endDate: '' }); // Reset form
             setShowForm(false); // Ẩn form sau khi thêm/sửa
         } catch (error) {
             alert("Lỗi khi thêm/sửa giá", error);
         }
     };
+    
 
     const handleEditPrice = (price) => {
         setNewPrice(price); // Đặt giá trị cho form sửa
@@ -132,10 +139,10 @@ const PricesPage = () => {
    
     return (
         <div className="bg-gray-100 min-h-screen flex flex-col">
-            <Header />
+            <ManagerHeader />
 
             <div className="flex flex-1">
-                <Sidebar className="w-1/4 bg-gray-200 p-4" />
+                <ManagerSidebar className="w-1/4 bg-gray-200 p-4" />
 
                 <main className="flex-1 p-6">
                     <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Giá</h1>
@@ -188,7 +195,7 @@ const PricesPage = () => {
                                     value={newPrice.endDate}
                                     onChange={handleInputChange}
                                     className="w-full border px-3 py-2"
-                                    required
+                                    // required
                                 />
                             </div>
 
@@ -216,7 +223,11 @@ const PricesPage = () => {
                                 <td className="py-2 px-4 border text-center">{price.id}</td>
                                 <td className="py-2 px-4 border text-center">{formatPrice(price.price)}</td>
                                 <td className="py-2 px-4 border text-center">{formatDate(price.startDate)}</td>
-                                <td className="py-2 px-4 border text-center">{formatDate(price.endDate)}</td>
+                                {/* <td className="py-2 px-4 border text-center">{formatDate(price.endDate)}</td> */}
+                                <td className="py-2 px-4 border text-center">
+                                    {price.endDate ? formatDate(price.endDate) : 'Chưa có'}
+                                </td>
+
                                 <td className="py-2 px-4 border text-center">
                                     <button onClick={() => handleEditPrice(price)} className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-700">
                                         Sửa
