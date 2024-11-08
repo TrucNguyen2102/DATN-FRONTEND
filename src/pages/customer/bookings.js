@@ -94,14 +94,7 @@ const CustomerBookingTable = () => {
       return;
     }
   
-    // const expiryTime = new Date(selectedBookingTime.getTime() + 15 * 60000); // Thời gian hết hạn sau 15 phút
   
-    // Log thông tin để kiểm tra
-    // console.log('Booking Time:', formatDate(selectedBookingTime));
-    // console.log('Expiry Time:', expiryTime);
-    // console.log('User ID:', user.id);
-    // console.log('Selected Tables IDs:', selectedTables.map(table => table.id));
-    
     try {
       const bookingResponse = await axios.post('/api/bookings/add', {
         bookingTime: formatDate(selectedBookingTime),
@@ -121,8 +114,17 @@ const CustomerBookingTable = () => {
         alert('Có lỗi xảy ra trong quá trình đặt bàn.');
       }
     } catch (error) {
+      alert('Bàn đã được đặt bởi người khác và đang chờ xác nhận. Vui lòng chọn bàn khác.');
       console.error('Error confirming booking:', error);
-      alert('Có lỗi xảy ra khi đặt bàn. Vui lòng thử lại sau.');
+      // alert('Có lỗi xảy ra khi đặt bàn. Vui lòng thử lại sau.');
+      
+      // // Kiểm tra nếu lỗi là do bàn đã được đặt trước
+      // if (error.response) { // Mã lỗi giả định là 409 Conflict
+      //   alert('Bàn đã được đặt bởi người khác và đang chờ xác nhận. Vui lòng chọn bàn khác.');
+      // } else {
+      //   alert('Có lỗi xảy ra khi đặt bàn. Vui lòng thử lại sau.');
+      // }
+
     }
   };
 

@@ -165,6 +165,10 @@ const StaffInvoices = () => {
         const billDateParts = now.toLocaleString('sv-SE', options).split(','); // 'YYYY-MM-DD HH:mm:ss'
         const billDate = billDateParts.join(' ').replace(' ', ' '); // Kết hợp lại thành 'YYYY-MM-DD HH:mm:ss'
     
+        // Cập nhật trạng thái đơn đặt bàn
+        await axios.put(`/api/bookings/update/${selectedBooking.bookingId}/status`, {
+            status: "Chờ Thanh Toán" // Cập nhật trạng thái đơn đặt thành "Chờ Thanh Toán"
+        });
             
             const updatedInvoice = {
                 bookingId: selectedBooking.bookingId,
@@ -211,6 +215,14 @@ const StaffInvoices = () => {
         }
 
         try {
+
+            console.log(selectedInvoice.bookingId); // Kiểm tra giá trị của bookingId
+
+        // Cập nhật trạng thái đơn đặt bàn
+        // await axios.put(`/api/bookings/update/${selectedInvoice.bookingId}/status`, {
+        //     status: "Đã Thanh Toán" // Cập nhật trạng thái đơn đặt thành "Chờ Thanh Toán"
+        // });
+
             // Update invoice status to "Đã Thanh Toán"
             const updatedInvoice = {
                 ...selectedBooking,
@@ -218,7 +230,7 @@ const StaffInvoices = () => {
             };
 
             await axios.put(`/api/invoices/update/${selectedInvoice.id}`, updatedInvoice);
-
+            
             // Cập nhật trạng thái bàn thành "Trống"
         // if (selectedInvoice.tableId) {
         //     await axios.put(`/api/tables/update/${selectedInvoice.tableId}/status`, {

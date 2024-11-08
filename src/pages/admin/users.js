@@ -169,7 +169,7 @@ const AdminUsers = () => {
                                         {/* <button onClick={() => handleEdit(user)} className="bg-yellow-400 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-500 transition duration-200">
                                             Sửa 
                                         </button> */}
-                                        {user.status === "BLOCKED" ? (
+                                        {/* {user.status === "BLOCKED" ? (
                                             <button onClick={() => handleUnlock(user.id)} className="bg-green-400 text-white py-1 px-2 rounded hover:bg-green-500 transition duration-200">
                                                 Mở Khóa
                                             </button>
@@ -177,6 +177,17 @@ const AdminUsers = () => {
                                             <button onClick={() => handleLock(user.id)} className="bg-red-400 text-white py-1 px-2 rounded hover:bg-red-500 transition duration-200">
                                                 Khóa
                                             </button>
+                                        )} */}
+                                        {(user.roles.includes('ADMIN') || user.roles.includes('MANAGER')) && (
+                                            user.status === "BLOCKED" ? (
+                                                <button onClick={() => handleUnlock(user.id)} className="bg-green-400 text-white py-1 px-2 rounded hover:bg-green-500 transition duration-200">
+                                                    Mở Khóa
+                                                </button>
+                                            ) : (
+                                                <button onClick={() => handleLock(user.id)} className="bg-red-400 text-white py-1 px-2 rounded hover:bg-red-500 transition duration-200">
+                                                    Khóa
+                                                </button>
+                                            )
                                         )}
                                     </td>
                                 </tr>

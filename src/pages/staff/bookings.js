@@ -4,14 +4,16 @@ import axios from 'axios';
 import StaffSidebar from "../components/Sidebar/StaffSidebar";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
-import { format } from 'date-fns';
+import { format, differenceInSeconds  } from 'date-fns';
 
 const StaffBooking = () => {
     const [error, setError] = useState('');
     const [bookings, setBookings] = useState([]);
+    const [timeLeft, setTimeLeft] = useState({}); // State để lưu thời gian đếm ngược
     const [isEditing, setIsEditing] = useState(false);
     const [currentBooking, setCurrentBooking] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState('');
 
     const handleRefresh = () => {
         window.location.reload();
@@ -34,9 +36,45 @@ const StaffBooking = () => {
         }
     };
 
+
     useEffect(() => {
-        fetchBookings();
+        const interval = setInterval(() => {
+            const updatedTimeLeft = bookings.reduce((acc, booking) => {
+                if (booking.bookingTime && booking.expiryTime) {
+                    const bookingTime = new Date(booking.bookingTime); // Thời gian đặt bàn
+                    const expiryTime = new Date(booking.expiryTime); // Thời gian hết hạn
+                    const now = new Date(); // Thời gian hiện tại
+
+                    // Nếu thời gian hiện tại đã vượt qua thời gian đặt bàn (bookingTime)
+                    if (now >= bookingTime) {
+                        // Tính thời gian còn lại từ thời điểm hiện tại đến expiryTime
+                        const secondsLeft = differenceInSeconds(expiryTime, now);
+
+                        // Nếu hết thời gian thì dừng đếm ngược
+                        acc[booking.id] = secondsLeft > 0 ? secondsLeft : 0;
+                    } else {
+                        // Nếu thời gian hiện tại chưa đến thời gian đặt bàn thì không làm gì
+                        acc[booking.id] = 0;
+                    }
+                }
+                return acc;
+            }, {});
+            setTimeLeft(updatedTimeLeft); // Cập nhật thời gian còn lại
+        }, 1000); // Cập nhật mỗi giây
+
+        return () => clearInterval(interval); // Dừng khi component unmount
+    }, [bookings]);
+
+    useEffect(() => {
+        fetchBookings(); // Lấy danh sách đơn đặt bàn
     }, []);
+
+    const formatTimeLeft = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes} phút ${remainingSeconds} giây`;
+    };
+    
 
     const filterBookingsByStatus = (status) => {
         return bookings.filter(booking => booking.status === status);
@@ -45,6 +83,7 @@ const StaffBooking = () => {
     const handleSearch = (e) => {
         setSearchTerm(e.target.value); // Cập nhật giá trị tìm kiếm
     };
+
 
     const filteredBookings = bookings.filter(booking => {
         return (
@@ -59,42 +98,104 @@ const StaffBooking = () => {
     };
 
     //ấn nút xác nhận cập nhật trạng thái đơn
+    // const handleUpdateStatus = async (e) => {
+    //     e.preventDefault();
+    //     if (!currentBooking || !currentBooking.id) {
+    //         console.error("ID của booking không hợp lệ.");
+    //         return;
+    //     }
+
+        
+    
+    //     try {
+    //         // Cập nhật trạng thái booking
+    //         await axios.put(`/api/bookings/update/${currentBooking.id}/status`, {
+    //             status: "Đã Xác Nhận" // Cập nhật trạng thái đơn đặt bàn
+    //         });
+
+    //         // if (updateBookingResponse.status === 200 || updateBookingResponse.status === 201) {
+    //         //     // Lấy danh sách các bàn liên quan đến booking này
+    //         //     const tableIds = currentBooking.tableIds; // Giả sử `currentBooking.tableIds` chứa các ID của bàn liên quan đến booking
+    
+    //         //     // Cập nhật trạng thái bàn
+    //         //     await updateTablesStatus(tableIds, "Đã ");
+    
+    //         //     // Tải lại danh sách đơn đặt bàn
+    //         //     fetchBookings(); 
+    //         //     setIsEditing(false);
+    //         //     alert('Đơn đặt bàn đã được xác nhận và bàn đã được cập nhật trạng thái.');
+    //         // } else {
+    //         //     alert('Cập nhật trạng thái đơn không thành công.');
+    //         // }
+    
+    //         fetchBookings(); // Tải lại danh sách đơn đặt bàn
+    //         setIsEditing(false);
+    //     } catch (error) {
+    //         console.error('Lỗi cập nhật trạng thái:', error);
+    //     }
+    // };
+
+        // Hàm gửi yêu cầu cập nhật trạng thái cho các bàn
+    const updateTablesStatus = async (tableIds, status) => {
+        try {
+            // Lặp qua tất cả các tableIds để gửi yêu cầu cập nhật cho từng bàn
+            for (let tableId of tableIds) {
+                // Gửi yêu cầu PUT cho mỗi bàn với ID và trạng thái mới
+                await axios.put('/api/tables/update-status', {
+                    tableId: tableId,  // ID của bàn
+                    status: status      // Trạng thái mới của bàn
+                });
+            }
+        } catch (error) {
+            // Nếu có lỗi xảy ra, log ra và thông báo cho người dùng
+            console.error('Lỗi cập nhật trạng thái bàn:', error);
+            alert('Đã có lỗi xảy ra khi cập nhật trạng thái bàn.');
+        }
+    };
+
     const handleUpdateStatus = async (e) => {
         e.preventDefault();
+    
+        // Kiểm tra tính hợp lệ của ID booking
         if (!currentBooking || !currentBooking.id) {
             console.error("ID của booking không hợp lệ.");
             return;
         }
     
+        setLoading(true); // Bắt đầu quá trình gửi yêu cầu
+    
         try {
             // Cập nhật trạng thái booking
-            await axios.put(`/api/bookings/update/${currentBooking.id}/status`, {
+            const updateBookingResponse = await axios.patch(`/api/bookings/update/${currentBooking.id}/status`, {
                 status: "Đã Xác Nhận" // Cập nhật trạng thái đơn đặt bàn
             });
     
-            // // Cập nhật trạng thái bàn
-            // if (currentBooking.tableId) {
-            //     await axios.put(`/api/tables/update/${currentBooking.tableId}/status`, {
-            //         status: "Đã Đặt" // Cập nhật trạng thái bàn thành "Đã Đặt"
-            //     });
-            //     console.log(`Cập nhật trạng thái bàn thành "Đã Đặt" cho bàn ID: ${currentBooking.tableId}`);
-            // }
+            if (updateBookingResponse.status === 200 || updateBookingResponse.status === 201) {
+                // Lấy danh sách các bàn liên quan đến booking này
+                const tableIds = currentBooking.tableIds;
+                console.log("Tables:", tableIds);
     
-            fetchBookings(); // Tải lại danh sách đơn đặt bàn
-            setIsEditing(false);
+                // Cập nhật trạng thái bàn
+                await updateTablesStatus(tableIds, "Đã Đặt");
+    
+                // Tải lại danh sách booking sau khi cập nhật
+                fetchBookings();
+                setIsEditing(false);
+                alert('Đơn đặt bàn đã được xác nhận và bàn đã được cập nhật trạng thái.');
+            } else {
+                alert('Cập nhật trạng thái đơn không thành công.');
+            }
         } catch (error) {
             console.error('Lỗi cập nhật trạng thái:', error);
+            alert('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
+        } finally {
+            setLoading(false); // Kết thúc quá trình gửi yêu cầu
         }
     };
-    
-    
-    
 
-    // const handleConfirm = async (id) => {
-    //     // Logic xác nhận đơn đặt
-    //     console.log(`Xác nhận đơn đặt với ID: ${id}`);
-    //     // Cập nhật trạng thái thành "Đã Xác Nhận" hoặc logic khác
-    // };
+
+
+    
 
     //ấn nút Nhận Bàn
     const handleConfirm = async (booking) => {
@@ -109,20 +210,16 @@ const StaffBooking = () => {
             await axios.put(`/api/bookings/update/${booking.id}/status`, {
                 status: "Đã Nhận Bàn" // Cập nhật trạng thái đơn đặt thành "Chờ Thanh Toán"
             });
-    
-            // Cập nhật trạng thái bàn thành "Đang Chơi"
-        if (currentBooking.tableId) {
-            await axios.put(`/api/tables/update/${currentBooking.tableId}/status`, {
-                status: "Đang Chơi" // Cập nhật trạng thái bàn thành "Đã Đặt"
-            });
-            console.log(`Cập nhật trạng thái bàn thành "Đã Đặt" cho bàn ID: ${currentBooking.tableId}`);
-        }
+            
+
             // Gọi API để tạo mới một hóa đơn (invoice)
             await axios.post('/api/invoices/create', {
                 bookingId: booking.id // Chỉ gửi ID của booking
             });
     
             console.log(`Đã tạo hóa đơn cho booking ID: ${booking.id}`);
+
+            
     
             // Tải lại danh sách đơn đặt bàn sau khi cập nhật
             fetchBookings();
@@ -163,7 +260,7 @@ const StaffBooking = () => {
             const updateBookingResponse = await axios.put(`/api/bookings/update/${booking.id}/status`, {
                 status: "Chưa Thanh Toán" // Cập nhật trạng thái booking thành "Chưa Thanh Toán"
             });
-    
+
             // Kiểm tra phản hồi từ API cập nhật booking
             if (updateBookingResponse.status === 200) {
                 console.log(`Đã cập nhật trạng thái booking thành "Chưa Thanh Toán" cho booking ID: ${booking.id}`);
@@ -225,7 +322,10 @@ const StaffBooking = () => {
                                             <tr key={booking.id}>
                                                 <td className="border px-4 py-2 text-center">{booking.id}</td>
                                                 <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
+                                                <td className="py-2 px-4 border-b border-r text-center">
+                                                    {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                </td>
                                                 <td className="border px-4 py-2 text-center">{booking.status}</td>
                                                 <td className="border px-4 py-2 text-center">{booking.fullName}</td>
                                                 <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td>
@@ -250,6 +350,7 @@ const StaffBooking = () => {
                                             <th className="border px-4 py-2 text-center">ID</th>
                                             <th className="border px-4 py-2 text-center">Thời Gian Đặt</th>
                                             <th className="border px-4 py-2 text-center">Thời Gian Hết Hạn</th>
+                                            <th className="border px-4 py-2 text-center">Đếm Ngược</th>
                                             <th className="border px-4 py-2 text-center">Trạng Thái</th>
                                             <th className="border px-4 py-2 text-center">Tên Người Dùng</th>
                                             <th className="border px-4 py-2 text-center">ID Bàn</th>
@@ -261,7 +362,13 @@ const StaffBooking = () => {
                                             <tr key={booking.id}>
                                                 <td className="border px-4 py-2 text-center">{booking.id}</td>
                                                 <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
+                                                <td className="py-2 px-4 border-b border-r text-center">
+                                                    {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                </td>
+                                                <td className="border px-4 py-2 text-center">
+                                                    {timeLeft[booking.id] > 0 ? formatTimeLeft(timeLeft[booking.id]) : "Hết hạn"}
+                                                </td>
                                                 <td className="border px-4 py-2 text-center">{booking.status}</td>
                                                 <td className="border px-4 py-2 text-center">{booking.fullName}</td>
                                                 <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td>
@@ -286,6 +393,7 @@ const StaffBooking = () => {
                                             <th className="border px-4 py-2 text-center">ID</th>
                                             <th className="border px-4 py-2 text-center">Thời Gian Đặt</th>
                                             <th className="border px-4 py-2 text-center">Thời Gian Hết Hạn</th>
+                                            <th className="border px-4 py-2 text-center">Đếm Ngược</th>
                                             <th className="border px-4 py-2 text-center">Trạng Thái</th>
                                             <th className="border px-4 py-2 text-center">Tên Người Dùng</th>
                                             <th className="border px-4 py-2 text-center">ID Bàn</th>
@@ -297,7 +405,13 @@ const StaffBooking = () => {
                                             <tr key={booking.id}>
                                                 <td className="border px-4 py-2 text-center">{booking.id}</td>
                                                 <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
+                                                <td className="py-2 px-4 border-b border-r text-center">
+                                                    {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                </td>
+                                                <td className="border px-4 py-2 text-center">
+                                                    {timeLeft[booking.id] > 0 ? formatTimeLeft(timeLeft[booking.id]) : "Hết hạn"}
+                                                </td>
                                                 <td className="border px-4 py-2 text-center">{booking.status}</td>
                                                 <td className="border px-4 py-2 text-center">{booking.fullName}</td>
                                                 <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td>
@@ -329,7 +443,10 @@ const StaffBooking = () => {
                                             <tr key={booking.id}>
                                                 <td className="border px-4 py-2 text-center">{booking.id}</td>
                                                 <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
+                                                <td className="py-2 px-4 border-b border-r text-center">
+                                                    {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                </td>
                                                 <td className="border px-4 py-2 text-center">{booking.status}</td>
                                                 <td className="border px-4 py-2 text-center">{booking.fullName}</td>
                                                 <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td>
