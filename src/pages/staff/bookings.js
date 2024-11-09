@@ -97,44 +97,6 @@ const StaffBooking = () => {
         setIsEditing(true); // Hiển thị form chỉnh sửa
     };
 
-    //ấn nút xác nhận cập nhật trạng thái đơn
-    // const handleUpdateStatus = async (e) => {
-    //     e.preventDefault();
-    //     if (!currentBooking || !currentBooking.id) {
-    //         console.error("ID của booking không hợp lệ.");
-    //         return;
-    //     }
-
-        
-    
-    //     try {
-    //         // Cập nhật trạng thái booking
-    //         await axios.put(`/api/bookings/update/${currentBooking.id}/status`, {
-    //             status: "Đã Xác Nhận" // Cập nhật trạng thái đơn đặt bàn
-    //         });
-
-    //         // if (updateBookingResponse.status === 200 || updateBookingResponse.status === 201) {
-    //         //     // Lấy danh sách các bàn liên quan đến booking này
-    //         //     const tableIds = currentBooking.tableIds; // Giả sử `currentBooking.tableIds` chứa các ID của bàn liên quan đến booking
-    
-    //         //     // Cập nhật trạng thái bàn
-    //         //     await updateTablesStatus(tableIds, "Đã ");
-    
-    //         //     // Tải lại danh sách đơn đặt bàn
-    //         //     fetchBookings(); 
-    //         //     setIsEditing(false);
-    //         //     alert('Đơn đặt bàn đã được xác nhận và bàn đã được cập nhật trạng thái.');
-    //         // } else {
-    //         //     alert('Cập nhật trạng thái đơn không thành công.');
-    //         // }
-    
-    //         fetchBookings(); // Tải lại danh sách đơn đặt bàn
-    //         setIsEditing(false);
-    //     } catch (error) {
-    //         console.error('Lỗi cập nhật trạng thái:', error);
-    //     }
-    // };
-
         // Hàm gửi yêu cầu cập nhật trạng thái cho các bàn
     const updateTablesStatus = async (tableIds, status) => {
         try {
@@ -166,7 +128,7 @@ const StaffBooking = () => {
     
         try {
             // Cập nhật trạng thái booking
-            const updateBookingResponse = await axios.patch(`/api/bookings/update/${currentBooking.id}/status`, {
+            const updateBookingResponse = await axios.put(`/api/bookings/update/${currentBooking.id}/status`, {
                 status: "Đã Xác Nhận" // Cập nhật trạng thái đơn đặt bàn
             });
     
@@ -210,14 +172,26 @@ const StaffBooking = () => {
             await axios.put(`/api/bookings/update/${booking.id}/status`, {
                 status: "Đã Nhận Bàn" // Cập nhật trạng thái đơn đặt thành "Chờ Thanh Toán"
             });
+
+            //cập nhật trạng thái bàn
+
+            // Lấy danh sách các bàn liên quan đến booking này
+            const tableIds = booking.tableIds;
+            console.log("Tables:", tableIds);
+
+            // Cập nhật trạng thái bàn
+            await updateTablesStatus(tableIds, "Đang Chơi");
             
 
             // Gọi API để tạo mới một hóa đơn (invoice)
             await axios.post('/api/invoices/create', {
                 bookingId: booking.id // Chỉ gửi ID của booking
             });
+
+            alert('Đã tạo hóa đơn thành công và các trạng thái đã được cập nhật!');
     
             console.log(`Đã tạo hóa đơn cho booking ID: ${booking.id}`);
+
 
             
     
@@ -367,7 +341,7 @@ const StaffBooking = () => {
                                                     {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
                                                 </td>
                                                 <td className="border px-4 py-2 text-center">
-                                                    {timeLeft[booking.id] > 0 ? formatTimeLeft(timeLeft[booking.id]) : "Hết hạn"}
+                                                    {timeLeft[booking.id] > 0 ? formatTimeLeft(timeLeft[booking.id]) : "Trong ít phút nữa"}
                                                 </td>
                                                 <td className="border px-4 py-2 text-center">{booking.status}</td>
                                                 <td className="border px-4 py-2 text-center">{booking.fullName}</td>

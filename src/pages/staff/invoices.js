@@ -60,12 +60,14 @@ const StaffInvoices = () => {
     };
 
     
-
-    
-
-
-
     const handleSelectBooking = async (booking) => {
+        // Kiểm tra trạng thái booking trước khi tiếp tục xử lý
+        // if (booking.status !== "Chưa Thanh Toán") {
+        //     // Hiển thị thông báo lỗi nếu trạng thái booking chưa kết thúc
+        //     alert("Đơn đặt bàn chưa được kết thúc. Vui lòng kết thúc đơn trước khi tạo hóa đơn.");
+        //     return; // Dừng không cho phép xử lý tiếp
+        // }
+
         setSelectedBooking(booking);
     
         try {
@@ -218,10 +220,10 @@ const StaffInvoices = () => {
 
             console.log(selectedInvoice.bookingId); // Kiểm tra giá trị của bookingId
 
-        // Cập nhật trạng thái đơn đặt bàn
-        // await axios.put(`/api/bookings/update/${selectedInvoice.bookingId}/status`, {
-        //     status: "Đã Thanh Toán" // Cập nhật trạng thái đơn đặt thành "Chờ Thanh Toán"
-        // });
+            // Cập nhật trạng thái đơn đặt bàn
+        await axios.put(`/api/bookings/update/${selectedInvoice.bookingId}/status`, {
+            status: "Đã Thanh Toán" // Cập nhật trạng thái đơn đặt thành "Đã Thanh Toán"
+        });
 
             // Update invoice status to "Đã Thanh Toán"
             const updatedInvoice = {
@@ -230,15 +232,9 @@ const StaffInvoices = () => {
             };
 
             await axios.put(`/api/invoices/update/${selectedInvoice.id}`, updatedInvoice);
-            
-            // Cập nhật trạng thái bàn thành "Trống"
-        // if (selectedInvoice.tableId) {
-        //     await axios.put(`/api/tables/update/${selectedInvoice.tableId}/status`, {
-        //         status: "Trống"
-        //     });
-        //     console.log(`Cập nhật trạng thái bàn thành "Trống" cho bàn ID: ${selectedInvoice.tableId}`);
-        // }
 
+            
+            
             // Alert success and refresh invoices
             alert('Hóa đơn đã được cập nhật thành công!');
 
@@ -254,6 +250,23 @@ const StaffInvoices = () => {
         } catch (error) {
             console.error('Error updating invoice:', error);
             alert('Có lỗi xảy ra khi cập nhật hóa đơn. Vui lòng thử lại.');
+        }
+    };
+
+    const updateTablesStatus = async (tableIds, status) => {
+        try {
+            // Lặp qua tất cả các tableIds để gửi yêu cầu cập nhật cho từng bàn
+            for (let tableId of tableIds) {
+                // Gửi yêu cầu PUT cho mỗi bàn với ID và trạng thái mới
+                await axios.put('/api/tables/update-status', {
+                    tableId: tableId,  // ID của bàn
+                    status: status      // Trạng thái mới của bàn
+                });
+            }
+        } catch (error) {
+            // Nếu có lỗi xảy ra, log ra và thông báo cho người dùng
+            console.error('Lỗi cập nhật trạng thái bàn:', error);
+            alert('Đã có lỗi xảy ra khi cập nhật trạng thái bàn.');
         }
     };
 
@@ -350,8 +363,8 @@ const StaffInvoices = () => {
                                                 <td className="border px-4 py-2 text-center">{format(new Date(invoice.endTime), 'dd/MM/yyyy HH:mm:ss')}</td>
                                                 <td className="border px-4 py-2 text-center">{format(new Date(invoice.billDate), 'dd/MM/yyyy HH:mm:ss')}</td> */}
                                                  <td className="border px-4 py-2 text-center">{formatDate(invoice.startTime)}</td>
-            <td className="border px-4 py-2 text-center">{formatDate(invoice.endTime)}</td>
-            <td className="border px-4 py-2 text-center">{formatDate(invoice.billDate)}</td>
+                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.endTime)}</td>
+                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.billDate)}</td>
                                                 <td className="border px-4 py-2 text-center">{formatCurrency(invoice.totalMoney)} VND</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.status}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.bookingId}</td>
