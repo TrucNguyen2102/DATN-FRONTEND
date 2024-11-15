@@ -116,14 +116,21 @@ const CustomerBookingTable = () => {
     } catch (error) {
       alert('Bàn đã được đặt bởi người khác và đang chờ xác nhận. Vui lòng chọn bàn khác.');
       console.error('Error confirming booking:', error);
-      // alert('Có lỗi xảy ra khi đặt bàn. Vui lòng thử lại sau.');
       
-      // // Kiểm tra nếu lỗi là do bàn đã được đặt trước
-      // if (error.response) { // Mã lỗi giả định là 409 Conflict
-      //   alert('Bàn đã được đặt bởi người khác và đang chờ xác nhận. Vui lòng chọn bàn khác.');
+      // Kiểm tra phản hồi lỗi có chứa thông tin bàn đã được đặt trước
+      // const bookedTableIds = error.response?.data?.bookedTables;
+      // if (bookedTableIds && Array.isArray(bookedTableIds)) {
+      //     // Tìm bàn bị xung đột và tạo chuỗi hiển thị
+      //     const conflictingTables = selectedTables
+      //         .filter(table => bookedTableIds.includes(table.id))
+      //         .map(table => `Bàn ${table.id}`)
+      //         .join(', ');
+
+      //     alert(`Bàn sau đã được đặt bởi người khác: ${conflictingTables}. Vui lòng chọn bàn hoặc thời gian khác.`);
       // } else {
-      //   alert('Có lỗi xảy ra khi đặt bàn. Vui lòng thử lại sau.');
+      //     alert('Có lỗi xảy ra khi đặt bàn. Vui lòng thử lại.');
       // }
+      
 
     }
   };

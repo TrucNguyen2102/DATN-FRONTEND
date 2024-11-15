@@ -13,13 +13,39 @@ const TablePlay = () => {
     const [editingTableId, setEditingTableId] = useState(null);
     const [loading, setLoading] = useState(false);
 
+    // Thêm state để quản lý phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [pageSize, setPageSize] = useState(5); // Số bản ghi mỗi trang
+    
+
+    // const fetchTables = async () => {
+    //     setLoading(true);
+    //     try {
+    //         const response = await axios.get('/api/tables/all');
+    //         console.log('Phản hồi từ API:', response.data);
+    //         if (Array.isArray(response.data)) {
+    //             setTables(response.data);
+    //         } else {
+    //             console.error('Dữ liệu trả về không phải là một mảng:', response.data);
+    //             setTables([]);
+    //         }
+    //     } catch (error) {
+    //         setError('Không thể tải danh sách bàn.');
+    //         console.error(error);
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // }
+
     const fetchTables = async () => {
         setLoading(true);
         try {
-            const response = await axios.get('/api/tables/all');
+            const response = await axios.get(`/api/tables/pages/all?page=${currentPage - 1}&size=${pageSize}`);
             console.log('Phản hồi từ API:', response.data);
-            if (Array.isArray(response.data)) {
-                setTables(response.data);
+            if (Array.isArray(response.data.content)) {
+                setTables(response.data.content);
+                setTotalPages(response.data.totalPages);
             } else {
                 console.error('Dữ liệu trả về không phải là một mảng:', response.data);
                 setTables([]);
@@ -49,6 +75,10 @@ const TablePlay = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
     };
 
     const validateForm = () => {
@@ -104,19 +134,6 @@ const TablePlay = () => {
         setShowForm(true);
     };
 
-    // const handleDeleteTable = async (id) => {
-    //     if (window.confirm(`Bạn có chắc chắn muốn xóa bàn này không?`)) {
-    //         try {
-    //             await axios.delete(`/api/tables/delete/${id}`);
-    //             fetchTables();
-    //             alert('Xóa bàn thành công!'); // Thông báo thành công
-    //         } catch (error) {
-    //             setError('Lỗi khi xóa bàn! Hãy thử lại.');
-    //             console.error(error);
-    //         }
-    //     }
-    // };
-
     const handleRefresh = () => {
         window.location.reload();
     };
@@ -124,7 +141,7 @@ const TablePlay = () => {
     useEffect(() => {
         fetchTables();
         fetchTypes();
-    }, []);
+    }, [currentPage, pageSize]);
 
     return (
         <div className="bg-gray-100 min-h-screen flex flex-col">
@@ -233,6 +250,24 @@ const TablePlay = () => {
                             ))}
                         </tbody>
                     </table>
+                    {/* Hiển thị phân trang */}
+                    <div className="flex justify-center mt-4">
+                        <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 mb-4"
+                        >
+                            Trước
+                        </button>
+                        <span className="px-4 py-2">{`Trang ${currentPage} / ${totalPages}`}</span>
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 mb-4"
+                        >
+                            Sau
+                        </button>
+                    </div>
                 </main>
             </div>
         </div>

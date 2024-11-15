@@ -12,6 +12,10 @@ const TablePlay = () => {
     const [isEdit, setIsEdit] = useState(false);
     const [editingTableId, setEditingTableId] = useState(null);
     const [loading, setLoading] = useState(false);
+    // // Thêm state để quản lý phân trang
+    // const [currentPage, setCurrentPage] = useState(1);
+    // const [totalPages, setTotalPages] = useState(1);
+    // const [pageSize, setPageSize] = useState(5); // Số bản ghi mỗi trang
 
     const fetchTables = async () => {
         setLoading(true);
@@ -31,6 +35,8 @@ const TablePlay = () => {
             setLoading(false);
         }
     }
+
+    
 
     const fetchTypes = async () => {
         setLoading(true);
@@ -119,6 +125,11 @@ const TablePlay = () => {
     const handleRefresh = () => {
         window.location.reload();
     };
+
+    // const handlePageChange = (page) => {
+    //     setCurrentPage(page);
+    // };
+
 
     useEffect(() => {
         fetchTables();
@@ -227,6 +238,26 @@ const TablePlay = () => {
                             ))}
                         </tbody>
                     </table>
+
+                    
+                    {/* <div className="flex justify-center mt-4">
+                        <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 mb-4"
+                        >
+                            Trước
+                        </button>
+                        <span className="px-4 py-2">{`Trang ${currentPage} / ${totalPages}`}</span>
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 mb-4"
+                        >
+                            Sau
+                        </button>
+                    </div> */}
+
                 </main>
             </div>
         </div>

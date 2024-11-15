@@ -28,6 +28,9 @@ const StaffInvoices = () => {
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [showConfirmPrint, setShowConfirmPrint] = useState(false);
 
+    const [currentPage, setCurrentPage] = useState({ 'Chưa Thanh Toán': 1, 'Chờ Thanh Toán': 1, 'Đã Thanh Toán': 1 });
+    const itemsPerPage = 8;
+
     const formatCurrency = (value) => {
         return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     };
@@ -209,50 +212,7 @@ const StaffInvoices = () => {
         setShowConfirmPrint(true);
     };
 
-
-    const handleConfirmInvoice = async () => {
-        if (!setSelectedInvoice) {
-            alert('Vui lòng chọn một đơn đặt.');
-            return;
-        }
-
-        try {
-
-            console.log(selectedInvoice.bookingId); // Kiểm tra giá trị của bookingId
-
-            // Cập nhật trạng thái đơn đặt bàn
-        await axios.put(`/api/bookings/update/${selectedInvoice.bookingId}/status`, {
-            status: "Đã Thanh Toán" // Cập nhật trạng thái đơn đặt thành "Đã Thanh Toán"
-        });
-
-            // Update invoice status to "Đã Thanh Toán"
-            const updatedInvoice = {
-                ...selectedBooking,
-                status: 'Đã Thanh Toán',
-            };
-
-            await axios.put(`/api/invoices/update/${selectedInvoice.id}`, updatedInvoice);
-
-            
-            
-            // Alert success and refresh invoices
-            alert('Hóa đơn đã được cập nhật thành công!');
-
-            // Export to Excel
-            handleExportToExcel([updatedInvoice]);
-
-            // Refresh invoice list
-            fetchInvoices();
-
-            // Close confirmation dialog
-            setShowForm(false);
-            setSelectedBooking(null);
-        } catch (error) {
-            console.error('Error updating invoice:', error);
-            alert('Có lỗi xảy ra khi cập nhật hóa đơn. Vui lòng thử lại.');
-        }
-    };
-
+    // Hàm để cập nhật trạng thái của các bàn
     const updateTablesStatus = async (tableIds, status) => {
         try {
             // Lặp qua tất cả các tableIds để gửi yêu cầu cập nhật cho từng bàn
@@ -267,6 +227,59 @@ const StaffInvoices = () => {
             // Nếu có lỗi xảy ra, log ra và thông báo cho người dùng
             console.error('Lỗi cập nhật trạng thái bàn:', error);
             alert('Đã có lỗi xảy ra khi cập nhật trạng thái bàn.');
+        }
+    };
+
+
+    const handleConfirmInvoice = async () => {
+        if (!setSelectedInvoice) {
+            alert('Vui lòng chọn một đơn đặt.');
+            return;
+        }
+
+        try {
+
+            console.log(selectedInvoice.bookingId); // Kiểm tra giá trị của bookingId
+
+            // Cập nhật trạng thái đơn đặt bàn
+        const updateBookingResponse =  await axios.put(`/api/bookings/update/${selectedInvoice.bookingId}/status`, {
+            status: "Đã Thanh Toán" // Cập nhật trạng thái đơn đặt thành "Đã Thanh Toán"
+        });
+
+        if (updateBookingResponse .status === 200 || updateBookingResponse.status === 201) {
+            
+            
+            // Cập nhật trạng thái của tất cả các bàn thành "Trống"
+            await updateTablesStatus(tableIds, "Trống");
+        }
+
+            // Update invoice status to "Đã Thanh Toán"
+            const updatedInvoice = {
+                ...selectedBooking,
+                status: 'Đã Thanh Toán',
+            };
+
+            await axios.put(`/api/invoices/update/${selectedInvoice.id}`, updatedInvoice);
+
+
+        
+
+            
+            // Alert success and refresh invoices
+            alert('Hóa đơn đã được cập nhật thành công và trạng thái bàn đã được cập nhật!');
+
+            // Export to Excel
+            handleExportToExcel([updatedInvoice]);
+
+            // Refresh invoice list
+            fetchInvoices();
+
+            // Close confirmation dialog
+            setShowForm(false);
+            setSelectedBooking(null);
+        } catch (error) {
+            console.error('Error updating invoice:', error);
+            alert('Có lỗi xảy ra khi cập nhật hóa đơn. Vui lòng thử lại.');
         }
     };
 
@@ -316,6 +329,21 @@ const StaffInvoices = () => {
         return invoices.filter(invoice => invoice.status === status);
     };
 
+    const handlePageChange = (status, page) => {
+        setCurrentPage(prevState => ({ ...prevState, [status]: page }));
+    };
+    
+    const totalPages = (status) => {
+        const filteredInvoices = filterInvoicesByStatus(status);
+        return Math.ceil(filteredInvoices.length / itemsPerPage);
+    };
+    
+    const getPaginatedInvoices = (status) => {
+        const filteredInvoices = filterInvoicesByStatus(status);
+        const startIndex = (currentPage[status] - 1) * itemsPerPage;
+        return filteredInvoices.slice(startIndex, startIndex + itemsPerPage);
+    };
+
     const handleRefresh = () => {
         window.location.reload();
     };
@@ -356,7 +384,8 @@ const StaffInvoices = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filterInvoicesByStatus('Chưa Thanh Toán').map(invoice => (
+                                        {/* {filterInvoicesByStatus('Chưa Thanh Toán').map(invoice => ( */}
+                                        {getPaginatedInvoices('Chưa Thanh Toán').map(invoice => (
                                             <tr key={invoice.id}>
                                                 <td className="border px-4 py-2 text-center">{invoice.id}</td>
                                                 {/* <td className="border px-4 py-2 text-center">{format(new Date(invoice.startTime), 'dd/MM/yyyy HH:mm:ss')}</td>
@@ -379,6 +408,22 @@ const StaffInvoices = () => {
                                     </tbody>
                                 </table>
                             </div>
+
+                            {/* Phân trang */}
+                            <div className="mt-4">
+                                <p className="text-sm">Trang {currentPage['Chưa Thanh Toán']} / {totalPages('Chưa Thanh Toán')}</p>
+                                <div className="flex justify-center">
+                                    {Array.from({ length: totalPages('Chưa Thanh Toán') }, (_, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => handlePageChange('Chưa Thanh Toán', index + 1)}
+                                        className={`mx-1 px-3 py-1 rounded ${currentPage['Chưa Thanh Toán'] === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                                    >
+                                        {index + 1}
+                                    </button>
+                                    ))}
+                                </div>
+                            </div>
                         </TabPanel>
 
 
@@ -398,15 +443,13 @@ const StaffInvoices = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filterInvoicesByStatus('Chờ Thanh Toán').map(invoice => (
+                                        {/* {filterInvoicesByStatus('Chờ Thanh Toán').map(invoice => ( */}
+                                        {getPaginatedInvoices('Chờ Thanh Toán').map(invoice => (
                                             <tr key={invoice.id}>
                                                 <td className="border px-4 py-2 text-center">{invoice.id}</td>
-                                                {/* <td className="border px-4 py-2 text-center">{format(new Date(invoice.startTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                <td className="border px-4 py-2 text-center">{format(new Date(invoice.endTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                <td className="border px-4 py-2 text-center">{format(new Date(invoice.billDate), 'dd/MM/yyyy HH:mm:ss')}</td> */}
-                                                 <td className="border px-4 py-2 text-center">{formatDate(invoice.startTime)}</td>
-            <td className="border px-4 py-2 text-center">{formatDate(invoice.endTime)}</td>
-            <td className="border px-4 py-2 text-center">{formatDate(invoice.billDate)}</td>
+                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.startTime)}</td>
+                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.endTime)}</td>
+                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.billDate)}</td>
                                                 <td className="border px-4 py-2 text-center">{formatCurrency(invoice.totalMoney)} VND</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.status}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.bookingId}</td>
@@ -419,6 +462,22 @@ const StaffInvoices = () => {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+
+                            {/* Phân trang */}
+                            <div className="mt-4">
+                                <p className="text-sm">Trang {currentPage['Chờ Thanh Toán']} / {totalPages('Chờ Thanh Toán')}</p>
+                                <div className="flex justify-center">
+                                    {Array.from({ length: totalPages('Chờ Thanh Toán') }, (_, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => handlePageChange('Chờ Thanh Toán', index + 1)}
+                                        className={`mx-1 px-3 py-1 rounded ${currentPage['Chờ Thanh Toán'] === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                                    >
+                                        {index + 1}
+                                    </button>
+                                    ))}
+                                </div>
                             </div>
                         </TabPanel>
 
@@ -438,15 +497,13 @@ const StaffInvoices = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filterInvoicesByStatus('Đã Thanh Toán').map(invoice => (
+                                        {/* {filterInvoicesByStatus('Đã Thanh Toán').map(invoice => ( */}
+                                        {getPaginatedInvoices('Đã Thanh Toán').map(invoice => (
                                             <tr key={invoice.id}>
                                                 <td className="border px-4 py-2 text-center">{invoice.id}</td>
-                                                {/* <td className="border px-4 py-2 text-center">{format(new Date(invoice.startTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                <td className="border px-4 py-2 text-center">{format(new Date(invoice.endTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                <td className="border px-4 py-2 text-center">{format(new Date(invoice.billDate), 'dd/MM/yyyy HH:mm:ss')}</td> */}
-                                                 <td className="border px-4 py-2 text-center">{formatDate(invoice.startTime)}</td>
-            <td className="border px-4 py-2 text-center">{formatDate(invoice.endTime)}</td>
-            <td className="border px-4 py-2 text-center">{formatDate(invoice.billDate)}</td>
+                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.startTime)}</td>
+                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.endTime)}</td>
+                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.billDate)}</td>
                                                 <td className="border px-4 py-2 text-center">{formatCurrency(invoice.totalMoney)} VND</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.status}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.bookingId}</td>
@@ -455,6 +512,22 @@ const StaffInvoices = () => {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+
+                            {/* Phân trang */}
+                            <div className="mt-4">
+                                <p className="text-sm">Trang {currentPage['Đã Thanh Toán']} / {totalPages('Đã Thanh Toán')}</p>
+                                <div className="flex justify-center">
+                                    {Array.from({ length: totalPages('Đã Thanh Toán') }, (_, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => handlePageChange('Đã Thanh Toán', index + 1)}
+                                        className={`mx-1 px-3 py-1 rounded ${currentPage['Đã Thanh Toán'] === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                                    >
+                                        {index + 1}
+                                    </button>
+                                    ))}
+                                </div>
                             </div>
                         </TabPanel>
 
