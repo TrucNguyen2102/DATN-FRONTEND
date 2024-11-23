@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useContext } from 'react';
+import { useContext} from 'react';
 import AuthContext from '@/pages/contexts/AuthContext';
 
 const StaffSidebar = () => {
@@ -16,7 +16,8 @@ const StaffSidebar = () => {
 
     const staffLinks = [
         { href: "/staff/tables", label: "Quản Lý Bàn" },
-        { href: "/staff/bookings", label: "Quản Lý Đặt Bàn" },
+        { href: "/staff/menus", label: "Quản Lý Menu" },
+        { href: "/staff/bookings", label: "Quản Lý Đơn Đặt" },
         { href: "/staff/invoices", label: "Quản Lý Hóa Đơn" },
         { href: "/staff/accounts", label: "Quản Lý Tài Khoản" }
     ];
@@ -50,6 +51,8 @@ const StaffSidebar = () => {
                         </li>
                     ))}
                 </ul>
+
+                
         </div>
     )
 }

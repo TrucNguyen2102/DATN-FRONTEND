@@ -1,5 +1,6 @@
 import CustomerHeader from "../components/Header/CustomerHeader";
 import Sidebar from "../components/Sidebar";
+import Chatbox from "../components/Chatbox";
 
 import Link from 'next/link';
 
@@ -71,6 +72,8 @@ const CustomerHome = () => {
               </Link>
             </div>
           </div>
+          {/* Tích hợp Chatbox */}
+          <Chatbox />
         </div>
         
       );

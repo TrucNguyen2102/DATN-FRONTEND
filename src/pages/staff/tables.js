@@ -2,9 +2,13 @@ import ManagerHeader from "../components/Header/ManagerHeader";
 import React, { useEffect, useState } from 'react';
 import axios from "axios";
 import StaffSidebar from "../components/Sidebar/StaffSidebar";
+import { FaRegClock } from 'react-icons/fa';
 
 const TablePlay = () => {
     const [tables, setTables] = useState([]);
+    const [tableTypes, setTableTypes] = useState([]);
+    const [prices, setPrices] = useState ([]);
+    const [invoices, setInvoices] = useState([]);
     const [error, setError] = useState('');
     const [newTable, setNewTable] = useState({ tableNum: '', tableStatus: '', typeId: '' });
     const [showForm, setShowForm] = useState(false);
@@ -13,10 +17,17 @@ const TablePlay = () => {
     const [editingTableId, setEditingTableId] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // Thêm state để quản lý phân trang
+    // Thêm state để quản lý phân trang   
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [pageSize, setPageSize] = useState(5); // Số bản ghi mỗi trang
+
+    const [elapsedTime, setElapsedTime] = useState({});
+
+    const [selectedTab, setSelectedTab] = useState(null);
+
+    const [filteredTables, setFilteredTables] = useState([]);
+    
     
 
     // const fetchTables = async () => {
@@ -77,6 +88,60 @@ const TablePlay = () => {
         }
     };
 
+    const fetchPrices = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get('/api/tables/prices/all');  // API lấy giá từ bảng giá
+            console.log('Phản hồi từ API bảng giá:', response.data);
+            if (Array.isArray(response.data)) {
+                setPrices(response.data);  // Lưu thông tin bảng giá
+            } else {
+                console.error('Dữ liệu trả về không phải là một mảng:', response.data);
+                setPrices([]);  // Nếu không phải mảng, xử lý lỗi
+            }
+        } catch (error) {
+            setError('Không thể tải bảng giá.');
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchInvoices = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get('/api/invoices/all'); // Đường dẫn API cần thay bằng endpoint thực tế
+            console.log('Phản hồi từ API hóa đơn:', response.data);
+            if (Array.isArray(response.data)) {
+                setInvoices(response.data); // Lưu danh sách hóa đơn
+            } else {
+                console.error('Dữ liệu trả về không phải là một mảng:', response.data);
+                setInvoices([]); // Nếu không phải mảng, xử lý lỗi
+            }
+        } catch (error) {
+            setError('Không thể tải danh sách hóa đơn.');
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const filterPlayingTables = () => {
+        const playingTables = tables
+            .filter((table) => table.tableStatus === "Đang Chơi")
+            .map((table) => {
+                const invoice = invoices.find((invoice) => invoice.tableId === table.id);
+                return {
+                    ...table,
+                    startTime: invoice ? invoice.startTime : null,
+                };
+            });
+        setFilteredTables(playingTables);
+    };
+    
+    
+    
+
     const handlePageChange = (page) => {
         setCurrentPage(page);
     };
@@ -127,7 +192,9 @@ const TablePlay = () => {
         setNewTable({
             tableNum: table.tableNum,
             tableStatus: table.tableStatus,
-            typeId: table.type.id, // Sử dụng type.id
+            // typeId: table.type.id, // Sử dụng type.id
+             typeId: table.type.id
+
         });
         setEditingTableId(table.id);
         setIsEdit(true);
@@ -141,7 +208,73 @@ const TablePlay = () => {
     useEffect(() => {
         fetchTables();
         fetchTypes();
+        fetchInvoices();
+        fetchPrices();
+        
     }, [currentPage, pageSize]);
+
+    // useEffect(() => {
+    //     fetchPrices();
+    // }, []);
+
+    useEffect(() => {
+        filterPlayingTables();
+    }, [tables, invoices]);
+    
+
+    // Hàm để tra cứu giá từ bảng giá
+    const getPriceById = (priceId) => {
+        const price = prices.find(price => price.id === priceId);  // Tìm giá trong mảng bảng giá
+        return price ? price.price : 'Chưa có giá';  // Nếu tìm thấy, trả về giá, nếu không có, trả về thông báo
+    };
+
+
+    // Lấy `startTime` từ bảng hóa đơn dựa vào `tableId`
+    const getStartTimeForTable = (tableId) => {
+        const invoice = invoices.find((invoice) => invoice.tableId === tableId && invoice.status === 'Chưa Thanh Toán');
+        return invoice ? invoice.startTime : null;
+    };
+
+    // Tính toán thời gian đã chơi
+    const calculateElapsedTime = (startTime) => {
+        if (!startTime) return "N/A";
+
+        const now = new Date();
+        const start = new Date(startTime);
+        const diffMs = now - start; // Chênh lệch thời gian (ms)
+        const hours = Math.floor(diffMs / 3600000); // Số giờ
+        const minutes = Math.floor((diffMs % 3600000) / 60000); // Số phút
+        const seconds = Math.floor((diffMs % 60000) / 1000); // Số giây
+        return `${hours} giờ ${minutes} phút ${seconds} giây`;
+    };
+
+    // Cập nhật thời gian đã chơi cho các bàn
+    const updateElapsedTimes = () => {
+        const newElapsedTime = {};
+        tables.forEach((table) => {
+            if (table.tableStatus === 'Đang Chơi') {
+                const startTime = getStartTimeForTable(table.id);
+                if (startTime) {
+                    newElapsedTime[table.id] = calculateElapsedTime(startTime);
+                }
+            }
+        });
+        setElapsedTime(newElapsedTime);
+    };
+
+    // Cập nhật thời gian đã chơi mỗi giây
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            updateElapsedTimes();
+        }, 1000); // Cập nhật mỗi giây
+
+        return () => clearInterval(intervalId); // Xóa interval khi component bị unmount
+    }, [tables, invoices]);
+
+
+
+
+    
 
     return (
         <div className="bg-gray-100 min-h-screen flex flex-col">
@@ -233,7 +366,8 @@ const TablePlay = () => {
                                     <td className="py-2 px-4 border text-center">{table.tableNum}</td>
                                     <td className="py-2 px-4 border text-center">{table.tableStatus}</td>
                                     <td className="py-2 px-4 border text-center">
-                                        {types.find(type => type.id === table.type.id)?.name || 'Chưa xác định'}
+                                        {/* {types.find(type => type.id === table.type.id)?.name || 'Chưa xác định'} */}
+                                        {table.type.name}
                                     </td>
                                     <td className="py-2 px-4 border text-center">
                                         {/* <button onClick={() => handleViewTable(table)} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-700">
@@ -268,6 +402,50 @@ const TablePlay = () => {
                             Sau
                         </button>
                     </div>
+
+                    
+                    <div className="mt-4 text-center">
+                        {/* <h3 className="text-xl font-semibold mb-4">Bàn Đang Chơi:</h3> */}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                            {tables
+                                .filter(table => table.tableStatus === "Đang Chơi")
+                                .map((table) => (
+                                    <div key={`${table.id}-${table.tableNum}`}>
+                                        {/* Thời gian hiển thị bên ngoài khung */}
+                                        <p className="text-lg font-bold mb-2 flex items-center justify-center gap-2">
+                                            <FaRegClock className="text-xl" />
+                                                {elapsedTime[table.id] || "Đang tính toán..."}
+                                        </p>
+
+                                        {/* Khung chính của table */}
+                                        <div
+                                            className={`p-6 border rounded-lg shadow-lg cursor-pointer transition duration-300 ease-in-out transform hover:scale-105 ${
+                                                table.tableStatus === "Đang Chơi"
+                                                    ? 'bg-orange-100 border-orange-400'
+                                                    : ''
+                                            }`}
+                                        >
+                                            <div className="text-center">
+                                                <h2 className="text-xl font-bold mb-2">Bàn {table.tableNum}</h2>
+                                                <p className="text-gray-700 mb-1">Trạng thái: {table.tableStatus}</p>
+                                                <p className="text-gray-700 mb-1">Loại: {table.type.name}</p>
+                                                <p className="text-gray-700 font-semibold">
+                                                    Giá loại bàn: {
+                                                        table.type.priceIds && table.type.priceIds.length > 0
+                                                            ? getPriceById(table.type.priceIds[0]) // Lấy giá từ bảng giá
+                                                            : "Chưa có giá"
+                                                    } VND
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                        </div>
+                    </div>
+
+
+                    
                 </main>
             </div>
         </div>

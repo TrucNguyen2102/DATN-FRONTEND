@@ -178,30 +178,12 @@ const StatisticsPage = () => {
       try {
         const formattedDate = selectedDate.toISOString().split('T')[0];
 
-        //         // Số đơn trong 1 ngày
-//         const ordersTodayResponse = await axios.get(`/api/bookings/orders/today?date=${formattedDate}`);
-//         setOrdersToday(ordersTodayResponse.data.count);
-
-//         // Bàn nào được đặt nhiều nhất
-//         const topTableResponse = await axios.get('/api/bookings/booking_table/most-booked-tables');
-//         if (topTableResponse.data && topTableResponse.data.length > 0) {
-//             const topTable = topTableResponse.data[0]; // Lấy phần tử đầu tiên
-//             const tableId = topTable[0]; // Giả sử tableId nằm ở chỉ mục 0
-//             setTopTable(tableId);
-//             console.log("Top:", tableId);
-//         } else {
-//             console.log("Không có bàn nào được đặt nhiều nhất.");
-//         }
-
         //đếm số đơn trong ngày
         const ordersTodayResponse = await axios.get(`/api/bookings/orders/today?date=${formattedDate}`);
         setOrdersToday(ordersTodayResponse.data.count);
 
         //bàn được đặt nhiều nhất
         const topTableResponse = await axios.get('/api/bookings/booking_table/most-booked-tables');
-        // if (topTableResponse.data && topTableResponse.data.length > 0) {
-        //   setTopTable(topTableResponse.data[0][0]);
-        // }
 
         if (topTableResponse.data && topTableResponse.data.length > 0) {
             const topTable = topTableResponse.data[0]; // Lấy phần tử đầu tiên
@@ -251,7 +233,7 @@ const StatisticsPage = () => {
     };
 
     fetchStatistics();
-  }, [selectedDate]);
+  }, [selectedDate, bookingId]);
 
   const handleRefresh = () => {
     window.location.reload();

@@ -25,6 +25,8 @@ const StaffBooking = () => {
 
     const [selectedOldTables, setSelectedOldTables] = useState([]); // Lưu các bàn cũ được chọn
     const [selectedNewTables, setSelectedNewTables] = useState([]); // Lưu các bàn mới được chọn
+
+    const [selectedTableIds, setSelectedTableIds] = useState([]);  // Lưu trạng thái bàn đã chọn
     
 
     const [availableTables, setAvailableTables] = useState([]); // Danh sách bàn trống
@@ -157,24 +159,52 @@ const StaffBooking = () => {
     };
 
         // Hàm gửi yêu cầu cập nhật trạng thái cho các bàn
+    // const updateTablesStatus = async (tableIds, status) => {
+    //     try {
+    //         // // Lặp qua tất cả các tableIds để gửi yêu cầu cập nhật cho từng bàn
+    //         for (let tableId of tableIds) {
+    //             // Gửi yêu cầu PUT cho mỗi bàn với ID và trạng thái mới
+    //             await axios.put('/api/tables/update-status', {
+    //                 tableId: tableId,  // ID của bàn
+    //                 status: status      // Trạng thái mới của bàn
+    //             });
+    //         }
+            
+
+    //     } catch (error) {
+    //         // Nếu có lỗi xảy ra, log ra và thông báo cho người dùng
+    //         console.error('Lỗi cập nhật trạng thái bàn:', error);
+    //         alert('Đã có lỗi xảy ra khi cập nhật trạng thái bàn.');
+    //     }
+    // };
+
+    
+
     const updateTablesStatus = async (tableIds, status) => {
         try {
-            // // Lặp qua tất cả các tableIds để gửi yêu cầu cập nhật cho từng bàn
-            for (let tableId of tableIds) {
+            // // Nếu tableIds không phải là mảng, chuyển nó thành mảng
+            const tableIdsArray = Array.isArray(tableIds) ? tableIds : [tableIds];
+    
+            // Lặp qua tất cả các tableIds để gửi yêu cầu cập nhật cho từng bàn
+            for (let tableId of tableIdsArray) {
                 // Gửi yêu cầu PUT cho mỗi bàn với ID và trạng thái mới
-                await axios.put('/api/tables/update-status', {
+                const response =  await axios.put('/api/tables/update-status', {
                     tableId: tableId,  // ID của bàn
                     status: status      // Trạng thái mới của bàn
                 });
-            }
-            
 
+                 // Log phản hồi từ API để kiểm tra
+                console.log(`Đã cập nhật trạng thái bàn ${tableId} thành "${status}". Phản hồi:`, response.data);
+            
+            }
         } catch (error) {
             // Nếu có lỗi xảy ra, log ra và thông báo cho người dùng
             console.error('Lỗi cập nhật trạng thái bàn:', error);
             alert('Đã có lỗi xảy ra khi cập nhật trạng thái bàn.');
         }
     };
+    
+    
 
     const handleUpdateStatus = async (e) => {
         e.preventDefault();
@@ -240,14 +270,24 @@ const StaffBooking = () => {
             const tableIds = booking.tableIds;
             console.log("Tables:", tableIds);
 
-            // Cập nhật trạng thái bàn
+            // // Cập nhật trạng thái bàn
+            // await updateTablesStatus(tableIds, "Đang Chơi");
+            // Cập nhật trạng thái các bàn
+        // const tableIds = booking.tableIds;
+        if (tableIds && tableIds.length > 0) {
             await updateTablesStatus(tableIds, "Đang Chơi");
+             // Gọi API để tạo mới hóa đơn (invoice)
+             await axios.post(`/api/invoices/create-for-booking/${booking.id}`, tableIds);
+        }
             
 
-            // Gọi API để tạo mới một hóa đơn (invoice)
-            await axios.post('/api/invoices/create', {
-                bookingId: booking.id // Chỉ gửi ID của booking
-            });
+            // // Gọi API để tạo mới một hóa đơn (invoice)
+            // await axios.post('/api/invoices/create', {
+            //     bookingId: booking.id // Chỉ gửi ID của booking
+            // });
+
+           
+
 
             alert('Đã tạo hóa đơn thành công và các trạng thái đã được cập nhật!');
     
@@ -284,6 +324,8 @@ const StaffBooking = () => {
                 return {
                     ...bookingTable,
                     tableNum: table ? table.tableNum : 'Không có thông tin',
+                    tableStatus: table ? table.tableStatus : 'Không rõ',
+                    typeName: table?.type?.name || 'Không rõ',
                     
                 };
             });
@@ -394,50 +436,7 @@ const StaffBooking = () => {
 
     
     
-    //ấn nút Kết Thúc
-
-    const handleRecieved = async (booking) => {
-        // Kiểm tra booking có hợp lệ không
-        if (!booking || !booking.id) {
-            console.error("Booking ID is invalid or undefined.");
-            return;
-        }
     
-        try {
-            // Lấy thời gian hiện tại
-            const currentDateTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
-    
-            // Cập nhật endTime trong hóa đơn bằng bookingId
-            const updateInvoiceResponse = await axios.put(`/api/invoices/update/byBookingId/${booking.id}/endTime`, {
-                endTime: currentDateTime // Thời gian kết thúc cần cập nhật
-            });
-
-            
-    
-            // Kiểm tra phản hồi từ API cập nhật hóa đơn
-            if (updateInvoiceResponse.status === 200) {
-                console.log(`Đã cập nhật thời gian kết thúc cho hóa đơn có booking ID: ${booking.id}`);
-            } else {
-                console.error(`Lỗi khi cập nhật hóa đơn: ${updateInvoiceResponse.statusText}`);
-            }
-    
-            // Cập nhật trạng thái booking (nếu cần)
-            const updateBookingResponse = await axios.put(`/api/bookings/update/${booking.id}/status`, {
-                status: "Chưa Thanh Toán" // Cập nhật trạng thái booking thành "Chưa Thanh Toán"
-            });
-
-            // Kiểm tra phản hồi từ API cập nhật booking
-            if (updateBookingResponse.status === 200) {
-                console.log(`Đã cập nhật trạng thái booking thành "Chưa Thanh Toán" cho booking ID: ${booking.id}`);
-            } else {
-                console.error(`Lỗi khi cập nhật trạng thái booking: ${updateBookingResponse.statusText}`);
-            }
-            fetchBookings();
-    
-        } catch (error) {
-            console.error("Lỗi khi thực hiện cập nhật:", error);
-        }
-    };
 
     const handleCancelTable = (booking) => {
         // Kiểm tra nếu booking có nhiều hơn 1 bàn
@@ -525,6 +524,50 @@ const StaffBooking = () => {
         }
     };
 
+    //ấn nút Kết Thúc ngay lập tức nếu đơn chỉ có 1 bàn
+    const handleRecieved = async (booking) => {
+        // Kiểm tra booking có hợp lệ không
+        if (!booking || !booking.id) {
+            console.error("Booking ID is invalid or undefined.");
+            return;
+        }
+    
+        try {
+            // Lấy thời gian hiện tại
+            const currentDateTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
+    
+            // Cập nhật endTime trong hóa đơn bằng bookingId
+            const updateInvoiceResponse = await axios.put(`/api/invoices/update/byBookingId/${booking.id}/endTime`, {
+                endTime: currentDateTime // Thời gian kết thúc cần cập nhật
+            });
+
+            
+    
+            // Kiểm tra phản hồi từ API cập nhật hóa đơn
+            if (updateInvoiceResponse.status === 200) {
+                console.log(`Đã cập nhật thời gian kết thúc cho hóa đơn có booking ID: ${booking.id}`);
+            } else {
+                console.error(`Lỗi khi cập nhật hóa đơn: ${updateInvoiceResponse.statusText}`);
+            }
+    
+            // Cập nhật trạng thái booking (nếu cần)
+            const updateBookingResponse = await axios.put(`/api/bookings/update/${booking.id}/status`, {
+                status: "Chưa Thanh Toán" // Cập nhật trạng thái booking thành "Chưa Thanh Toán"
+            });
+
+            // Kiểm tra phản hồi từ API cập nhật booking
+            if (updateBookingResponse.status === 200) {
+                console.log(`Đã cập nhật trạng thái booking thành "Chưa Thanh Toán" cho booking ID: ${booking.id}`);
+            } else {
+                console.error(`Lỗi khi cập nhật trạng thái booking: ${updateBookingResponse.statusText}`);
+            }
+            fetchBookings();
+    
+        } catch (error) {
+            console.error("Lỗi khi thực hiện cập nhật:", error);
+        }
+    };
+
     
 
     //hàm xác nhận hiển thị khi ấn kết thúc
@@ -540,6 +583,109 @@ const StaffBooking = () => {
         );
     };
 
+    const SelectTablesModal = ({ booking, onClose, onConfirm, selectedTableIds, setSelectedTableIds }) => {
+        
+        
+        
+
+        // // Hàm xử lý chọn hoặc bỏ chọn bàn
+        // const handleTableSelection = (tableId) => {
+        //     setSelectedTableIds(prev => 
+        //         prev.includes(tableId) ? prev.filter(id => id !== tableId) : [...prev, tableId]
+        //     );
+        // };
+
+        const handleTableSelection = async (tableId) => {
+            try {
+                // Lấy trạng thái của bàn từ bảng TablePlay qua API
+                const response = await axios.get(`/api/tables/${tableId}`);
+                console.log("Response:", response);
+                const tableStatus = response.data.tableStatus;
+        
+                // Nếu bàn có trạng thái "Đang Xử Lý Thanh Toán", hiển thị thông báo lỗi
+                if (tableStatus === "Đang Xử Lý Thanh Toán") {
+                    alert(`Bàn ${tableId} đang xử lý thanh toán. Bạn không thể chọn bàn này.`);
+                    return; // Dừng lại nếu bàn đang xử lý thanh toán
+                }
+        
+                // Nếu không có lỗi, cho phép chọn hoặc bỏ chọn bàn
+                setSelectedTableIds(prev => 
+                    prev.includes(tableId) ? prev.filter(id => id !== tableId) : [...prev, tableId]
+                );
+            } catch (error) {
+                console.error("Lỗi khi lấy trạng thái bàn:", error);
+                alert("Lỗi khi kiểm tra trạng thái bàn.");
+            }
+        };
+        
+
+        const handleConfirmSelection = async () => {
+            if (selectedTableIds.length === 0) {
+                alert("Vui lòng chọn ít nhất một bàn.");
+                return;
+            }
+        
+            // Kiểm tra tất cả các bàn đã chọn
+            for (const tableId of selectedTableIds) {
+                try {
+                    // Lấy trạng thái của bàn từ bảng TablePlay qua API
+                    const response = await axios.get(`/api/tables/${tableId}`);
+                    const tableStatus = response.data.tableStatus;
+        
+                    // Nếu bàn có trạng thái "Đang Xử Lý Thanh Toán", hiển thị thông báo lỗi
+                    if (tableStatus === "Đang Xử Lý Thanh Toán") {
+                        alert(`Bàn ${tableId} đang xử lý thanh toán. Bạn không thể chọn bàn này.`);
+                        return; // Dừng lại nếu có bàn đang xử lý thanh toán
+                    }
+                } catch (error) {
+                    console.error("Lỗi khi kiểm tra trạng thái bàn:", error);
+                    alert("Lỗi khi kiểm tra trạng thái bàn.");
+                    return;
+                }
+            }
+        
+            // Nếu không có bàn nào bị lỗi, gọi hàm onConfirm để xử lý tiếp
+            onConfirm(booking, selectedTableIds); 
+            onClose();  // Đóng modal sau khi xác nhận
+        };
+        
+        
+    
+        return (
+            <div className="mt-6 p-4 border border-gray-300 bg-white">
+                <h3 className="text-2xl mb-4">Chọn Bàn Cần Kết Thúc</h3>
+                <div className="space-y-2">
+                    {booking.tableIds.map(tableId => (
+                        <div key={tableId}>
+                            <input 
+                                type="checkbox" 
+                                id={`table-${tableId}`} 
+                                checked={selectedTableIds.includes(tableId)}  // Đánh dấu bàn đã chọn
+                                onChange={() => handleTableSelection(tableId)} 
+                            />
+                            <label htmlFor={`table-${tableId}`} className="ml-2">Bàn {tableId}</label>
+                        </div>
+                    ))}
+                </div>
+                <div className="mt-4">
+                    <button 
+                        onClick={handleConfirmSelection} 
+                        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700"
+                    >
+                        Xác Nhận
+                    </button>
+                    <button 
+                        onClick={onClose} 
+                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2"
+                    >
+                        Hủy
+                    </button>
+                </div>
+            </div>
+        );
+    };
+    
+
     //hàm chọn tất cả bàn
     const handleConfirmEndAll = async (booking) => {
         await handleRecievedAll(booking);
@@ -549,7 +695,8 @@ const StaffBooking = () => {
     //hàm chọn bàn muốn kết thúc
     const handleConfirmEndPartial = async (booking) => {
         // Hiển thị modal để chọn các bàn muốn kết thúc, rồi gọi handleRecievedPartial
-        await handleRecievedPartial(booking);
+        // await handleRecievedPartial(booking);
+        setSelectedTableIds([]);
         setSelectedBooking(booking);
         setShowPartialModal(true);
     };
@@ -582,31 +729,118 @@ const StaffBooking = () => {
             console.error("Lỗi khi thực hiện cập nhật:", error);
         }
     };
+    
 
-    //chọn bàn muốn kết thúc
+    // Cập nhật thời gian kết thúc cho nhiều hóa đơn liên quan đến các bàn
+    const updateInvoiceEndTime = async (selectedTableIds, bookingId, endTime) => {
+        try {
+            // Giả sử bạn muốn cập nhật cho tất cả các bàn trong selectedTableIds
+            for (const tableId of selectedTableIds) {
+                const response = await axios.put(`/api/invoices/updateEndTimeAndLinkTable/${tableId}`, null, {
+                    params: {
+                        bookingId: bookingId,
+                        endTime: endTime
+                    }
+                });
+                console.log('Hóa đơn đã được cập nhật thời gian kết thúc và liên kết với bàn:', tableId);
+            }
+        } catch (error) {
+            console.error("Lỗi khi cập nhật thời gian kết thúc hóa đơn:", error);
+        }
+    };
+    
+
     const handleRecievedPartial = async (booking, selectedTableIds) => {
         if (!booking || !booking.id) {
             console.error("Booking ID is invalid or undefined.");
+            alert("Booking không hợp lệ.");
+            return;
+        }
+    
+        if (!Array.isArray(selectedTableIds)) {
+            console.error("selectedTableIds phải là một mảng, nhưng nhận được:", selectedTableIds);
+            alert("Danh sách bàn không hợp lệ.");
             return;
         }
     
         try {
-            // Cập nhật trạng thái các bàn được chọn thành "Trống"
-            await updateTablesStatus(selectedTableIds, "Trống");
+            // Lấy thông tin các bàn được chọn
+            const selectedTables = await Promise.all(
+                selectedTableIds.map(async (tableId) => {
+                    const { data } = await axios.get(`/api/tables/${tableId}`);
+                    return data;
+                })
+            );
     
-            // Giữ trạng thái booking là Đã Xác Nhận cho các bàn còn lại
-            const remainingTableIds = booking.tableIds.filter(id => !selectedTableIds.includes(id));
-            await updateTablesStatus(remainingTableIds, "Đã Đặt");
+            console.log("Dữ liệu bàn được chọn:", selectedTables);
     
-            // Kiểm tra xem có cần cập nhật lại booking không
-            await axios.put(`/api/bookings/update/${booking.id}/status`, { status: "Đã Xác Nhận" });
+            // Cập nhật trạng thái của các bàn
+            await Promise.all(
+                selectedTables.map(async (table) => {
+                    if (table.tableStatus !== "Đang Xử Lý Thanh Toán") {
+                        console.log(`Cập nhật trạng thái bàn ${table.id} thành "Đang Xử Lý Thanh Toán".`);
+                        await updateTableStatus(table.id, "Đang Xử Lý Thanh Toán");
+                    }
+                })
+            );
     
-            alert('Đã hủy các bàn đã chọn thành công.');
-            fetchBookings();
+            // Lấy lại thông tin các bàn sau khi cập nhật
+            const updatedTables = await Promise.all(
+                selectedTableIds.map(async (tableId) => {
+                    const { data } = await axios.get(`/api/tables/${tableId}`);
+                    return data;
+                })
+            );
+    
+            // Kiểm tra nếu tất cả các bàn đã đang xử lý thanh toán
+            const allTablesProcessed = updatedTables.every(
+                (table) => table.tableStatus === "Đang Xử Lý Thanh Toán"
+            );
+            console.log("Tất cả các bàn trong booking đều 'Đang Xử Lý Thanh Toán'? ", allTablesProcessed);
+    
+            // Cập nhật thời gian kết thúc hóa đơn
+            const endTime = format(new Date(), "yyyy-MM-dd HH:mm:ss");
+            console.log("Cập nhật thời gian kết thúc hóa đơn:", endTime);
+            await updateInvoiceEndTime(selectedTableIds, booking.id, endTime);
+    
+            // Cập nhật trạng thái booking dựa trên trạng thái các bàn
+            const bookingStatus = allTablesProcessed ? "Chưa Thanh Toán" : "Đã Nhận Bàn";
+            console.log("Trạng thái booking sẽ được cập nhật thành:", bookingStatus);
+    
+            // Gửi yêu cầu cập nhật trạng thái booking
+            const { data: currentBooking } = await axios.get(`/api/bookings/${booking.id}`);
+            if (currentBooking.status !== bookingStatus) {
+                await axios.put(`/api/bookings/booking_table/update/${booking.id}/status/paymentProcessing`, {
+                    status: bookingStatus,
+                });
+                console.log("Trạng thái booking đã được cập nhật thành công.");
+            } else {
+                console.log("Trạng thái booking không thay đổi.");
+            }
+    
+            alert("Đã cập nhật thành công.");
+            fetchBookings(); // Lấy lại danh sách booking
         } catch (error) {
-            console.error("Lỗi khi xử lý hủy một số bàn:", error);
+            console.error("Lỗi khi xử lý cập nhật bàn:", error);
+            alert("Có lỗi xảy ra khi cập nhật trạng thái bàn. Vui lòng thử lại.");
         }
     };
+    
+    
+    
+    
+    // Hàm cập nhật trạng thái bàn
+    const updateTableStatus = async (tableId, status) => {
+        try {
+            const response = await axios.put(`/api/tables/${tableId}/status`, { tableStatus: status });
+            console.log(`Trạng thái bàn ${tableId} đã được cập nhật thành công: ${status}`);
+        } catch (error) {
+            console.error(`Lỗi khi cập nhật trạng thái bàn ${tableId}:`, error);
+        }
+    };
+    
+    
+    
 
     
     
@@ -872,7 +1106,7 @@ const StaffBooking = () => {
                                                         Kết Thúc
                                                     </button> */}
                                                     <button
-                                                        onClick={() => handleEndClick(booking)}  // Gọi hàm handleEndClick thay vì handleRecieved
+                                                        onClick={() => handleEndClick(booking)}  // Gọi hàm handleEndClick
                                                         className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700"
                                                     >
                                                         Kết Thúc
@@ -975,7 +1209,7 @@ const StaffBooking = () => {
                                                     checked={selectedOldTables.includes(table.id)}
                                                     onChange={() => handleOldTableSelect(table.id)} // Chọn bàn cũ
                                                 />
-                                                Bàn {table.tableNum || "Không"}
+                                                Bàn {table.tableNum || "Không"} - {table.tableStatus} - {table.typeName}
                                             </label>
                                         </div>
                                     ))}
@@ -1013,15 +1247,34 @@ const StaffBooking = () => {
                     )}
 
 
-                
+                    {/* mở form để chọn xác nhận kết thúc */}
                     {isChangeModalOpen && (
                             <ConfirmEndModal
                                 booking={selectedBooking}
                                 onClose={() => setIsChangeModalOpen(false)}
-                                onEndAll={handleConfirmEndAll}
-                                onEndPartial={handleConfirmEndPartial}
+                                onEndAll={handleConfirmEndAll} //kết thúc tất cả
+                                onEndPartial={handleConfirmEndPartial} //kết thúc bàn mu
                             />
                     )}
+
+                    {/* {showPartialModal  && (
+                        <SelectTablesModal
+                            booking={selectedBooking}
+                            onClose={() => setShowPartialModal(false)}  // Đóng modal khi người dùng hủy
+                            oonConfirm={handleRecievedPartial}
+                        />
+                    )} */}
+
+                {showPartialModal && (
+                    <SelectTablesModal
+                        booking={selectedBooking}
+                        onClose={() => setShowPartialModal(false)}  // Đóng modal khi người dùng hủy
+                        onConfirm={handleRecievedPartial}  // Khi xác nhận
+                        selectedTableIds={selectedTableIds}  // Truyền danh sách bàn đã chọn vào modal
+                        setSelectedTableIds={setSelectedTableIds}  // Truyền hàm cập nhật bàn đã chọn
+                    />
+                )}
+
                 </main>
             </div>
         </div>

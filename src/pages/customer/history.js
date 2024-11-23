@@ -237,7 +237,7 @@ const CustomerHistoryTable = () => {
 
                                                 <td className="py-2 px-4 border-b border-r text-center">
                                                     <button
-                                                        onClick={() => handleViewInvoice(booking.id)}
+                                                        onClick={() => handleViewInvoice(booking.id, booking.tableIds)}
                                                         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
                                                     >
                                                         Xem Hóa Đơn
@@ -280,6 +280,9 @@ const CustomerHistoryTable = () => {
                             <p><strong>Ngày Lập Hóa Đơn:</strong> {new Date(selectedInvoice.billDate).toLocaleString()}</p>
                             <p><strong>Tổng Tiền:</strong> {formatCurrency(selectedInvoice.totalMoney)} VND</p>
                             <p><strong>Trạng Thái Thanh Toán:</strong> {selectedInvoice.status}</p>
+
+                             
+                            <p><strong>Bàn Đã Đặt:</strong> {selectedInvoice.tableId}</p>
                             
                             <div className="mt-4">
                                 <button

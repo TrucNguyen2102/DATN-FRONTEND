@@ -12,8 +12,9 @@ const StaffInvoices = () => {
     const [invoices, setInvoices] = useState([]);
     const [bookingTables, setBookingTables] = useState([]); 
     const [selectedBooking, setSelectedBooking] = useState(null);
+    const [invoice, setInvoice] = useState(null);
     const [formValues, setFormValues] = useState({
-       
+        
         startTime: '',
         endTime: '',
         totalMoney: 0,
@@ -31,9 +32,19 @@ const StaffInvoices = () => {
     const [currentPage, setCurrentPage] = useState({ 'Chưa Thanh Toán': 1, 'Chờ Thanh Toán': 1, 'Đã Thanh Toán': 1 });
     const itemsPerPage = 8;
 
+    // const formatCurrency = (value) => {
+    //     // return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    //     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    // };
+
     const formatCurrency = (value) => {
+        if (value == null || isNaN(value)) {
+            console.error("formatCurrency nhận giá trị không hợp lệ:", value);
+            return "0"; // Trả về giá trị mặc định nếu không hợp lệ
+        }
         return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     };
+    
 
     
     
@@ -46,6 +57,7 @@ const StaffInvoices = () => {
         try {
             const response = await axios.get('/api/invoices/all');
             const invoicesData = response.data;
+            console.log("Invoices Data:", invoicesData);
             setInvoices(invoicesData);
         } catch (error) {
             setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
@@ -63,92 +75,227 @@ const StaffInvoices = () => {
     };
 
     
-    const handleSelectBooking = async (booking) => {
-        // Kiểm tra trạng thái booking trước khi tiếp tục xử lý
-        // if (booking.status !== "Chưa Thanh Toán") {
-        //     // Hiển thị thông báo lỗi nếu trạng thái booking chưa kết thúc
-        //     alert("Đơn đặt bàn chưa được kết thúc. Vui lòng kết thúc đơn trước khi tạo hóa đơn.");
-        //     return; // Dừng không cho phép xử lý tiếp
-        // }
-
-        setSelectedBooking(booking);
+    // const handleSelectBooking = async (booking) => {
     
+    //     setSelectedBooking(booking);
+    
+    //     try {
+    //         // Lấy danh sách các bàn liên quan đến booking
+    //         const tablesResponse = await axios.get(`/api/bookings/booking_table/${booking.bookingId}`);
+    //         const tables = tablesResponse.data;
+    
+    //         const tableIdsList = tables.map(table => table.id.tableId);
+    //         setTableIds(tableIdsList);
+    
+    //         if (tableIdsList.length > 0) {
+    //             const tableDetailsPromises = tableIdsList.map(async (tableId) => {
+    //                 try {
+                        
+    //                     const response = await axios.get(`/api/tables/with-type-price/${tableId}`);
+    //                     return response.data;
+    //                 } catch (error) {
+    //                     console.error(`Lỗi khi lấy dữ liệu bàn ID ${tableId}:`, error);
+    //                     return null;
+    //                 }
+    //             });
+    
+    //             const tableDetails = await Promise.all(tableDetailsPromises);
+    //             const validTableDetails = tableDetails.filter(detail => detail !== null);
+    
+    //             if (validTableDetails.length > 0) {
+    //                 const types = validTableDetails.map(detail => detail.typeName);
+    //                 const prices = validTableDetails.map(detail => detail.price);
+    
+    //                 setTableType(types.join(', '));
+    //                 setTablePrice(prices); 
+    
+    //                 const startTime = new Date(booking.startTime);
+    //                 console.log('Start Time:', startTime);
+
+    //                 const endTime = new Date(booking.endTime);
+    //                 console.log('End Time:', endTime);
+
+    //                 const timeDiffMilliseconds = endTime - startTime;
+
+    //                 console.log("Time Diff:", timeDiffMilliseconds);
+                    
+    //                 // Tính toán giờ và phút
+    //                 const hours = Math.floor(timeDiffMilliseconds / 3600000); //tính số giờ
+    //                 console.log('Hours:', hours);
+                    
+    //                 const minutes = Math.floor((timeDiffMilliseconds % 3600000) / 60000); //tính số phút
+    //                 console.log('Minutes:', minutes);
+    
+    //                 // Tính tổng tiền
+    //                 const totalMoney = Math.round(validTableDetails.reduce((total, detail) => {
+    //                     const pricePerHour = detail.price; 
+    //                     return total + (hours * pricePerHour) + ((pricePerHour / 60) * minutes); 
+    //                 }, 0));
+
+    //                 console.log("Total Money:", totalMoney);
+
+    //                 // Tính tổng giá loại bàn
+    //                 const totalTablePrice = validTableDetails.reduce((total, detail) => total + detail.price, 0);
+    
+    //                 setFormValues({
+    //                     bookingId: booking.bookingId,
+    //                     startTime: format(startTime, 'dd/MM/yyyy HH:mm:ss'),
+    //                     endTime: format(endTime, 'dd/MM/yyyy HH:mm:ss'),
+    //                     totalMoney,
+    //                     totalTablePrice,
+    //                     totalTime: `${hours} giờ ${minutes} phút`, // Thêm tổng thời gian vào state
+    //                 });
+    //             } else {
+    //                 setTableType('Không xác định');
+    //                 setTablePrice(0);
+    //             }
+    //         }
+    
+    //         setShowForm(true);
+    //     } catch (error) {
+    //         setError('Có lỗi xảy ra khi lấy dữ liệu chi tiết bàn.');
+    //         console.error('Chi tiết lỗi:', error);
+    //     }
+    // };
+
+
+    // const handleSelectBooking = async (invoice) => {
+    //     try {
+
+    //         setSelectedBooking(invoice);
+
+    //         // Lấy thông tin hóa đơn từ API
+    //         const invoiceResponse = await axios.get(`/api/invoices/${invoice.id}`);
+    //         const invoiceData = invoiceResponse.data;
+
+    //          // In ra toàn bộ invoiceData để kiểm tra cấu trúc
+    //         console.log('Dữ liệu hóa đơn:', invoiceData);
+
+    //         // Kiểm tra tableId của invoiceData
+    //         if (!invoiceData.tableId) {
+    //             console.error('Không có tableId trong hóa đơn');
+    //             return;
+    //         }
+    
+    //         // Lấy thông tin bàn từ API bằng tableId trong hóa đơn
+    //         const tableResponse = await axios.get(`/api/tables/with-type-price/${invoiceData.tableId}`);
+    //         const tableData = tableResponse.data;
+
+    //         console.log("Table Data:", tableData);
+    
+    //         // Tính toán tổng tiền dựa trên thông tin bàn và thời gian
+    //         const startTime = new Date(invoiceData.startTime);
+    //         console.log("StartTime:", startTime);
+    //         const endTime = new Date(invoiceData.endTime);
+    //         console.log("EndTime:", endTime);
+
+    //         // Kiểm tra nếu startTime và endTime là giá trị hợp lệ
+    //         if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+    //             console.error('Thời gian không hợp lệ');
+    //             return;
+    //         }
+
+    //         const timeDiffMilliseconds = endTime - startTime;
+    
+    //         const hours = Math.floor(timeDiffMilliseconds / 3600000);
+    //         const minutes = Math.floor((timeDiffMilliseconds % 3600000) / 60000);
+    
+    //         const totalMoney = Math.round(tableData.price * hours + (tableData.price / 60) * minutes);
+    
+    //         setSelectedBooking({
+    //             bookingId: invoiceData.bookingId,
+    //             tableId: tableData.id,
+    //             tableName: tableData.name || "N/A", // assuming tableData has name
+    //             tableType: tableData.typeName || "N/A", // assuming tableData has type
+    //             tablePrice: tableData.price || 0, // assuming tableData has price
+    //         });
+
+    //         // Cập nhật form với các giá trị cần thiết
+    //         setFormValues({
+    //             invoiceId: invoice.id,
+    //             tableId: tableData.id,
+    //             tableType: tableData.tableType, // Lấy loại bàn từ dữ liệu trả về
+    //             startTime: format(startTime, 'yyyy/MM/dd HH:mm:ss'),
+    //             endTime: format(endTime, 'yyyy/MM/dd HH:mm:ss'),
+    //             totalMoney,
+    //             totalTime: `${hours} giờ ${minutes} phút`,
+    //             status: invoiceData.status,
+    //         });
+    
+    //         // Hiển thị form chi tiết hóa đơn
+    //         setShowForm(true);
+    //     } catch (error) {
+    //         console.error('Có lỗi xảy ra khi lấy thông tin:', error);
+    //     }
+    // };
+
+    const handleSelectBooking = async (invoice) => {
         try {
-            const tablesResponse = await axios.get(`/api/bookings/booking_table/${booking.bookingId}`);
-            const tables = tablesResponse.data;
-    
-            const tableIdsList = tables.map(table => table.id.tableId);
-            setTableIds(tableIdsList);
-    
-            if (tableIdsList.length > 0) {
-                const tableDetailsPromises = tableIdsList.map(async (tableId) => {
-                    try {
-                        const response = await axios.get(`/api/tables/with-type-price/${tableId}`);
-                        return response.data;
-                    } catch (error) {
-                        console.error(`Lỗi khi lấy dữ liệu bàn ID ${tableId}:`, error);
-                        return null;
-                    }
-                });
-    
-                const tableDetails = await Promise.all(tableDetailsPromises);
-                const validTableDetails = tableDetails.filter(detail => detail !== null);
-    
-                if (validTableDetails.length > 0) {
-                    const types = validTableDetails.map(detail => detail.typeName);
-                    const prices = validTableDetails.map(detail => detail.price);
-    
-                    setTableType(types.join(', '));
-                    setTablePrice(prices); 
-    
-                    const startTime = new Date(booking.startTime);
-                    console.log('Start Time:', startTime);
+            // Lấy thông tin hóa đơn từ API
+            const invoiceResponse = await axios.get(`/api/invoices/${invoice.id}`);
+            const invoiceData = invoiceResponse.data;
 
-                    const endTime = new Date(booking.endTime);
-                    console.log('End Time:', endTime);
+            console.log('Dữ liệu hóa đơn:', invoiceData);
 
-                    const timeDiffMilliseconds = endTime - startTime;
+                // Lấy thông tin bàn từ API bằng tableId trong hóa đơn
+                const tableResponse = await axios.get(`/api/tables/with-type-price/${invoiceData.tableId}`);
+                const tableData = tableResponse.data;
 
-                    console.log("Time Diff:", timeDiffMilliseconds);
-                    
-                    // Tính toán giờ và phút
-                    const hours = Math.floor(timeDiffMilliseconds / 3600000); //tính số giờ
-                    console.log('Hours:', hours);
-                    
-                    const minutes = Math.floor((timeDiffMilliseconds % 3600000) / 60000); //tính số phút
-                    console.log('Minutes:', minutes);
-    
-                    // Tính tổng tiền
-                    const totalMoney = Math.round(validTableDetails.reduce((total, detail) => {
-                        const pricePerHour = detail.price; 
-                        return total + (hours * pricePerHour) + ((pricePerHour / 60) * minutes); 
-                    }, 0));
+                console.log("Table Data:", tableData);
 
-                    console.log("Total Money:", totalMoney);
-
-                    // Tính tổng giá loại bàn
-                    const totalTablePrice = validTableDetails.reduce((total, detail) => total + detail.price, 0);
-    
-                    setFormValues({
-                        bookingId: booking.bookingId,
-                        startTime: format(startTime, 'dd/MM/yyyy HH:mm:ss'),
-                        endTime: format(endTime, 'dd/MM/yyyy HH:mm:ss'),
-                        totalMoney,
-                        totalTablePrice,
-                        totalTime: `${hours} giờ ${minutes} phút`, // Thêm tổng thời gian vào state
-                    });
-                } else {
-                    setTableType('Không xác định');
-                    setTablePrice(0);
+                // Kiểm tra nếu bàn không phải là "Đang Xử Lý Thanh Toán" thì hiển thị thông báo
+                if (tableData.tableStatus !== 'Đang Xử Lý Thanh Toán') {
+                    alert(`Bàn số ${tableData.tableNum} chưa kết thúc, không thể tạo hóa đơn.`);
+                    return;  // Dừng hàm nếu bàn không phải trạng thái "Đang Xử Lý Thanh Toán"
                 }
-            }
-    
+
+                            // Tính toán tổng tiền dựa trên thông tin bàn và thời gian
+                const startTime = new Date(invoiceData.startTime);
+                console.log("StartTime:", startTime);
+                const endTime = new Date(invoiceData.endTime);
+                console.log("EndTime:", endTime);
+
+                            const timeDiffMilliseconds = endTime - startTime;
+                            console.log("Time Diff:", timeDiffMilliseconds);
+        
+                const hours = Math.floor(timeDiffMilliseconds / 3600000);
+
+                console.log("Hour:", hours);
+                const minutes = Math.floor((timeDiffMilliseconds % 3600000) / 60000);
+
+                console.log("Minute:", minutes);
+        
+                const totalMoney = Math.round(tableData.price * hours + (tableData.price / 60) * minutes);
+
+            // Gán dữ liệu hóa đơn vào state
+            setInvoice({
+                id: invoiceData.id,
+                bookingId: invoiceData.bookingId,
+                tableId: invoiceData.tableId,
+                tableType: tableData.typeName || "Không có loại",
+                tablePrice: tableData.price || 0,
+                startTime: invoiceData.startTime ? format(new Date(invoiceData.startTime), 'yyyy/MM/dd HH:mm:ss') : "Chưa có",
+                endTime: invoiceData.endTime ? format(new Date(invoiceData.endTime), 'yyyy/MM/dd HH:mm:ss') : "Chưa có",
+                // totalMoney: invoiceData.totalMoney || 0,
+                totalMoney: totalMoney,
+                totalTime: `${hours} giờ ${minutes} phút`,
+                
+            });
+
+            // Cập nhật selectedBooking
+            setSelectedBooking({
+                bookingId: invoiceData.bookingId,
+                tableId: invoiceData.tableId,
+            });
+
             setShowForm(true);
         } catch (error) {
-            setError('Có lỗi xảy ra khi lấy dữ liệu chi tiết bàn.');
-            console.error('Chi tiết lỗi:', error);
+            console.error('Có lỗi xảy ra khi lấy thông tin:', error);
         }
     };
+
+    
+    
 
 
     const handleUpdateInvoice = async () => {
@@ -158,8 +305,15 @@ const StaffInvoices = () => {
                 alert('Vui lòng chọn một đơn đặt.');
                 return;
             }
+
+             // Kiểm tra nếu `bookingId` không tồn tại trong `selectedBooking`
+        if (!selectedBooking.bookingId) {
+            alert('Vui lòng chọn một đơn đặt có thông tin hợp lệ.');
+            console.error("Lỗi: bookingId không tồn tại trong selectedBooking.");
+            return;
+        }
     
-            if (!formValues.totalMoney) {
+            if (!invoice.totalMoney) {
                 alert('Vui lòng nhập tổng tiền.');
                 return;
             }
@@ -178,11 +332,11 @@ const StaffInvoices = () => {
             const updatedInvoice = {
                 bookingId: selectedBooking.bookingId,
                 billDate: billDate, 
-                totalMoney: formValues.totalMoney,  
+                totalMoney: invoice.totalMoney,  
                 status: 'Chờ Thanh Toán',  
             };
     
-            const response = await axios.put(`/api/invoices/update/bill-totalMoney/${selectedBooking.bookingId}`, updatedInvoice);
+            const response = await axios.put(`/api/invoices/update/bill-totalMoney/${selectedBooking.tableId}`, updatedInvoice);
     
             if (response.status === 200) {
                 alert('Hóa đơn đã được cập nhật thành công!');
@@ -230,51 +384,71 @@ const StaffInvoices = () => {
         }
     };
 
+    // Hàm cập nhật trạng thái bàn đc chọn (1 bàn)
+    const updateTableStatus = async (tableId, status) => {
+        if (!tableId) {
+            console.error('Không có ID bàn để cập nhật trạng thái.');
+            return;
+        }
+    
+        try {
+            // Cập nhật trạng thái của bàn
+            const response = await axios.put(`/api/tables/${tableId}/status`, { tableStatus: status });
+            if (response.status === 200) {
+                console.log(`Trạng thái bàn ID ${tableId} đã được cập nhật thành: ${status}`);
+            } else {
+                console.error('Cập nhật trạng thái bàn thất bại:', response.data);
+            }
+        } catch (error) {
+            console.error('Lỗi khi cập nhật trạng thái bàn:', error);
+        }
+    };
 
     const handleConfirmInvoice = async () => {
-        if (!setSelectedInvoice) {
+        if (!selectedInvoice) {
             alert('Vui lòng chọn một đơn đặt.');
             return;
         }
-
+    
         try {
+            // Gửi yêu cầu cập nhật trạng thái Booking
+            const bookingId = selectedInvoice.bookingId;
+            console.log("Booking ID:", bookingId);
 
-            console.log(selectedInvoice.bookingId); // Kiểm tra giá trị của bookingId
-
-            // Cập nhật trạng thái đơn đặt bàn
-        const updateBookingResponse =  await axios.put(`/api/bookings/update/${selectedInvoice.bookingId}/status`, {
-            status: "Đã Thanh Toán" // Cập nhật trạng thái đơn đặt thành "Đã Thanh Toán"
-        });
-
-        if (updateBookingResponse .status === 200 || updateBookingResponse.status === 201) {
-            
-            
-            // Cập nhật trạng thái của tất cả các bàn thành "Trống"
-            await updateTablesStatus(tableIds, "Trống");
-        }
-
-            // Update invoice status to "Đã Thanh Toán"
+            // Cập nhật trạng thái của hóa đơn thành "Đã Thanh Toán"
             const updatedInvoice = {
                 ...selectedBooking,
                 status: 'Đã Thanh Toán',
             };
-
+    
+            // Gửi yêu cầu cập nhật trạng thái hóa đơn
             await axios.put(`/api/invoices/update/${selectedInvoice.id}`, updatedInvoice);
 
-
-        
-
+            // Cập nhật trạng thái bàn
+            const tableId = selectedInvoice.tableId; // Lấy tableId từ hóa đơn
+            console.log("Updating table with ID:", tableId);
+            // await axios.put(`/api/tables/update-status/${tableId}`, null, {
+            //     params: { newStatus: "Trống" }, // Truyền trạng thái mới qua query
+            // });
+            await axios.put(`/api/tables/${tableId}/status`, {
+                tableStatus: "Trống" // Trạng thái mới
+            });
+    
+            // Cập nhật trạng thái đơn đặt bàn và bàn liên quan
+            const response = await axios.put(`/api/bookings/booking_table/update/${bookingId}/status`);
+            console.log("Booking update response:", response);
+    
             
-            // Alert success and refresh invoices
-            alert('Hóa đơn đã được cập nhật thành công và trạng thái bàn đã được cập nhật!');
-
-            // Export to Excel
+            // Thông báo thành công và thực hiện xuất hóa đơn
+            alert('Hóa đơn đã được cập nhật thành công và trạng thái của bàn và booking đã được cập nhật!');
+            
+            // Xuất ra Excel (nếu có)
             handleExportToExcel([updatedInvoice]);
-
-            // Refresh invoice list
+    
+            // Tải lại danh sách hóa đơn
             fetchInvoices();
-
-            // Close confirmation dialog
+    
+            // Đóng hộp thoại xác nhận
             setShowForm(false);
             setSelectedBooking(null);
         } catch (error) {
@@ -282,6 +456,7 @@ const StaffInvoices = () => {
             alert('Có lỗi xảy ra khi cập nhật hóa đơn. Vui lòng thử lại.');
         }
     };
+
 
     const handleExportToExcel = () => {
         // Lọc hóa đơn theo trạng thái "Chờ Thanh Toán"
@@ -354,7 +529,7 @@ const StaffInvoices = () => {
             <div className="flex flex-1">
                 <StaffSidebar className="w-1/4 bg-gray-200 p-4" />
                 <main className="flex-1 p-6">
-                    <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Đơn Đặt</h1>
+                    <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Hóa Đơn</h1>
                     {error && <p className="text-red-500 text-center">{error}</p>}
                     
                     <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mb-4">
@@ -380,6 +555,7 @@ const StaffInvoices = () => {
                                             <th className="border px-4 py-2 text-center">Tổng Tiền</th>
                                             <th className="border px-4 py-2 text-center">Trạng Thái</th>
                                             <th className="border px-4 py-2 text-center">Mã Đơn Đặt</th>
+                                            <th className="border px-4 py-2 text-center">Bàn</th>
                                             <th className="border px-4 py-2 text-center">Hành Động</th>
                                         </tr>
                                     </thead>
@@ -392,11 +568,12 @@ const StaffInvoices = () => {
                                                 <td className="border px-4 py-2 text-center">{format(new Date(invoice.endTime), 'dd/MM/yyyy HH:mm:ss')}</td>
                                                 <td className="border px-4 py-2 text-center">{format(new Date(invoice.billDate), 'dd/MM/yyyy HH:mm:ss')}</td> */}
                                                  <td className="border px-4 py-2 text-center">{formatDate(invoice.startTime)}</td>
-                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.endTime)}</td>
-                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.billDate)}</td>
+                                                <td className="border px-4 py-2 text-center">{invoice.endTime ? formatDate(invoice.endTime) : 'Chưa Có'}</td>
+                                                <td className="border px-4 py-2 text-center">{invoice.billDate ? formatDate(invoice.billDate): 'Chưa Có'}</td>
                                                 <td className="border px-4 py-2 text-center">{formatCurrency(invoice.totalMoney)} VND</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.status}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.bookingId}</td>
+                                                <td className="border px-4 py-2 text-center">{invoice.tableId || 'Không có dữ liệu'}</td>
                                                 <td className="border px-4 py-2 text-center">
                                                     <button onClick={() => handleSelectBooking(invoice)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">
                                                         Tạo Hóa Đơn
@@ -439,6 +616,7 @@ const StaffInvoices = () => {
                                             <th className="border px-4 py-2 text-center">Tổng Tiền</th>
                                             <th className="border px-4 py-2 text-center">Trạng Thái</th>
                                             <th className="border px-4 py-2 text-center">Mã Đơn Đặt</th>
+                                            <th className="border px-4 py-2 text-center">Bàn</th>
                                             <th className="border px-4 py-2 text-center">Hành Động</th>
                                         </tr>
                                     </thead>
@@ -453,6 +631,7 @@ const StaffInvoices = () => {
                                                 <td className="border px-4 py-2 text-center">{formatCurrency(invoice.totalMoney)} VND</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.status}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.bookingId}</td>
+                                                <td className="border px-4 py-2 text-center">{invoice.tableId || 'Không có dữ liệu'}</td>
                                                 <td className="border px-4 py-2 text-center">
                                                     <button onClick={() => handlePrintClick(invoice)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">
                                                         In Hóa Đơn
@@ -493,6 +672,7 @@ const StaffInvoices = () => {
                                             <th className="border px-4 py-2 text-center">Tổng Tiền</th>
                                             <th className="border px-4 py-2 text-center">Trạng Thái</th>
                                             <th className="border px-4 py-2 text-center">Mã Đơn Đặt</th>
+                                            <th className="border px-4 py-2 text-center">Bàn</th>
                                            
                                         </tr>
                                     </thead>
@@ -507,6 +687,7 @@ const StaffInvoices = () => {
                                                 <td className="border px-4 py-2 text-center">{formatCurrency(invoice.totalMoney)} VND</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.status}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.bookingId}</td>
+                                                <td className="border px-4 py-2 text-center">{invoice.tableId || 'Không có dữ liệu'}</td>
                                                 
                                             </tr>
                                         ))}
@@ -535,7 +716,7 @@ const StaffInvoices = () => {
                     </Tabs>
 
                     
-                    {showForm && selectedBooking && (
+                    {/* {showForm && selectedBooking && (
                         <div className="bg-white p-6 mt-4 rounded shadow">
                             <h2 className="text-2xl font-semibold mb-4">Thông Tin Chi Tiết</h2>
                             <div className="grid grid-cols-2 gap-4">
@@ -576,7 +757,157 @@ const StaffInvoices = () => {
                             </button>
                             
                         </div>
-                    )}
+                    )} */}
+
+                    {/* {showForm && selectedBooking && (
+                        <div className="bg-white p-6 mt-4 rounded shadow">
+                            <h2 className="text-2xl font-semibold mb-4">Thông Tin Chi Tiết</h2>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block mb-2">Mã Đơn Đặt:</label>
+                                    <input type="text" value={selectedBooking.bookingId} readOnly className="border border-gray-300 rounded p-2 w-full" />
+                                    
+                                    <label className="block mb-2">Bàn Được Chọn:</label>
+                                    
+                                    <input type="text" value={selectedBooking.tableId || "Không có dữ liệu"} readOnly className="border border-gray-300 rounded p-2 w-full" />
+                                    
+                                    <label className="block mb-2">Loại Bàn:</label>
+                                    <input type="text" value={selectedBooking.tableType} readOnly className="border border-gray-300 rounded p-2 w-full" />
+                                    
+                                    <label className="block mb-2">Giá Loại Bàn:</label>
+                                    <input type="text" value={`${formatCurrency(selectedBooking.tablePrice)} VND`} readOnly className="border border-gray-300 rounded p-2 w-full" />
+                                    
+                                    
+                                </div>
+
+                                <div>
+                                    <label className="block mb-2">Mã Hóa Đơn:</label>
+                                    <input type="text" value={formValues.invoiceId} readOnly className="border border-gray-300 rounded p-2 w-full" />
+
+                                    <label className="block mb-2">Thời Gian Bắt Đầu:</label>
+                                    <input type="text" value={formValues.startTime} readOnly className="border border-gray-300 rounded p-2 w-full" />
+                                    
+                                    <label className="block mb-2">Thời Gian Kết Thúc:</label>
+                                    <input type="text" value={formValues.endTime ? formValues.endTime : 'Chưa Có'} readOnly className="border border-gray-300 rounded p-2 w-full" />
+                                    
+                                    <label className="block mb-2">Tổng Thời Gian:</label>
+                                    <input type="text" value={formValues.totalTime} readOnly className="border border-gray-300 rounded p-2 w-full" />
+                                    
+                                    <label className="block mb-2">Tổng Tiền:</label>
+                                    <input type="text" value={`${formatCurrency(formValues.totalMoney)} VND`} readOnly className="border border-gray-300 rounded p-2 w-full" />
+                                </div>
+                            </div>
+
+                            <button onClick={handleUpdateInvoice} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                Lưu
+                            </button>
+
+                            <button onClick={handleCloseForm} className="mt-4 ml-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">
+                                Hủy
+                            </button>
+                        </div>
+                    )} */}
+
+{showForm && invoice && (
+    <div className="bg-white p-6 mt-4 rounded shadow">
+        <h2 className="text-2xl font-semibold mb-4">Thông Tin Chi Tiết</h2>
+        <div className="grid grid-cols-2 gap-4">
+            <div>
+                <label className="block mb-2 font-bold">Mã Đơn Đặt:</label>
+                <input
+                    type="text"
+                    value={invoice.bookingId || "Không có dữ liệu"}
+                    readOnly
+                    className="border border-gray-300 rounded p-2 w-full"
+                />
+
+                <label className="block mb-2 font-bold">Bàn Được Chọn:</label>
+                <input
+                    type="text"
+                    value={invoice.tableId || "Không có dữ liệu"}
+                    readOnly
+                    className="border border-gray-300 rounded p-2 w-full"
+                />
+
+                <label className="block mb-2 font-bold">Loại Bàn:</label>
+                <input
+                    type="text"
+                    value={invoice.tableType || "Không có dữ liệu"}
+                    readOnly
+                    className="border border-gray-300 rounded p-2 w-full"
+                />
+
+                <label className="block mb-2 font-bold">Giá Loại Bàn:</label>
+                <input
+                    type="text"
+                    value={`${formatCurrency(invoice.tablePrice || 0)} VND`}
+                    readOnly
+                    className="border border-gray-300 rounded p-2 w-full"
+                />
+            </div>
+
+            <div>
+                <label className="block mb-2 font-bold">Mã Hóa Đơn:</label>
+                <input
+                    type="text"
+                    value={invoice.id || "Không có dữ liệu"}
+                    readOnly
+                    className="border border-gray-300 rounded p-2 w-full"
+                />
+
+                <label className="block mb-2 font-bold">Thời Gian Bắt Đầu:</label>
+                <input
+                    type="text"
+                    value={invoice.startTime || "Chưa có"}
+                    readOnly
+                    className="border border-gray-300 rounded p-2 w-full"
+                />
+
+                <label className="block mb-2 font-bold">Thời Gian Kết Thúc:</label>
+                <input
+                    type="text"
+                    value={invoice.endTime || "Chưa có"}
+                    readOnly
+                    className="border border-gray-300 rounded p-2 w-full"
+                />
+
+                <label className="block mb-2 font-bold">Ngày Lập Hóa Đơn:</label>
+                <input
+                    type="text"
+                    value={invoice.billDate || "Chưa có"}
+                    readOnly
+                    className="border border-gray-300 rounded p-2 w-full"
+                />
+
+                <label className="block mb-2 font-bold">Tổng Thời Gian:</label>
+                <input
+                    type="text"
+                    value={invoice.totalTime || "Không có dữ liệu"}
+                    readOnly
+                    className="border border-gray-300 rounded p-2 w-full"
+                />
+
+                <label className="block mb-2 font-bold">Tổng Tiền:</label>
+                <input
+                    type="text"
+                    value={`${formatCurrency(invoice.totalMoney || 0)} VND`}
+                    readOnly
+                    className="border border-gray-300 rounded p-2 w-full"
+                />
+            </div>
+        </div>
+
+        <button onClick={handleUpdateInvoice} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Lưu
+        </button>
+
+        <button onClick={handleCloseForm} className="mt-4 ml-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">
+            Hủy
+        </button>
+    </div>
+)}
+
+
 
                     {showConfirmPrint && (
                         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
