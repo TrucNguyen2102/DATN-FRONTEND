@@ -8,6 +8,13 @@ const CustomerHeader = () => {
   const router = useRouter();
 
   const handleLogout = async () => {
+    // Hiển thị cửa sổ xác nhận
+    const confirmLogout = window.confirm("Bạn có chắc chắn muốn đăng xuất không?");
+    
+    if (!confirmLogout) {
+      return; // Nếu người dùng nhấn "Hủy", thoát khỏi hàm mà không thực hiện gì
+    }
+
     if (!user || !user.id) {
         console.error("User ID is undefined.");
         return;
@@ -27,7 +34,7 @@ const CustomerHeader = () => {
 
   return (
     <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
-      <h1 className="text-xl font-bold">BILLIARDS</h1>
+      <h1 className="text-xl font-bold">NTT BILLIARDS</h1>
       <div className="flex items-center">
         {/* {user && <h3 className="text-lg mr-4">Xin chào, {user.fullName}</h3>} */}
         {user && <h3 className="text-lg mr-4">Xin chào, {user.fullName}</h3>}

@@ -138,6 +138,14 @@ const TablePlay = () => {
             });
         setFilteredTables(playingTables);
     };
+
+    const formatCurrency = (value) => {
+        if (value == null || isNaN(value)) {
+            console.error("formatCurrency nhận giá trị không hợp lệ:", value);
+            return "0"; // Trả về giá trị mặc định nếu không hợp lệ
+        }
+        return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
     
     
     
@@ -433,7 +441,7 @@ const TablePlay = () => {
                                                 <p className="text-gray-700 font-semibold">
                                                     Giá loại bàn: {
                                                         table.type.priceIds && table.type.priceIds.length > 0
-                                                            ? getPriceById(table.type.priceIds[0]) // Lấy giá từ bảng giá
+                                                            ? formatCurrency(getPriceById(table.type.priceIds[0])) // Lấy giá từ bảng giá
                                                             : "Chưa có giá"
                                                     } VND
                                                 </p>

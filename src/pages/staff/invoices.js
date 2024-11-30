@@ -10,6 +10,8 @@ import * as XLSX from 'xlsx';
 const StaffInvoices = () => {
     const [error, setError] = useState('');
     const [invoices, setInvoices] = useState([]);
+    const [menuItems, setMenuItems] = useState([]);
+    const [orderItems, setOrderItems] = useState([]);
     const [bookingTables, setBookingTables] = useState([]); 
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [invoice, setInvoice] = useState(null);
@@ -74,160 +76,33 @@ const StaffInvoices = () => {
         }
     };
 
-    
-    // const handleSelectBooking = async (booking) => {
-    
-    //     setSelectedBooking(booking);
-    
-    //     try {
-    //         // Lấy danh sách các bàn liên quan đến booking
-    //         const tablesResponse = await axios.get(`/api/bookings/booking_table/${booking.bookingId}`);
-    //         const tables = tablesResponse.data;
-    
-    //         const tableIdsList = tables.map(table => table.id.tableId);
-    //         setTableIds(tableIdsList);
-    
-    //         if (tableIdsList.length > 0) {
-    //             const tableDetailsPromises = tableIdsList.map(async (tableId) => {
-    //                 try {
-                        
-    //                     const response = await axios.get(`/api/tables/with-type-price/${tableId}`);
-    //                     return response.data;
-    //                 } catch (error) {
-    //                     console.error(`Lỗi khi lấy dữ liệu bàn ID ${tableId}:`, error);
-    //                     return null;
-    //                 }
-    //             });
-    
-    //             const tableDetails = await Promise.all(tableDetailsPromises);
-    //             const validTableDetails = tableDetails.filter(detail => detail !== null);
-    
-    //             if (validTableDetails.length > 0) {
-    //                 const types = validTableDetails.map(detail => detail.typeName);
-    //                 const prices = validTableDetails.map(detail => detail.price);
-    
-    //                 setTableType(types.join(', '));
-    //                 setTablePrice(prices); 
-    
-    //                 const startTime = new Date(booking.startTime);
-    //                 console.log('Start Time:', startTime);
+    // Lấy danh sách menu
+    useEffect(() => {
+        const fetchMenuItems = async () => {
+            try {
+                const response = await axios.get(`/api/menus/all`);
+                console.log("Menu Data:", response.data);
+                setMenuItems(response.data);
+            } catch (error) {
+                console.error("Lỗi khi lấy danh sách menu:", error);
+            }
+        };
+        fetchMenuItems();
+    }, []);
 
-    //                 const endTime = new Date(booking.endTime);
-    //                 console.log('End Time:', endTime);
+    // Hàm để tìm tên món ăn từ menuItems dựa trên menuId
+    const getMenuNameById = (menuId) => {
+        const menuItem = menuItems.find(item => item.id === menuId);
+        return menuItem ? menuItem.itemName : "Không có tên món";
+    };
 
-    //                 const timeDiffMilliseconds = endTime - startTime;
-
-    //                 console.log("Time Diff:", timeDiffMilliseconds);
-                    
-    //                 // Tính toán giờ và phút
-    //                 const hours = Math.floor(timeDiffMilliseconds / 3600000); //tính số giờ
-    //                 console.log('Hours:', hours);
-                    
-    //                 const minutes = Math.floor((timeDiffMilliseconds % 3600000) / 60000); //tính số phút
-    //                 console.log('Minutes:', minutes);
-    
-    //                 // Tính tổng tiền
-    //                 const totalMoney = Math.round(validTableDetails.reduce((total, detail) => {
-    //                     const pricePerHour = detail.price; 
-    //                     return total + (hours * pricePerHour) + ((pricePerHour / 60) * minutes); 
-    //                 }, 0));
-
-    //                 console.log("Total Money:", totalMoney);
-
-    //                 // Tính tổng giá loại bàn
-    //                 const totalTablePrice = validTableDetails.reduce((total, detail) => total + detail.price, 0);
-    
-    //                 setFormValues({
-    //                     bookingId: booking.bookingId,
-    //                     startTime: format(startTime, 'dd/MM/yyyy HH:mm:ss'),
-    //                     endTime: format(endTime, 'dd/MM/yyyy HH:mm:ss'),
-    //                     totalMoney,
-    //                     totalTablePrice,
-    //                     totalTime: `${hours} giờ ${minutes} phút`, // Thêm tổng thời gian vào state
-    //                 });
-    //             } else {
-    //                 setTableType('Không xác định');
-    //                 setTablePrice(0);
-    //             }
-    //         }
-    
-    //         setShowForm(true);
-    //     } catch (error) {
-    //         setError('Có lỗi xảy ra khi lấy dữ liệu chi tiết bàn.');
-    //         console.error('Chi tiết lỗi:', error);
-    //     }
-    // };
+    // Hàm để tìm tên món ăn từ menuItems dựa trên menuId
+    const getMenuPriceById = (menuId) => {
+        const menuItem = menuItems.find(item => item.id === menuId);
+        return menuItem ? menuItem.price : "Giá không được xác định";
+    };
 
 
-    // const handleSelectBooking = async (invoice) => {
-    //     try {
-
-    //         setSelectedBooking(invoice);
-
-    //         // Lấy thông tin hóa đơn từ API
-    //         const invoiceResponse = await axios.get(`/api/invoices/${invoice.id}`);
-    //         const invoiceData = invoiceResponse.data;
-
-    //          // In ra toàn bộ invoiceData để kiểm tra cấu trúc
-    //         console.log('Dữ liệu hóa đơn:', invoiceData);
-
-    //         // Kiểm tra tableId của invoiceData
-    //         if (!invoiceData.tableId) {
-    //             console.error('Không có tableId trong hóa đơn');
-    //             return;
-    //         }
-    
-    //         // Lấy thông tin bàn từ API bằng tableId trong hóa đơn
-    //         const tableResponse = await axios.get(`/api/tables/with-type-price/${invoiceData.tableId}`);
-    //         const tableData = tableResponse.data;
-
-    //         console.log("Table Data:", tableData);
-    
-    //         // Tính toán tổng tiền dựa trên thông tin bàn và thời gian
-    //         const startTime = new Date(invoiceData.startTime);
-    //         console.log("StartTime:", startTime);
-    //         const endTime = new Date(invoiceData.endTime);
-    //         console.log("EndTime:", endTime);
-
-    //         // Kiểm tra nếu startTime và endTime là giá trị hợp lệ
-    //         if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-    //             console.error('Thời gian không hợp lệ');
-    //             return;
-    //         }
-
-    //         const timeDiffMilliseconds = endTime - startTime;
-    
-    //         const hours = Math.floor(timeDiffMilliseconds / 3600000);
-    //         const minutes = Math.floor((timeDiffMilliseconds % 3600000) / 60000);
-    
-    //         const totalMoney = Math.round(tableData.price * hours + (tableData.price / 60) * minutes);
-    
-    //         setSelectedBooking({
-    //             bookingId: invoiceData.bookingId,
-    //             tableId: tableData.id,
-    //             tableName: tableData.name || "N/A", // assuming tableData has name
-    //             tableType: tableData.typeName || "N/A", // assuming tableData has type
-    //             tablePrice: tableData.price || 0, // assuming tableData has price
-    //         });
-
-    //         // Cập nhật form với các giá trị cần thiết
-    //         setFormValues({
-    //             invoiceId: invoice.id,
-    //             tableId: tableData.id,
-    //             tableType: tableData.tableType, // Lấy loại bàn từ dữ liệu trả về
-    //             startTime: format(startTime, 'yyyy/MM/dd HH:mm:ss'),
-    //             endTime: format(endTime, 'yyyy/MM/dd HH:mm:ss'),
-    //             totalMoney,
-    //             totalTime: `${hours} giờ ${minutes} phút`,
-    //             status: invoiceData.status,
-    //         });
-    
-    //         // Hiển thị form chi tiết hóa đơn
-    //         setShowForm(true);
-    //     } catch (error) {
-    //         console.error('Có lỗi xảy ra khi lấy thông tin:', error);
-    //     }
-    // };
 
     const handleSelectBooking = async (invoice) => {
         try {
@@ -264,8 +139,23 @@ const StaffInvoices = () => {
                 const minutes = Math.floor((timeDiffMilliseconds % 3600000) / 60000);
 
                 console.log("Minute:", minutes);
+
+
+                // Lấy danh sách các OrderItems liên quan đến invoiceId
+                const orderItemsResponse = await axios.get(`/api/orders/byInvoiceId/${invoiceData.id}`);
+                console.log("OrderItem:", orderItemsResponse.data);
+
+                let orderTotal = 0;
+                // Tính tổng tiền từ các OrderItem
+                orderItemsResponse.data.forEach(item => {
+                    // orderTotal += item.quantity * item.price;
+                    orderTotal += item.totalPriceItem;
+                });
         
-                const totalMoney = Math.round(tableData.price * hours + (tableData.price / 60) * minutes);
+                const totalInvoice = Math.round(tableData.price * hours + (tableData.price / 60) * minutes);
+
+                // Tính tổng tiền của hóa đơn (bao gồm cả thời gian sử dụng bàn và OrderItem nếu có)
+                 const totalMoney = Math.round(totalInvoice + orderTotal);
 
             // Gán dữ liệu hóa đơn vào state
             setInvoice({
@@ -277,8 +167,10 @@ const StaffInvoices = () => {
                 startTime: invoiceData.startTime ? format(new Date(invoiceData.startTime), 'yyyy/MM/dd HH:mm:ss') : "Chưa có",
                 endTime: invoiceData.endTime ? format(new Date(invoiceData.endTime), 'yyyy/MM/dd HH:mm:ss') : "Chưa có",
                 // totalMoney: invoiceData.totalMoney || 0,
-                totalMoney: totalMoney,
+                totalInvoice: totalInvoice, //tổng tiền chơi
+                totalMoney: totalMoney, //tổng tiền thanh toán (tiền chơi + tiền orderItem)
                 totalTime: `${hours} giờ ${minutes} phút`,
+                orderItems: orderItemsResponse.data,
                 
             });
 
@@ -715,88 +607,149 @@ const StaffInvoices = () => {
                         
                     </Tabs>
 
-                    
-                    {/* {showForm && selectedBooking && (
+                
+                    {showForm && invoice && (
                         <div className="bg-white p-6 mt-4 rounded shadow">
-                            <h2 className="text-2xl font-semibold mb-4">Thông Tin Chi Tiết</h2>
+                            <h2 className="text-2xl font-semibold mb-4 text-center">Thông Tin Chi Tiết</h2>
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block mb-2">Mã Đơn Đặt:</label>
-                                    <input type="text" value={selectedBooking.bookingId} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                    <label className="block mb-2">Danh Sách Bàn:</label>
-                                    <input type="text" value={tableIds.join(', ')} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                    <label className="block mb-2">Loại Bàn:</label>
-                                    <input type="text" value={tableType} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                    <label className="block mb-2">Giá Loại Bàn:</label>
-                                    <input type="text" value={tablePrice.map(price => `${formatCurrency(price)} VND`).join(', ')} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                    <label className="block mb-2">Tổng Giá Loại Bàn:</label>
-                                    <input type="text" value={`${formatCurrency(formValues.totalTablePrice)} VND`} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                </div>
-
                                 
+                                <div>
+
+                                    <div className="mt-6">
+                                        <h3 className="text-xl font-semibold mb-2">Thông Tin Đơn Đặt</h3>
+                                        <label className="block mb-2 font-bold">Mã Đơn Đặt:</label>
+                                        <input
+                                            type="text"
+                                            value={invoice.bookingId || "Không có dữ liệu"}
+                                            readOnly
+                                            className="border border-gray-300 rounded p-2 w-full"
+                                        />
+
+                                        <label className="block mb-2 font-bold">Bàn Được Chọn:</label>
+                                        <input
+                                            type="text"
+                                            value={invoice.tableId || "Không có dữ liệu"}
+                                            readOnly
+                                            className="border border-gray-300 rounded p-2 w-full"
+                                        />
+
+                                        <label className="block mb-2 font-bold">Loại Bàn:</label>
+                                        <input
+                                            type="text"
+                                            value={invoice.tableType || "Không có dữ liệu"}
+                                            readOnly
+                                            className="border border-gray-300 rounded p-2 w-full"
+                                        />
+
+                                        <label className="block mb-2 font-bold">Giá Loại Bàn:</label>
+                                        <input
+                                            type="text"
+                                            value={`${formatCurrency(invoice.tablePrice || 0)} VND`}
+                                            readOnly
+                                            className="border border-gray-300 rounded p-2 w-full"
+                                        />
+                                    </div>
+
+                                    
+
+                                    {invoice?.orderItems?.length > 0 ? (
+                                        <div className="mt-6">
+                                            <h3 className="text-xl font-semibold mb-2">Thông Tin OrderItem</h3>
+                                            <table className="w-full table-auto border-collapse">
+                                                <thead>
+                                                    <tr>
+                                                        <th className="border px-4 py-2 text-center">Món</th>
+                                                        <th className="border px-4 py-2 text-center">Đơn Giá</th>
+                                                        <th className="border px-4 py-2 text-center">Số Lượng</th>
+                                                        <th className="border px-4 py-2 text-center">Tổng Giá Món</th>
+                                                        {/* <th className="border px-4 py-2 text-center">Tổng OrderItem</th> */}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {invoice.orderItems.map((item, index) => (
+                                                        <tr key={index}>
+                                                            <td className="border px-4 py-2 text-center">{getMenuNameById(item.menuId)}</td> {/* Lấy tên món từ menuItems */}
+                                                            <td className="border px-4 py-2 text-center">{formatCurrency(getMenuPriceById(item.menuId))} VND</td>
+                                                            {/* <td className="border px-4 py-2">{item.itemName || "Không có tên món"}</td> */}
+                                                            <td className="border px-4 py-2 text-center">{item.quantity}</td>
+                                                            <td className="border px-4 py-2 text-center">{formatCurrency(item.totalPriceItem)} VND</td>
+                                                            {/* <td className="border px-4 py-2 text-center">{formatCurrency(item.quantity * item.price)} VND</td> */}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <p className="text-center mt-4">Không có OrderItem nào được chọn.</p>
+                                    )}
+
+                                </div>
+
 
                                 <div>
-                                    <label className="block mb-2">Thời Gian Bắt Đầu:</label>
-                                    <input type="text" value={formValues.startTime} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                    <label className="block mb-2">Thời Gian Kết Thúc:</label>
-                                    <input type="text" value={formValues.endTime} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                    <label className="block mb-2">Tổng Thời Gian:</label>
-                                    <input type="text" value={formValues.totalTime} readOnly className="border border-gray-300 rounded p-2 w-full" />                           
-                                    <label className="block mb-2">Tổng Tiền:</label>
-                                    <input type="text" value={`${formatCurrency(formValues.totalMoney)} VND`} readOnly className="border border-gray-300 rounded p-2 w-full" />
+                                    <div className="mt-6">
+                                        <h3 className="text-xl font-semibold mb-2">Thông Tin Hóa Đơn</h3>
+                                        <label className="block mb-2 font-bold">Mã Hóa Đơn:</label>
+                                        <input
+                                            type="text"
+                                            value={invoice.id || "Không có dữ liệu"}
+                                            readOnly
+                                            className="border border-gray-300 rounded p-2 w-full"
+                                        />
+
+                                        <label className="block mb-2 font-bold">Thời Gian Bắt Đầu:</label>
+                                        <input
+                                            type="text"
+                                            value={invoice.startTime || "Chưa có"}
+                                            readOnly
+                                            className="border border-gray-300 rounded p-2 w-full"
+                                        />
+
+                                        <label className="block mb-2 font-bold">Thời Gian Kết Thúc:</label>
+                                        <input
+                                            type="text"
+                                            value={invoice.endTime || "Chưa có"}
+                                            readOnly
+                                            className="border border-gray-300 rounded p-2 w-full"
+                                        />
+
+                                        <label className="block mb-2 font-bold">Ngày Lập Hóa Đơn:</label>
+                                        <input
+                                            type="text"
+                                            value={invoice.billDate || "Chưa có"}
+                                            readOnly
+                                            className="border border-gray-300 rounded p-2 w-full"
+                                        />
+
+                                        <label className="block mb-2 font-bold">Tổng Thời Gian:</label>
+                                        <input
+                                            type="text"
+                                            value={invoice.totalTime || "Không có dữ liệu"}
+                                            readOnly
+                                            className="border border-gray-300 rounded p-2 w-full"
+                                        />
+
+                                        <label className="block mb-2 font-bold">Tổng Tiền Chơi:</label>
+                                        <input
+                                            type="text"
+                                            value={`${formatCurrency(invoice.totalInvoice || 0)} VND`}
+                                            readOnly
+                                            className="border border-gray-300 rounded p-2 w-full"
+                                        />
+
+                                        <label className="block mb-2 font-bold">Tổng Tiền Thanh Toán:</label>
+                                        <input
+                                            type="text"
+                                            value={`${formatCurrency(invoice.totalMoney || 0)} VND`}
+                                            readOnly
+                                            className="border border-gray-300 rounded p-2 w-full"
+                                        />
+                                    </div>
                                     
                                 </div>
                             </div>
 
-                            <button onClick={handleUpdateInvoice} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
-                                    Lưu
-                            </button>
-
-                            <button onClick={handleCloseForm} className="mt-4 ml-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">
-                                    Hủy
-                            </button>
                             
-                        </div>
-                    )} */}
-
-                    {/* {showForm && selectedBooking && (
-                        <div className="bg-white p-6 mt-4 rounded shadow">
-                            <h2 className="text-2xl font-semibold mb-4">Thông Tin Chi Tiết</h2>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block mb-2">Mã Đơn Đặt:</label>
-                                    <input type="text" value={selectedBooking.bookingId} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                    
-                                    <label className="block mb-2">Bàn Được Chọn:</label>
-                                    
-                                    <input type="text" value={selectedBooking.tableId || "Không có dữ liệu"} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                    
-                                    <label className="block mb-2">Loại Bàn:</label>
-                                    <input type="text" value={selectedBooking.tableType} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                    
-                                    <label className="block mb-2">Giá Loại Bàn:</label>
-                                    <input type="text" value={`${formatCurrency(selectedBooking.tablePrice)} VND`} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                    
-                                    
-                                </div>
-
-                                <div>
-                                    <label className="block mb-2">Mã Hóa Đơn:</label>
-                                    <input type="text" value={formValues.invoiceId} readOnly className="border border-gray-300 rounded p-2 w-full" />
-
-                                    <label className="block mb-2">Thời Gian Bắt Đầu:</label>
-                                    <input type="text" value={formValues.startTime} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                    
-                                    <label className="block mb-2">Thời Gian Kết Thúc:</label>
-                                    <input type="text" value={formValues.endTime ? formValues.endTime : 'Chưa Có'} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                    
-                                    <label className="block mb-2">Tổng Thời Gian:</label>
-                                    <input type="text" value={formValues.totalTime} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                    
-                                    <label className="block mb-2">Tổng Tiền:</label>
-                                    <input type="text" value={`${formatCurrency(formValues.totalMoney)} VND`} readOnly className="border border-gray-300 rounded p-2 w-full" />
-                                </div>
-                            </div>
 
                             <button onClick={handleUpdateInvoice} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
                                 Lưu
@@ -806,106 +759,7 @@ const StaffInvoices = () => {
                                 Hủy
                             </button>
                         </div>
-                    )} */}
-
-{showForm && invoice && (
-    <div className="bg-white p-6 mt-4 rounded shadow">
-        <h2 className="text-2xl font-semibold mb-4">Thông Tin Chi Tiết</h2>
-        <div className="grid grid-cols-2 gap-4">
-            <div>
-                <label className="block mb-2 font-bold">Mã Đơn Đặt:</label>
-                <input
-                    type="text"
-                    value={invoice.bookingId || "Không có dữ liệu"}
-                    readOnly
-                    className="border border-gray-300 rounded p-2 w-full"
-                />
-
-                <label className="block mb-2 font-bold">Bàn Được Chọn:</label>
-                <input
-                    type="text"
-                    value={invoice.tableId || "Không có dữ liệu"}
-                    readOnly
-                    className="border border-gray-300 rounded p-2 w-full"
-                />
-
-                <label className="block mb-2 font-bold">Loại Bàn:</label>
-                <input
-                    type="text"
-                    value={invoice.tableType || "Không có dữ liệu"}
-                    readOnly
-                    className="border border-gray-300 rounded p-2 w-full"
-                />
-
-                <label className="block mb-2 font-bold">Giá Loại Bàn:</label>
-                <input
-                    type="text"
-                    value={`${formatCurrency(invoice.tablePrice || 0)} VND`}
-                    readOnly
-                    className="border border-gray-300 rounded p-2 w-full"
-                />
-            </div>
-
-            <div>
-                <label className="block mb-2 font-bold">Mã Hóa Đơn:</label>
-                <input
-                    type="text"
-                    value={invoice.id || "Không có dữ liệu"}
-                    readOnly
-                    className="border border-gray-300 rounded p-2 w-full"
-                />
-
-                <label className="block mb-2 font-bold">Thời Gian Bắt Đầu:</label>
-                <input
-                    type="text"
-                    value={invoice.startTime || "Chưa có"}
-                    readOnly
-                    className="border border-gray-300 rounded p-2 w-full"
-                />
-
-                <label className="block mb-2 font-bold">Thời Gian Kết Thúc:</label>
-                <input
-                    type="text"
-                    value={invoice.endTime || "Chưa có"}
-                    readOnly
-                    className="border border-gray-300 rounded p-2 w-full"
-                />
-
-                <label className="block mb-2 font-bold">Ngày Lập Hóa Đơn:</label>
-                <input
-                    type="text"
-                    value={invoice.billDate || "Chưa có"}
-                    readOnly
-                    className="border border-gray-300 rounded p-2 w-full"
-                />
-
-                <label className="block mb-2 font-bold">Tổng Thời Gian:</label>
-                <input
-                    type="text"
-                    value={invoice.totalTime || "Không có dữ liệu"}
-                    readOnly
-                    className="border border-gray-300 rounded p-2 w-full"
-                />
-
-                <label className="block mb-2 font-bold">Tổng Tiền:</label>
-                <input
-                    type="text"
-                    value={`${formatCurrency(invoice.totalMoney || 0)} VND`}
-                    readOnly
-                    className="border border-gray-300 rounded p-2 w-full"
-                />
-            </div>
-        </div>
-
-        <button onClick={handleUpdateInvoice} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Lưu
-        </button>
-
-        <button onClick={handleCloseForm} className="mt-4 ml-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">
-            Hủy
-        </button>
-    </div>
-)}
+                    )}
 
 
 

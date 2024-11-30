@@ -1,109 +1,3 @@
-
-// import { useEffect, useState, useContext } from "react";
-// import axios from "axios";
-// import AuthContext from '../contexts/AuthContext';
-// import CustomerHeader from "../components/Header/CustomerHeader";
-// import CustomerSidebar from "../components/Sidebar/CustomerSidebar";
-
-// const CustomerHistoryTable = () => {
-//     const [bookings, setBookings] = useState([]); // State để lưu trữ lịch sử đặt bàn
-//     const [loading, setLoading] = useState(true); // State để quản lý trạng thái tải dữ liệu
-//     const { user } = useContext(AuthContext);
-
-    
-
-//     useEffect(() => {
-//         const fetchBookings = async () => {
-//             if (!user || !user.id) {
-//                 console.error("Không tìm thấy userId!");
-//                 setLoading(false);
-//                 return; // Dừng nếu không có userId
-//             }
-
-//             try {
-//                 const response = await axios.get(`/api/bookings/history/${user.id}`); // Gọi API để lấy lịch sử đặt bàn
-//                 setBookings(response.data); // Lưu dữ liệu vào state
-//             } catch (error) {
-//                 console.error("Lỗi khi tải lịch sử đặt bàn:", error);
-//             } finally {
-//                 setLoading(false); // Đã tải xong dữ liệu, cập nhật trạng thái
-//             }
-//         };
-
-//         // Chỉ gọi fetchBookings nếu user đã được xác định
-//         if (user) {
-//             fetchBookings(); // Gọi hàm lấy dữ liệu
-//         }
-//     }, [user]); // Chạy lại khi user thay đổi
-
-    
-
-//     const handleRefresh = () => {
-//         window.location.reload(); // Làm mới trang
-//     };
-
-//     return (
-//         <div className="bg-gray-100 min-h-screen flex flex-col">
-//             <CustomerHeader />
-//             <div className="flex flex-1">
-//                 <CustomerSidebar className="w-1/4 bg-gray-200 p-4" />
-
-//                 <main className="flex-1 p-6">
-//                     <h1 className="text-3xl font-semibold mb-8 text-center">Lịch Sử Đặt Bàn</h1>
-
-//                     <div className='mb-4'>
-//                         <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">
-//                             Làm Mới
-//                         </button>
-//                     </div>
-
-//                     {loading ? (
-//                         <p className="text-center">Đang tải dữ liệu...</p>
-//                     ) : (
-//                         <table className="min-w-full bg-white border border-gray-300 table-fixed">
-//                             <thead>
-//                                 <tr>
-//                                     <th className="py-2 px-4 border-b border-r w-1/10">ID</th>
-//                                     <th className="py-2 px-4 border-b border-r w-1/10">Thời Gian Đặt</th>
-//                                     <th className="py-2 px-4 border-b border-r w-1/10">Thời Gian Hết Hạn</th>
-//                                     <th className="py-2 px-4 border-b border-r w-1/10">Trạng Thái</th>
-//                                     <th className="py-2 px-4 border-b border-r w-1/10">Bàn</th>
-//                                 </tr>
-//                             </thead>
-//                             <tbody>
-//                                 {bookings.length === 0 ? (
-//                                     <tr>
-//                                         <td colSpan="4" className="text-center py-4">Không có lịch sử đặt bàn nào.</td>
-//                                     </tr>
-//                                 ) : (
-//                                     bookings.map((booking) => (
-//                                         <tr key={booking.id}>
-//                                             <td className="py-2 px-4 border-b border-r text-center">{booking.id}</td>
-//                                             <td className="py-2 px-4 border-b border-r text-center">{new Date(booking.bookingTime).toLocaleString()}</td>
-//                                             <td className="py-2 px-4 border-b border-r text-center">
-//                                                 {booking.expiryTime ? new Date(booking.expiryTime).toLocaleString() : "Chưa Có"}
-//                                             </td>
-//                                             <td className="py-2 px-4 border-b border-r text-center">{booking.status}</td>
-//                                             <td className="py-2 px-4 border-b border-r text-center">
-//                                                 {booking.tableIds && booking.tableIds.length > 0
-//                                                     ? booking.tableIds.join(", ") // Hiển thị danh sách ID bàn, ngăn cách bằng dấu phẩy
-//                                                     : "Không có bàn"}
-//                                             </td>
-//                                         </tr>
-//                                     ))
-//                                 )}
-//                             </tbody>
-//                         </table>
-//                     )}
-//                 </main>
-//             </div>
-//         </div>
-//     );
-// };
-
-// export default CustomerHistoryTable;
-
-
 import { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import AuthContext from '../contexts/AuthContext';
@@ -272,8 +166,8 @@ const CustomerHistoryTable = () => {
                         </div>
                     )}
 
-                    {/* Hiển thị chi tiết hóa đơn nếu có */}
-                    {showInvoiceDetail  && selectedInvoice && (
+                    
+                    {/* {showInvoiceDetail  && selectedInvoice && (
                         <div className="mt-6 bg-white p-4 rounded shadow-md">
                             <h2 className="text-2xl font-semibold mb-4">Chi Tiết Hóa Đơn</h2>
                             <p><strong>ID Hóa Đơn:</strong> {selectedInvoice.id}</p>
@@ -293,7 +187,44 @@ const CustomerHistoryTable = () => {
                                 </button>
                             </div>
                         </div>
+                    )} */}
+
+                    {showInvoiceDetail && selectedInvoice && (
+                        <div className="mt-6 bg-white p-4 rounded shadow-md">
+                            <h2 className="text-2xl font-semibold mb-4">Chi Tiết Hóa Đơn</h2>
+                            {Array.isArray(selectedInvoice) ? (
+                                selectedInvoice.map((invoice) => (
+                                    <div key={invoice.id}>
+                                        <p><strong>ID Hóa Đơn:</strong> {invoice.id}</p>
+                                        <p><strong>Ngày Lập Hóa Đơn:</strong> {invoice.billDate ? new Date(invoice.billDate).toLocaleString() : "Chưa có ngày"}</p>
+                                        <p><strong>Tổng Tiền:</strong> {formatCurrency(invoice.totalMoney)} VND</p>
+                                        <p><strong>Trạng Thái Thanh Toán:</strong> {invoice.status}</p>
+                                        <p><strong>Bàn Đã Đặt:</strong> {invoice.tableId}</p>
+                                        <hr className="my-4" />
+                                    </div>
+                                ))
+                            ) : (
+                                <div>
+                                    <p><strong>ID Hóa Đơn:</strong> {selectedInvoice.id}</p>
+                                    <p><strong>Ngày Lập Hóa Đơn:</strong> {new Date(selectedInvoice.billDate).toLocaleString()}</p>
+                                    <p><strong>Tổng Tiền:</strong> {formatCurrency(selectedInvoice.totalMoney)} VND</p>
+                                    <p><strong>Trạng Thái Thanh Toán:</strong> {selectedInvoice.status}</p>
+                                    <p><strong>Bàn Đã Đặt:</strong> {selectedInvoice.tableId}</p>
+                                </div>
+                            )}
+
+                            <div className="mt-4">
+                                <button
+                                    onClick={handleCancelInvoiceDetail}
+                                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700"
+                                >
+                                    Hủy
+                                </button>
+                            </div>
+                        </div>
                     )}
+
+
                 </main>
             </div>
         </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
     fullName: '',
+    birthDay: '',
     phone: '',
     email: '',
     password: '',
@@ -31,7 +32,7 @@ const RegisterPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { fullName, phone, email, password, confirmPassword } = formData;
+    const { fullName, birthDay, phone, email, password, confirmPassword } = formData;
 
     // Kiểm tra mật khẩu và xác nhận mật khẩu khớp nhau
     if (password !== confirmPassword) {
@@ -76,6 +77,20 @@ const RegisterPage = () => {
             name="fullName"
             id="fullName"
             value={formData.fullName}
+            onChange={handleChange}
+            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-sm font-semibold mb-2" htmlFor="birthDay">
+            Ngày Sinh
+          </label>
+          <input
+            type="date"
+            name="birthDay"
+            id="birthDay"
+            value={formData.birthDay}
             onChange={handleChange}
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
           />

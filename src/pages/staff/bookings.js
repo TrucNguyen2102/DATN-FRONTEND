@@ -14,6 +14,13 @@ const StaffBooking = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [currentBooking, setCurrentBooking] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [status, setStatus] = useState(
+        "Chờ Xác Nhận",
+        "Đã Xác Nhận", 
+        "Đã Hủy",
+        "Đã Nhận Bàn",
+    ); // Trạng thái mặc định của tab đầu tiên
+    const [filteredBookings, setFilteredBookings] = useState([]);
     const [loading, setLoading] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isChangeModalOpen, setIsChangeModalOpen] = useState(false);
@@ -141,42 +148,103 @@ const StaffBooking = () => {
         return filteredBookings.slice(startIndex, startIndex + itemsPerPage);
     };
 
-    const handleSearch = (e) => {
-        setSearchTerm(e.target.value); // Cập nhật giá trị tìm kiếm
-    };
+    const handleSearchChange = (tab, value) => {
+        setSearchTerm(prev => ({ ...prev, [tab]: value }));
+      };
 
 
-    const filteredBookings = bookings.filter(booking => {
-        return (
-            booking.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || // Lọc theo tên
-            booking.userPhone?.toLowerCase().includes(searchTerm.toLowerCase()) // Lọc theo số điện thoại (giả định có thuộc tính userPhone)
-        );
-    });
+
+    // // Xử lý tìm kiếm booking
+    // const handleSearch = async (currentStatus) => {
+    //     try {
+    //         console.log("Tìm kiếm với tên/phone:", searchTerm, "và trạng thái:", currentStatus);
+    //         const response = await axios.get("/api/bookings/search", {
+    //             params: {
+    //                 name: searchTerm,
+    //                 phone: searchTerm,
+    //                 status: currentStatus, // Truyền trạng thái hiện tại
+    //             },
+    //         });
+    //         console.log("Kết quả tìm kiếm:", response.data); // Kiểm tra kết quả trả về
+    //         setBookings(response.data); // Cập nhật danh sách bookings
+    //     } catch (error) {
+    //         console.error("Lỗi khi tìm kiếm booking:", error);
+    //     }
+    // };
+
+    // const handleSearch = async (currentStatus) => {
+    //     try {
+    //         // Mã hóa các tham số name và phone trước khi gửi yêu cầu
+    //         const encodedName = encodeURIComponent(searchTerm);
+    //         const encodedPhone = encodeURIComponent(searchTerm);
+    //         const encodedStatus = encodeURIComponent(currentStatus);
+    
+    //         console.log("Tìm kiếm với tên/phone:", searchTerm, "và trạng thái:", currentStatus);
+    
+    //         const response = await axios.get("/api/bookings/search", {
+    //             params: {
+    //                 name: encodedName,  // Mã hóa tên
+    //                 phone: encodedPhone, // Mã hóa số điện thoại
+    //                 status: encodedStatus, // Mã hóa trạng thái
+    //             },
+    //         });
+    
+    //         console.log("Kết quả tìm kiếm:", response.data); // Kiểm tra kết quả trả về
+    //         setBookings(response.data); // Cập nhật danh sách bookings
+    //     } catch (error) {
+    //         console.error("Lỗi khi tìm kiếm booking:", error);
+    //     }
+    // };
+
+    
+    
+
+    // const handleSearch = async (currentStatus) => {
+    //     try {
+    //         // Kiểm tra nếu searchTerm có chứa tên và số điện thoại, ví dụ: searchTerm là một đối tượng
+    //         const fullName = searchTerm.fullName || ""; // Lấy tên nếu có
+    //         console.log("FullName:", fullName);
+
+    //         const phone = searchTerm.phone || ""; // Lấy số điện thoại nếu có
+    //         console.log("Phone:", phone);
+
+    //         const encodedFullName = encodeURIComponent(fullName); // Mã hóa tên
+    //         console.log("encodedFullName:", encodedFullName);
+
+    //         const encodedPhone = encodeURIComponent(phone); // Mã hóa số điện thoại
+    //         console.log("encodedPhone:", encodedPhone);
+
+    //         const encodedStatus = encodeURIComponent(currentStatus); // Mã hóa trạng thái
+    //         console.log("encodedStatus:", encodedStatus);
+
+    
+    //         console.log("Tìm kiếm với tên:", fullName, "và số điện thoại:", phone, "và trạng thái:", currentStatus);
+    
+    //         // Gửi yêu cầu tìm kiếm
+    //         const response = await axios.get("/api/bookings/search", {
+    //             params: {
+    //                 fullName: encodedFullName,  // Mã hóa tên
+    //                 phone: encodedPhone, // Mã hóa số điện thoại
+    //                 status: encodedStatus, // Mã hóa trạng thái
+    //             },
+    //         });
+    
+    //         // Kiểm tra kết quả tìm kiếm
+    //         console.log("Kết quả tìm kiếm:", response.data);
+    //         setBookings(response.data); // Cập nhật danh sách bookings
+    //     } catch (error) {
+    //         console.error("Lỗi khi tìm kiếm booking:", error);
+    //     }
+    // };
+    
+    
+
 
     const handleEdit = (booking) => {
         setCurrentBooking(booking); // Lưu thông tin đơn đặt vào state
         setIsEditing(true); // Hiển thị form chỉnh sửa
     };
 
-        // Hàm gửi yêu cầu cập nhật trạng thái cho các bàn
-    // const updateTablesStatus = async (tableIds, status) => {
-    //     try {
-    //         // // Lặp qua tất cả các tableIds để gửi yêu cầu cập nhật cho từng bàn
-    //         for (let tableId of tableIds) {
-    //             // Gửi yêu cầu PUT cho mỗi bàn với ID và trạng thái mới
-    //             await axios.put('/api/tables/update-status', {
-    //                 tableId: tableId,  // ID của bàn
-    //                 status: status      // Trạng thái mới của bàn
-    //             });
-    //         }
-            
-
-    //     } catch (error) {
-    //         // Nếu có lỗi xảy ra, log ra và thông báo cho người dùng
-    //         console.error('Lỗi cập nhật trạng thái bàn:', error);
-    //         alert('Đã có lỗi xảy ra khi cập nhật trạng thái bàn.');
-    //     }
-    // };
 
     
 
@@ -289,7 +357,7 @@ const StaffBooking = () => {
            
 
 
-            alert('Đã tạo hóa đơn thành công và các trạng thái đã được cập nhật!');
+            alert('Đã nhận bàn và tạo hóa đơn thành công!');
     
             console.log(`Đã tạo hóa đơn cho booking ID: ${booking.id}`);
 
@@ -561,6 +629,25 @@ const StaffBooking = () => {
             } else {
                 console.error(`Lỗi khi cập nhật trạng thái booking: ${updateBookingResponse.statusText}`);
             }
+
+
+             // Kiểm tra nếu booking chỉ có một bàn
+            if (booking.tableIds && booking.tableIds.length === 1) {
+                // Lấy tableId từ booking và cập nhật trạng thái của bàn
+                const tableId = booking.tableIds[0];
+
+                const updateTableStatusResponse = await axios.put(`/api/tables/${tableId}/status`, {
+                    tableStatus: "Đang Xử Lý Thanh Toán" // Cập nhật trạng thái bàn
+                });
+
+                // Kiểm tra phản hồi từ API cập nhật bàn
+                if (updateTableStatusResponse.status === 200) {
+                    console.log(`Đã cập nhật trạng thái bàn thành "Đang Xử Lý Thanh Toán" cho bàn ID: ${tableId}`);
+                } else {
+                    console.error(`Lỗi khi cập nhật trạng thái bàn: ${updateTableStatusResponse.statusText}`);
+                }
+            }
+
             fetchBookings();
     
         } catch (error) {
@@ -575,8 +662,8 @@ const StaffBooking = () => {
         return (
             <div className="mt-6 p-4 border border-gray-300 bg-white">
                 <h3 className="text-2xl mb-4" >Xác Nhận Kết Thúc</h3>
-                <p>Bạn muốn kết thúc tất cả bàn hay chỉ chọn bàn để kết thúc?</p>
-                <button type="submit" onClick={() => onEndAll(booking)} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mt-4">Tất Cả</button>
+                <p>Chọn bàn muốn kết thúc</p>
+                {/* <button type="submit" onClick={() => onEndAll(booking)} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mt-4">Tất Cả</button> */}
                 <button type="submit" onClick={() => onEndPartial(booking)} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4 ml-2">Chọn Bàn</button>
                 <button type="button" onClick={onClose} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 mt-4 ml-2">Hủy</button>
             </div>
@@ -687,10 +774,10 @@ const StaffBooking = () => {
     
 
     //hàm chọn tất cả bàn
-    const handleConfirmEndAll = async (booking) => {
-        await handleRecievedAll(booking);
-        setIsModalOpen(false);
-    };
+    // const handleConfirmEndAll = async (booking) => {
+    //     await handleRecievedAll(booking);
+    //     setIsModalOpen(false);
+    // };
 
     //hàm chọn bàn muốn kết thúc
     const handleConfirmEndPartial = async (booking) => {
@@ -702,33 +789,33 @@ const StaffBooking = () => {
     };
 
     //nếu kết thúc tất cả
-    const handleRecievedAll = async (booking) => {
-        if (!booking || !booking.id) {
-            console.error("Booking ID is invalid or undefined.");
-            return;
-        }
+    // const handleRecievedAll = async (booking) => {
+    //     if (!booking || !booking.id) {
+    //         console.error("Booking ID is invalid or undefined.");
+    //         return;
+    //     }
     
-        const currentDateTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
+    //     const currentDateTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
     
-        try {
-            // Cập nhật endTime cho hóa đơn và trạng thái booking
-            const [updateInvoiceResponse, updateBookingResponse] = await Promise.all([
-                axios.put(`/api/invoices/update/byBookingId/${booking.id}/endTime`, { endTime: currentDateTime }),
-                axios.put(`/api/bookings/update/${booking.id}/status`, { status: "Chưa Thanh Toán" })
-            ]);
+    //     try {
+    //         // Cập nhật endTime cho hóa đơn và trạng thái booking
+    //         const [updateInvoiceResponse, updateBookingResponse] = await Promise.all([
+    //             axios.put(`/api/invoices/update/byBookingId/${booking.id}/endTime`, { endTime: currentDateTime }),
+    //             axios.put(`/api/bookings/update/${booking.id}/status`, { status: "Chưa Thanh Toán" })
+    //         ]);
     
-            if (updateInvoiceResponse.status === 200 && updateBookingResponse.status === 200) {
-                console.log(`Đã kết thúc tất cả bàn cho booking ID: ${booking.id}`);
-            } else {
-                console.error("Lỗi khi kết thúc tất cả bàn.");
-            }
+    //         if (updateInvoiceResponse.status === 200 && updateBookingResponse.status === 200) {
+    //             console.log(`Đã kết thúc tất cả bàn cho booking ID: ${booking.id}`);
+    //         } else {
+    //             console.error("Lỗi khi kết thúc tất cả bàn.");
+    //         }
     
-            fetchBookings();
-            setIsChangeModalOpen(false);
-        } catch (error) {
-            console.error("Lỗi khi thực hiện cập nhật:", error);
-        }
-    };
+    //         fetchBookings();
+    //         setIsChangeModalOpen(false);
+    //     } catch (error) {
+    //         console.error("Lỗi khi thực hiện cập nhật:", error);
+    //     }
+    // };
     
 
     // Cập nhật thời gian kết thúc cho nhiều hóa đơn liên quan đến các bàn
@@ -861,13 +948,8 @@ const StaffBooking = () => {
                         Làm Mới
                     </button>
 
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm theo tên hoặc số điện thoại"
-                        value={searchTerm}
-                        onChange={handleSearch}
-                        className="border border-gray-400 rounded p-2 mb-4"
-                    />
+                
+
                     <Tabs>
                         <TabList className="mb-4">
                             <Tab className="react-tabs__tab">Chờ Xác Nhận</Tab> 
@@ -878,6 +960,24 @@ const StaffBooking = () => {
 
                         {/* Tab "Chờ Xác Nhận" */}
                         <TabPanel>
+                            {/* Thanh tìm kiếm */}
+                            <div className="flex justify-between mb-4">
+                                <input
+                                type="text"
+                                placeholder="Search..."
+                                className="border px-4 py-2 rounded w-1/3"
+                                value={searchTerm['Chờ Xác Nhận']}
+                                onChange={(e) => handleSearchChange('Chờ Xác Nhận', e.target.value)}
+                                />
+                                <button
+                                onClick={() => handleSearch('Chờ Xác Nhận')}
+                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                >
+                                Tìm kiếm
+                                </button>
+                            </div>
+
+
                             <div className="mt-4 overflow-x-auto">
                                 <table className="min-w-full bg-white border border-gray-300">
                                     <thead>
@@ -938,6 +1038,22 @@ const StaffBooking = () => {
 
                         {/* Tab "Đã Xác Nhận" */}
                         <TabPanel>
+                             {/* Thanh tìm kiếm */}
+                            <div className="flex justify-between mb-4">
+                                <input
+                                type="text"
+                                placeholder="Search..."
+                                className="border px-4 py-2 rounded w-1/3"
+                                value={searchTerm['Đã Xác Nhận']}
+                                onChange={(e) => handleSearchChange('Đã Xác Nhận', e.target.value)}
+                                />
+                                <button
+                                onClick={() => handleSearch('Đã Xác Nhận')}
+                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                >
+                                Tìm kiếm
+                                </button>
+                            </div>
                             <div className="mt-4 overflow-x-auto">
                                 <table className="min-w-full bg-white border border-gray-300">
                                     <thead>
@@ -977,7 +1093,7 @@ const StaffBooking = () => {
                                                         Nhận Bàn
                                                     </button>
 
-                                                    <button onClick={() => handleChange(booking)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">
+                                                    <button onClick={() => handleChange(booking)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700 ml-2">
                                                         Chuyển Bàn
                                                     </button>
 
@@ -1013,6 +1129,22 @@ const StaffBooking = () => {
 
                         {/* Tab "Đã Hủy" */}
                         <TabPanel>
+                            {/* Thanh tìm kiếm */}
+                            <div className="flex justify-between mb-4">
+                                <input
+                                type="text"
+                                placeholder="Search..."
+                                className="border px-4 py-2 rounded w-1/3"
+                                value={searchTerm['Đã Hủy']}
+                                onChange={(e) => handleSearchChange('Đã Hủy', e.target.value)}
+                                />
+                                <button
+                                onClick={() => handleSearch('Đã Hủy')}
+                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                >
+                                Tìm kiếm
+                                </button>
+                            </div>
                             <div className="mt-4 overflow-x-auto">
                                 <table className="min-w-full bg-white border border-gray-300">
                                     <thead>
@@ -1072,6 +1204,23 @@ const StaffBooking = () => {
 
                         {/* Tab "Đã Nhận Bàn" */}
                         <TabPanel>
+                            {/* Thanh tìm kiếm */}
+                            <div className="flex justify-between mb-4">
+                                <input
+                                type="text"
+                                placeholder="Search..."
+                                className="border px-4 py-2 rounded w-1/3"
+                                value={searchTerm['Đã Nhận Bàn']}
+                                onChange={(e) => handleSearchChange('Đã Nhận Bàn', e.target.value)}
+                                />
+                                <button
+                                onClick={() => handleSearch('Đã Nhận Bàn')}
+                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                >
+                                Tìm kiếm
+                                </button>
+                            </div>
+
                             <div className="mt-4 overflow-x-auto">
                                 <table className="min-w-full bg-white border border-gray-300">
                                     <thead>
@@ -1252,7 +1401,7 @@ const StaffBooking = () => {
                             <ConfirmEndModal
                                 booking={selectedBooking}
                                 onClose={() => setIsChangeModalOpen(false)}
-                                onEndAll={handleConfirmEndAll} //kết thúc tất cả
+                                // onEndAll={handleConfirmEndAll} //kết thúc tất cả
                                 onEndPartial={handleConfirmEndPartial} //kết thúc bàn mu
                             />
                     )}

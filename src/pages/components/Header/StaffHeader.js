@@ -8,6 +8,14 @@ const StaffHeader = () => {
   const router = useRouter();
 
   const handleLogout = async () => {
+    // Hiển thị cửa sổ xác nhận
+    const confirmLogout = window.confirm("Bạn có chắc chắn muốn đăng xuất không?");
+    
+    if (!confirmLogout) {
+      return; // Nếu người dùng nhấn "Hủy", thoát khỏi hàm mà không thực hiện gì
+    }
+
+    
     if (!user || !user.id) {
         console.error("User ID is undefined.");
         return;

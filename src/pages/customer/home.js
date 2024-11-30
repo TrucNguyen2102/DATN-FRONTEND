@@ -3,6 +3,7 @@ import Sidebar from "../components/Sidebar";
 import Chatbox from "../components/Chatbox";
 
 import Link from 'next/link';
+import Footer from "../components/Footer";
 
 const CustomerHome = () => {
     // return (
@@ -20,7 +21,7 @@ const CustomerHome = () => {
           <CustomerHeader/>
           <div className="container mx-auto mt-10">
             {/* Banner giới thiệu */}
-            <div className="relative bg-[url('/images/banner.jpg')] h-80 bg-cover bg-center rounded-lg shadow-md">
+            <div className="relative bg-[url('/images/billiards_banner.jpg')] h-80 bg-cover bg-center rounded-lg shadow-md">
               <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center">
                 <h1 className="text-4xl text-white font-bold">Chào mừng đến với hệ thống giải trí</h1>
                 <p className="text-white mt-2">Billiards</p>
@@ -57,7 +58,7 @@ const CustomerHome = () => {
                 <img src="/icons/history.png" alt="Lịch sử đặt bàn" className="w-16 h-16 mx-auto mb-4" />
                 <h2 className="text-xl font-semibold mb-2">Lịch sử đặt bàn</h2>
                 <p>Xem lại các lần đặt bàn trước đây của bạn.</p>
-                <Link href="/customers/history" className="inline-block mt-4 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600">
+                <Link href="/customer/history" className="inline-block mt-4 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600">
                 Xem Lịch sử
                 </Link>
               </div>
@@ -72,6 +73,13 @@ const CustomerHome = () => {
               </Link>
             </div>
           </div>
+
+          <div className="mt-10">
+            <Footer/>
+          </div>
+          
+
+
           {/* Tích hợp Chatbox */}
           <Chatbox />
         </div>

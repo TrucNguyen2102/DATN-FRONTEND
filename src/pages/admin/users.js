@@ -126,6 +126,7 @@ const AdminUsers = () => {
                             <tr>
                                 <th className="py-2 px-4 border-b border-r w-1/10">ID</th>
                                 <th className="py-2 px-4 border-b border-r w-1/10">Họ Tên</th>
+                                <th className="py-2 px-4 border-b border-r w-1/10">Ngày Sinh</th>
                                 <th className="py-2 px-4 border-b border-r w-1/10">Số Điện Thoại</th>
                                 <th className="py-2 px-4 border-b border-r w-1/10">Email</th>
                                 <th className="py-2 px-4 border-b border-r w-1/10">Trạng Thái</th>
@@ -141,6 +142,7 @@ const AdminUsers = () => {
                                 <tr key={user.id}>
                                     <td className="py-2 px-4 border-b border-r text-center">{user.id}</td>
                                     <td className="py-2 px-4 border-b border-r text-center">{user.fullName}</td>
+                                    <td className="py-2 px-4 border-b border-r text-center">{user.birthDay || "Chưa cập nhật"}</td>
                                     <td className="py-2 px-4 border-b border-r text-center">{user.phone}</td>
                                     <td className="py-2 px-4 border-b border-r text-center">{user.email}</td>
                                     <td className="py-2 px-4 border-b border-r text-center ">

@@ -10,14 +10,20 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Lấy thông tin người dùng từ localStorage nếu có
     const storedUser = localStorage.getItem('user');
+   
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
   }, []);
 
+
+
+  
+
   const login = (userData) => {
     // Lưu thông tin người dùng vào localStorage
     localStorage.setItem('user', JSON.stringify(userData));
+    console.log('User data:', (userData));
     setUser(userData);
   };
 
@@ -27,8 +33,12 @@ export const AuthProvider = ({ children }) => {
     router.push('/');
   };
 
+  
+
+  
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, setUser, login, logout}}>
       {children}
     </AuthContext.Provider>
   );
