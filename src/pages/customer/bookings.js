@@ -57,7 +57,13 @@ const CustomerBookingTable = () => {
     }
   };
   
-  
+  const formatCurrency = (value) => {
+    if (value == null || isNaN(value)) {
+        console.error("formatCurrency nhận giá trị không hợp lệ:", value);
+        return "0"; // Trả về giá trị mặc định nếu không hợp lệ
+    }
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
 
 
 
@@ -211,7 +217,7 @@ const CustomerBookingTable = () => {
                     <h2 className="text-xl font-bold mb-2">Bàn {table.tableNum}</h2>
                     <p className="text-gray-700 mb-1">Trạng thái: {table.tableStatus}</p>
                     <p className="text-gray-700 mb-1">Loại: {table.name}</p>
-                    <p className="text-gray-700 font-semibold">Giá: {table.price} VND</p>
+                    <p className="text-gray-700 font-semibold">Giá: {formatCurrency(table.price)} VND /giờ</p>
                   </div>
                   <div className="text-center mt-4">
                     {table.tableStatus === "Trống" && (

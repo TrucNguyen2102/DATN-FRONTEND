@@ -126,16 +126,62 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
 
+    const { user } = useContext(AuthContext);
+
     if (!isOpen) return null;
 
-    const handlePasswordChange = () => {
-        if (newPassword !== confirmPassword) {
-            setErrorMessage("Mật khẩu xác nhận không khớp");
+    const handlePasswordChange = async (oldPassword, newPassword) => {
+        if (!user?.id) {
+            alert("Không tìm thấy User ID. Vui lòng đăng nhập lại.");
             return;
         }
-        const updatedData = { oldPassword, newPassword };
-        onSave(updatedData);
-        onClose();
+    
+        try {
+            // Bước 1: Gửi yêu cầu đổi mật khẩu
+            const passwordResponse = await axios.put(
+                `/api/users/change-password/${user.id}`, // API đổi mật khẩu
+                {
+                    oldPassword,
+                    newPassword,
+                },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                }
+            );
+    
+            if (passwordResponse.status === 200) {
+                alert("Mật khẩu đã được cập nhật thành công.");
+    
+                // Bước 2: Gửi yêu cầu cập nhật updatedAt
+                try {
+                    const timestampResponse = await axios.put(
+                        `/api/users/${user.id}/updateAt`, // API cập nhật updatedAt
+                        {},
+                        {
+                            headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                            },
+                        }
+                    );
+    
+                    if (timestampResponse.status === 200) {
+                        console.log("Cập nhật updatedAt thành công.");
+                    }
+                } catch (timestampError) {
+                    console.error(
+                        "Lỗi khi cập nhật updatedAt:",
+                        timestampError.response?.data || timestampError.message
+                    );
+                }
+            }
+        } catch (error) {
+            console.error("Lỗi khi đổi mật khẩu:", error.response?.data || error.message);
+            alert("Đổi mật khẩu thất bại. Vui lòng thử lại.");
+        }
     };
 
     return (
@@ -189,7 +235,8 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                         <button
                             type="button"
                             className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-                            onClick={handlePasswordChange}
+                            // onClick={handlePasswordChange}
+                            onClick={() => handlePasswordChange(oldPassword, newPassword)}
                         >
                             Đổi mật khẩu
                         </button>

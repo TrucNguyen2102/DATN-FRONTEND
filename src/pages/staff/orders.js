@@ -277,7 +277,7 @@ const MenuManagement = () => {
                             onClick={toggleAddForm}
                             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4 ml-4"
                         >
-                            {isAdding ? 'Ẩn Form' : 'Thêm Món'}
+                            {isAdding ? 'Ẩn Form' : 'Thêm Đơn'}
                         </button>
 
                         {/* Hiển thị form khi isAdding là true */}

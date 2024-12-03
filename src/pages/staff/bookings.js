@@ -649,6 +649,8 @@ const StaffBooking = () => {
             }
 
             fetchBookings();
+
+            alert("Đã kết thúc và cập nhật hóa đơn thành công!")
     
         } catch (error) {
             console.error("Lỗi khi thực hiện cập nhật:", error);
@@ -925,14 +927,6 @@ const StaffBooking = () => {
             console.error(`Lỗi khi cập nhật trạng thái bàn ${tableId}:`, error);
         }
     };
-    
-    
-    
-
-    
-    
-    
-    
     
 
     return (

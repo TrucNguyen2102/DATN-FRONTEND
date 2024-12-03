@@ -19,7 +19,8 @@ const StaffSidebar = () => {
         { href: "/staff/orders", label: "Quản Lý Đơn Món" },
         { href: "/staff/bookings", label: "Quản Lý Đơn Đặt" },
         { href: "/staff/invoices", label: "Quản Lý Hóa Đơn" },
-        { href: "/staff/accounts", label: "Quản Lý Tài Khoản" }
+        { href: "/staff/accounts", label: "Quản Lý Tài Khoản" },
+
     ];
 
     const links = {

@@ -17,31 +17,33 @@ const AdminUsers = () => {
     const { user } = useContext(AuthContext);
     console.log(user);
 
-    // Lấy danh sách người dùng từ API
-    const fetchUsers = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            console.log("Token: ", token);  // Kiểm tra token trước khi gọi API
-            
-            if (!token) throw new Error('Chưa đăng nhập hoặc token không tồn tại.');
+    // Thêm các state cho phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const pageSize = 3; // Số bản ghi mỗi trang
 
-            // const response = await axios.get('/api/users/all');
-            const response = await axios.get('/api/users/all', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+    // Lấy danh sách người dùng từ API
+    const fetchUsers = async (page) => {
+        try {
+            const response = await axios.get(`/api/users/all`, {
+                params: {
+                    page: page - 1, // Backend thường bắt đầu từ 0
+                    size: 5, // Số lượng người dùng mỗi trang
+                },
             });
-            
-            setUsers(response.data);
-        } catch (err) {
-            setError('Không thể tải dữ liệu người dùng.');
-            console.error(err);
+            setUsers(response.data.content); // Cập nhật danh sách người dùng
+            setTotalPages(response.data.totalPages); // Tổng số trang
+            setCurrentPage(response.data.number + 1); // Trang hiện tại
+        } catch (error) {
+            console.error('Lỗi khi tải người dùng:', error);
+            setUsers([]); // Nếu lỗi, để danh sách người dùng rỗng
         }
     };
+    
 
     useEffect(() => {
-        fetchUsers();
-    }, []);
+        fetchUsers(currentPage);
+    }, [currentPage]);
 
     const handleAddManager = () => {
         setShowForm(!showForm);
@@ -50,6 +52,19 @@ const AdminUsers = () => {
     const handleSuccess = (newUser) => {
         setUsers([...users, newUser]);
         setShowForm(false);
+    };
+
+    // Xử lý chuyển trang
+    // const handlePageChange = (newPage) => {
+    //     if (newPage > 0 && newPage <= totalPages) {
+    //         setCurrentPage(newPage);
+    //     }
+    // };
+
+    const handlePageChange = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
     };
 
     const handleRefresh = () => {
@@ -137,65 +152,85 @@ const AdminUsers = () => {
                             </tr>
                         </thead>
                         
+                        
                         <tbody>
-                            {users.map(user => (
-                                <tr key={user.id}>
-                                    <td className="py-2 px-4 border-b border-r text-center">{user.id}</td>
-                                    <td className="py-2 px-4 border-b border-r text-center">{user.fullName}</td>
-                                    <td className="py-2 px-4 border-b border-r text-center">{user.birthDay || "Chưa cập nhật"}</td>
-                                    <td className="py-2 px-4 border-b border-r text-center">{user.phone}</td>
-                                    <td className="py-2 px-4 border-b border-r text-center">{user.email}</td>
-                                    <td className="py-2 px-4 border-b border-r text-center ">
-                                        {/* Kiểm tra trạng thái và hiển thị màu */}
-                                        {user.status === "ACTIVE" ? (
-                                            <span className="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
-                                        ) : (
-                                            <span className="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
-                                        )}
-                                        <span className="ml-2">{user.status}</span>
-                                    </td>
-                                    <td className="py-2 px-4 border-b border-r text-center">
-                                        {user.roles && user.roles.length > 0 ? (
-                                            <ul>
-                                                {user.roles.map((role, index) => (
-                                                    <li key={index}>{role}</li>
-                                                ))}
-                                            </ul>
-                                        ) : (
-                                            'Không có vai trò'
-                                        )}
-                                    </td>
-                                    <td className="py-2 px-4 border-b border-r text-center">{format(new Date(user.createdAt), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                    <td className="py-2 px-4 border-b border-r text-center">{format(new Date(user.updatedAt), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                    <td className="py-2 px-4 border text-center">
-                                        {/* <button onClick={() => handleEdit(user)} className="bg-yellow-400 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-500 transition duration-200">
-                                            Sửa 
-                                        </button> */}
-                                        {/* {user.status === "BLOCKED" ? (
-                                            <button onClick={() => handleUnlock(user.id)} className="bg-green-400 text-white py-1 px-2 rounded hover:bg-green-500 transition duration-200">
-                                                Mở Khóa
-                                            </button>
-                                        ) : (
-                                            <button onClick={() => handleLock(user.id)} className="bg-red-400 text-white py-1 px-2 rounded hover:bg-red-500 transition duration-200">
-                                                Khóa
-                                            </button>
-                                        )} */}
-                                        {(user.roles.includes('ADMIN') || user.roles.includes('MANAGER')) && (
-                                            user.status === "BLOCKED" ? (
-                                                <button onClick={() => handleUnlock(user.id)} className="bg-green-400 text-white py-1 px-2 rounded hover:bg-green-500 transition duration-200">
-                                                    Mở Khóa
-                                                </button>
+                            {users?.length > 0 ? (
+                                users.map(user => (
+                                    <tr key={user.id}>
+                                        <td className="py-2 px-4 border-b border-r text-center">{user.id}</td>
+                                        <td className="py-2 px-4 border-b border-r text-center">{user.fullName}</td>
+                                        <td className="py-2 px-4 border-b border-r text-center">{user.birthDay || "Chưa cập nhật"}</td>
+                                        <td className="py-2 px-4 border-b border-r text-center">{user.phone}</td>
+                                        <td className="py-2 px-4 border-b border-r text-center">{user.email}</td>
+                                        <td className="py-2 px-4 border-b border-r text-center">
+                                            {user.status === "ACTIVE" ? (
+                                                <span className="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
                                             ) : (
-                                                <button onClick={() => handleLock(user.id)} className="bg-red-400 text-white py-1 px-2 rounded hover:bg-red-500 transition duration-200">
-                                                    Khóa
-                                                </button>
-                                            )
-                                        )}
-                                    </td>
+                                                <span className="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+                                            )}
+                                            <span className="ml-2">{user.status}</span>
+                                        </td>
+                                        <td className="py-2 px-4 border-b border-r text-center">
+                                            {user.roles && user.roles.length > 0 ? (
+                                                <ul>
+                                                    {user.roles.map((role, index) => (
+                                                        <li key={index}>{role}</li>
+                                                    ))}
+                                                </ul>
+                                            ) : (
+                                                'Không có vai trò'
+                                            )}
+                                        </td>
+                                        <td className="py-2 px-4 border-b border-r text-center">
+                                            {user.createdAt ? format(new Date(user.createdAt), 'dd/MM/yyyy HH:mm:ss') : "N/A"}
+                                        </td>
+                                        <td className="py-2 px-4 border-b border-r text-center">
+                                            {user.updatedAt ? format(new Date(user.updatedAt), 'dd/MM/yyyy HH:mm:ss') : "N/A"}
+                                        </td>
+                                        <td className="py-2 px-4 border text-center">
+                                            {(user.roles.includes('ADMIN') || user.roles.includes('MANAGER')) && (
+                                                user.status === "BLOCKED" ? (
+                                                    <button onClick={() => handleUnlock(user.id)} className="bg-green-400 text-white py-1 px-2 rounded hover:bg-green-500 transition duration-200">
+                                                        Mở Khóa
+                                                    </button>
+                                                ) : (
+                                                    <button onClick={() => handleLock(user.id)} className="bg-red-400 text-white py-1 px-2 rounded hover:bg-red-500 transition duration-200">
+                                                        Khóa
+                                                    </button>
+                                                )
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="10" className="text-center py-4">Không có dữ liệu</td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
+
                     </table>
+
+                    {/* Điều hướng phân trang */}
+                    <div className="flex justify-center mt-4">
+                                <button
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                    className="px-4 py-2 mx-1 bg-gray-200 hover:bg-gray-300 rounded"
+                                >
+                                    Trước
+                                </button>
+                                <span className="px-4 py-2">
+                                    Trang {currentPage} / {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                    className="px-4 py-2 mx-1 bg-gray-200 hover:bg-gray-300 rounded"
+                                >
+                                    Tiếp
+                                </button>
+                    </div>
                 </main>
             </div>
         </div>

@@ -6,6 +6,7 @@ import 'react-tabs/style/react-tabs.css';
 import axios from 'axios';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
+import { jsPDF } from "jspdf";
 
 const StaffInvoices = () => {
     const [error, setError] = useState('');
@@ -34,25 +35,40 @@ const StaffInvoices = () => {
     const [currentPage, setCurrentPage] = useState({ 'Chưa Thanh Toán': 1, 'Chờ Thanh Toán': 1, 'Đã Thanh Toán': 1 });
     const itemsPerPage = 8;
 
+    const formatCurrency = (value) => {
+        // return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+
     // const formatCurrency = (value) => {
-    //     // return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    //     if (value == null || isNaN(value)) {
+    //         console.error("formatCurrency nhận giá trị không hợp lệ:", value);
+    //         return "0"; // Trả về giá trị mặc định nếu không hợp lệ
+    //     }
     //     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     // };
 
-    const formatCurrency = (value) => {
-        if (value == null || isNaN(value)) {
-            console.error("formatCurrency nhận giá trị không hợp lệ:", value);
-            return "0"; // Trả về giá trị mặc định nếu không hợp lệ
-        }
-        return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    };
+    // const formatCurrency = (value) => {
+    //     if (value === undefined || value === null) return '0 VNĐ'; // Tránh lỗi khi value là undefined hoặc null
+    //     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+    // };
     
-
+    
+    // const formatCurrency = (value) => {
+    //     if (typeof value !== 'number') return '0 VND';  // Kiểm tra giá trị nếu không phải là số
+    //     return value.toLocaleString('vi-VN');   // Định dạng số và thêm VND vào cuối
+    // };
     
     
     const formatDate = (date) => {
         return date ? format(new Date(date), 'dd/MM/yyyy HH:mm:ss') : 'Không xác định';
     };
+
+    // const formatDate = (dateString) => {
+    //     const date = new Date(dateString);
+    //     return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+    // };
+    
 
     //hàm lấy hóa đơn
     const fetchInvoices = async () => {
@@ -334,8 +350,15 @@ const StaffInvoices = () => {
             // Thông báo thành công và thực hiện xuất hóa đơn
             alert('Hóa đơn đã được cập nhật thành công và trạng thái của bàn và booking đã được cập nhật!');
             
-            // Xuất ra Excel (nếu có)
-            handleExportToExcel([updatedInvoice]);
+            // // Xuất ra Excel (nếu có)
+             handleExportToExcel([updatedInvoice]);
+
+        //     // Hiển thị hóa đơn để in
+        // setShowConfirmPrint(false); // Đóng hộp thoại xác nhận
+        // window.print(); // Gọi phương thức in
+
+        // Sau khi xác nhận và cập nhật thành công, xuất ra PDF
+        //handleSaveAsPDF(updatedInvoice);
     
             // Tải lại danh sách hóa đơn
             fetchInvoices();
@@ -348,6 +371,41 @@ const StaffInvoices = () => {
             alert('Có lỗi xảy ra khi cập nhật hóa đơn. Vui lòng thử lại.');
         }
     };
+
+    // Hàm để xuất hóa đơn ra PDF
+    // const handleSaveAsPDF = (invoice) => {
+
+    //      // In dữ liệu invoice ra console để kiểm tra
+    // console.log("Invoice Dataa:", invoice);
+
+    //     const doc = new jsPDF();
+    
+    //     // Thiết lập font và kích thước
+    //     doc.setFontSize(16);
+    //     doc.text('Hóa Đơn', 105, 20, { align: "center" });
+    
+    //     doc.setFontSize(12);
+    
+    //     // Kiểm tra dữ liệu và thay thế nếu cần thiết
+    //     const id = invoice?.id || 'N/A';
+    //     const billDate = invoice?.billDate ? formatDate(invoice.billDate) : 'Chưa có ngày';
+    //     const totalMoney = invoice?.totalMoney ? formatCurrency(invoice.totalMoney) : '0 VND';
+    //     const status = invoice?.status || 'Chưa có trạng thái';
+
+    //     console.log(`Mã Hóa Đơn: ${id}`);
+    //     console.log(`Ngày Hóa Đơn: ${billDate}`);
+    //     console.log(`Tổng Tiền: ${totalMoney}`);
+    //     console.log(`Trạng Thái: ${status}`);
+    
+    //     doc.text(`ID: ${id}`, 20, 40);
+    //     doc.text(`BillDate: ${billDate}`, 20, 50);
+    //     doc.text(`TotalMoney: ${totalMoney}`, 20, 60);
+    //     doc.text(`Status: ${status}`, 20, 70);
+    
+    //     // Lưu PDF
+    //     doc.save('invoice.pdf');
+    // };
+    
 
 
     const handleExportToExcel = () => {
@@ -375,6 +433,36 @@ const StaffInvoices = () => {
         // Xuất file Excel
         XLSX.writeFile(workbook, 'invoices.xlsx');
     };
+
+    // const InvoicePrint = ({ invoice }) => {
+    //     console.log("Invoice Data:", invoice); // Kiểm tra dữ liệu invoice để chắc chắn nó có sẵn
+    
+    //     // Kiểm tra dữ liệu để tránh undefined
+    //     const id = invoice?.id || 'N/A';
+    //     const billDate = invoice?.billDate ? formatDate(invoice.billDate) : 'Chưa có ngày';
+    //     const totalMoney = invoice?.totalMoney ? formatCurrency(invoice.totalMoney) : '0 VNĐ';
+    //     const status = invoice?.status || 'Chưa có trạng thái';
+    
+    //     return (
+    //         <div id="invoice-to-print" className="p-6 w-full max-w-md mx-auto bg-white border rounded shadow-lg">
+    //             <h2 className="text-lg font-semibold mb-4 text-center">Hóa Đơn</h2>
+    //             <div className="mb-4">
+    //                 <p><strong>ID:</strong> {id}</p>
+    //                 <p><strong>BillDate:</strong> {billDate}</p>
+    //                 <p><strong>TotalMoney:</strong> {totalMoney}</p>
+    //                 <p><strong>Status:</strong> {status}</p>
+    //             </div>
+    //         </div>
+    //     );
+    // };
+    
+    
+    
+    
+    
+    
+    
+    
     
 
     // Hàm đóng form
@@ -779,6 +867,31 @@ const StaffInvoices = () => {
                             </div>
                         </div>
                     )}
+
+{/* {showConfirmPrint && (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="bg-white p-6 rounded shadow-lg w-full max-w-lg">
+            <h2 className="text-lg font-semibold mb-4 text-center">Xác Nhận In Hóa Đơn</h2>
+            
+           
+            <InvoicePrint invoice={selectedInvoice} />
+
+            <div className="mt-4">
+                <button onClick={handleConfirmInvoice} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mr-2">
+                    Xác Nhận
+                </button>
+                <button onClick={() => setShowConfirmPrint(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">
+                    Hủy
+                </button>
+            </div>
+        </div>
+    </div>
+)} */}
+
+
+
+                    
+                    {/* {selectedInvoice && <InvoicePrint invoice={selectedInvoice} />} */}
 
 
                 </main>
