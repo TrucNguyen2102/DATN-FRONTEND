@@ -5,14 +5,16 @@ import StaffSidebar from "../components/Sidebar/StaffSidebar";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import { format, differenceInSeconds  } from 'date-fns';
+import { FaSyncAlt, FaCheckCircle, FaExchangeAlt, FaTimes  } from "react-icons/fa"
 import CancelBookingModal from "../components/staff/CancelBookingModal";
+import { table } from "@nextui-org/react";
 
 const StaffBooking = () => {
     const [error, setError] = useState('');
     const [bookings, setBookings] = useState([]);
     const [timeLeft, setTimeLeft] = useState({}); // State để lưu thời gian đếm ngược
-    const [isEditing, setIsEditing] = useState(false);
-    const [currentBooking, setCurrentBooking] = useState(null);
+    const [isEditing, setIsEditing] = useState(false); // Trạng thái hiển thị modal
+    const [currentBooking, setCurrentBooking] = useState(null); // Thông tin đơn đặt hiện tại
     const [searchTerm, setSearchTerm] = useState('');
     const [status, setStatus] = useState(
         "Chờ Xác Nhận",
@@ -22,9 +24,13 @@ const StaffBooking = () => {
     ); // Trạng thái mặc định của tab đầu tiên
     const [filteredBookings, setFilteredBookings] = useState([]);
     const [loading, setLoading] = useState('');
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isChangeModalOpen, setIsChangeModalOpen] = useState(false);
-    const [isChangeNewModalOpen, setIsChangeNewModalOpen] = useState(false);
+    const [isModalEditingOpen, setIsModalEdittingOpen] = useState(false); //modal cập nhật đơn
+    const [isModalCancelOpen, setIsModalCancelOpen] = useState(false); //modal xác nhận hủy bàn
+    const [isEndModalOpen, setIsEndModalOpen] = useState(false); //modal để kết thúc bàn
+    const [isChangeNewModalOpen, setIsChangeNewModalOpen] = useState(false); //modal chọn bàn mới khi chuyển bàn trc khi chơi
+
+    const [isSwitchModalOpen, setIsSwitchNewModalOpen] = useState(false); //modal chuyển bàn khi đang chơi
+
     const [selectedBooking, setSelectedBooking] = useState(null);  // Lưu thông tin booking hiện tại
     const [selectedTable, setSelectedTable] = useState(null); //lưu trữ ds bàn được chọn
     const [showPartialModal, setShowPartialModal] = useState(false);
@@ -37,6 +43,7 @@ const StaffBooking = () => {
     
 
     const [availableTables, setAvailableTables] = useState([]); // Danh sách bàn trống
+    const [currentSelectedTable, setCurrentSelectedTable] = useState(null);
 
     const [tablesInfo, setTablesInfo] = useState([]);
 
@@ -239,10 +246,11 @@ const StaffBooking = () => {
     
     
 
-
+    //cập nhật đơn
     const handleEdit = (booking) => {
         setCurrentBooking(booking); // Lưu thông tin đơn đặt vào state
-        setIsEditing(true); // Hiển thị form chỉnh sửa
+        // setIsEditing(true); // Hiển thị form chỉnh sửa
+        setIsModalEdittingOpen(true); //mở modal cập nhật
     };
 
 
@@ -265,6 +273,7 @@ const StaffBooking = () => {
                 console.log(`Đã cập nhật trạng thái bàn ${tableId} thành "${status}". Phản hồi:`, response.data);
             
             }
+            setIsModalEdittingOpen(false);
         } catch (error) {
             // Nếu có lỗi xảy ra, log ra và thông báo cho người dùng
             console.error('Lỗi cập nhật trạng thái bàn:', error);
@@ -515,7 +524,7 @@ const StaffBooking = () => {
 
         // Mở modal và truyền thông tin của booking vào modal
         setSelectedBooking(booking);
-        setIsModalOpen(true);
+        setIsModalCancelOpen(true);
     };
 
     // Hàm để chọn hoặc bỏ chọn bàn trong modal
@@ -559,7 +568,7 @@ const StaffBooking = () => {
 
             // Tải lại danh sách booking
             fetchBookings();
-            setIsModalOpen(false); // Đóng modal sau khi thực hiện
+            setIsModalCancelOpen(false); // Đóng modal sau khi thực hiện
         } catch (error) {
             console.error('Lỗi khi xử lý hủy bàn:', error);
         }
@@ -588,7 +597,7 @@ const StaffBooking = () => {
         } else {
             // Nếu có nhiều bàn, mở modal để xác nhận
             setSelectedBooking(booking);
-            setIsChangeModalOpen(true); // Hiển thị form để người dùng chọn bàn
+            setIsEndModalOpen(true); // Hiển thị form để người dùng chọn bàn kết thúc
         }
     };
 
@@ -662,28 +671,24 @@ const StaffBooking = () => {
     //hàm xác nhận hiển thị khi ấn kết thúc
     const ConfirmEndModal = ({ booking, onClose, onEndAll, onEndPartial }) => {
         return (
-            <div className="mt-6 p-4 border border-gray-300 bg-white">
-                <h3 className="text-2xl mb-4" >Xác Nhận Kết Thúc</h3>
-                <p>Chọn bàn muốn kết thúc</p>
-                {/* <button type="submit" onClick={() => onEndAll(booking)} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mt-4">Tất Cả</button> */}
-                <button type="submit" onClick={() => onEndPartial(booking)} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4 ml-2">Chọn Bàn</button>
-                <button type="button" onClick={onClose} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 mt-4 ml-2">Hủy</button>
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                <div className="bg-white rounded-lg p-6 w-96">
+                    <h3 className="text-2xl mb-4 font-bold text-center" >Xác Nhận Kết Thúc</h3>
+                    <h4>Chọn bàn muốn kết thúc</h4>
+                    {/* <button type="submit" onClick={() => onEndAll(booking)} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mt-4">Tất Cả</button> */}
+                    <div className="flex mt-2space-x-2">
+                        <button type="submit" onClick={() => onEndPartial(booking)} className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4 ml-2">Chọn Bàn</button>
+                        <button type="button" onClick={onClose} className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 mt-4 ml-2">Hủy</button>
+                    </div>
+                    
+                </div>
             </div>
+            
         );
     };
 
     const SelectTablesModal = ({ booking, onClose, onConfirm, selectedTableIds, setSelectedTableIds }) => {
         
-        
-        
-
-        // // Hàm xử lý chọn hoặc bỏ chọn bàn
-        // const handleTableSelection = (tableId) => {
-        //     setSelectedTableIds(prev => 
-        //         prev.includes(tableId) ? prev.filter(id => id !== tableId) : [...prev, tableId]
-        //     );
-        // };
-
         const handleTableSelection = async (tableId) => {
             try {
                 // Lấy trạng thái của bàn từ bảng TablePlay qua API
@@ -741,36 +746,39 @@ const StaffBooking = () => {
         
     
         return (
-            <div className="mt-6 p-4 border border-gray-300 bg-white">
-                <h3 className="text-2xl mb-4">Chọn Bàn Cần Kết Thúc</h3>
-                <div className="space-y-2">
-                    {booking.tableIds.map(tableId => (
-                        <div key={tableId}>
-                            <input 
-                                type="checkbox" 
-                                id={`table-${tableId}`} 
-                                checked={selectedTableIds.includes(tableId)}  // Đánh dấu bàn đã chọn
-                                onChange={() => handleTableSelection(tableId)} 
-                            />
-                            <label htmlFor={`table-${tableId}`} className="ml-2">Bàn {tableId}</label>
-                        </div>
-                    ))}
-                </div>
-                <div className="mt-4">
-                    <button 
-                        onClick={handleConfirmSelection} 
-                        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700"
-                    >
-                        Xác Nhận
-                    </button>
-                    <button 
-                        onClick={onClose} 
-                        className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2"
-                    >
-                        Hủy
-                    </button>
+            <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center">
+                <div className="bg-white rounded-lg p-6 w-96">
+                    <h3 className="text-2xl mb-4 font-bold text-center">Chọn Bàn Cần Kết Thúc</h3>
+                    <div className="space-y-2">
+                        {booking.tableIds.map(tableId => (
+                            <div key={tableId}>
+                                <input 
+                                    type="checkbox" 
+                                    id={`table-${tableId}`} 
+                                    checked={selectedTableIds.includes(tableId)}  // Đánh dấu bàn đã chọn
+                                    onChange={() => handleTableSelection(tableId)} 
+                                />
+                                <label htmlFor={`table-${tableId}`} className="ml-2">Bàn {tableId}</label>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex mt-4 space-x-2">
+                        <button 
+                            onClick={handleConfirmSelection} 
+                            className="flex-1 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700"
+                        >
+                            Xác Nhận
+                        </button>
+                        <button 
+                            onClick={onClose} 
+                            className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2"
+                        >
+                            Hủy
+                        </button>
+                    </div>
                 </div>
             </div>
+            
         );
     };
     
@@ -927,6 +935,107 @@ const StaffBooking = () => {
             console.error(`Lỗi khi cập nhật trạng thái bàn ${tableId}:`, error);
         }
     };
+
+    const fetchAvailableTables = async () => {
+        try {
+            const response = await fetch(`/api/tables/available`);
+            const data = await response.json();
+            setAvailableTables(data);
+        } catch (error) {
+            console.error("Lỗi khi lấy danh sách bàn khả dụng:", error);
+            Swal.fire("Lỗi", "Không thể tải danh sách bàn khả dụng", "error");
+        }
+    };
+
+    const handleSwitchTableInPlayClick = async () => {
+        await fetchAvailableTables();
+        setIsSwitchNewModalOpen(true);
+    };
+
+    const handleSelectTable = async (newTableId) => {
+        try {
+            const response = await fetch(`/api/bookings/switch-table`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ oldBookingId: booking.id, newTableId }),
+            });
+
+            if (response.ok) {
+                alert("Thành công!", "Đã chuyển bàn thành công.", "success");
+                setIsSwitchNewModalOpen(false);
+            } else {
+                alert("Lỗi", "Không thể chuyển bàn.", "error");
+            }
+        } catch (error) {
+            console.error("Lỗi khi chuyển bàn:", error);
+            al("Lỗi", "Không thể chuyển bàn.", "error");
+        }
+    };
+
+    const TableSelectModal = ({ isOpen, onClose, availableTables, onSelectTable, initialSelectedTable }) => {
+        const [selectedTable, setSelectedTable] = useState(initialSelectedTable); // Bàn được chọn
+    
+        useEffect(() => {
+            // Cập nhật trạng thái ban đầu từ `initialSelectedTable` khi modal mở
+            if (isOpen) {
+                setSelectedTable(initialSelectedTable);
+            }
+        }, [isOpen, initialSelectedTable]);
+    
+        // Xử lý khi chọn bàn
+        const handleTableSelect = (tableId) => {
+            setSelectedTable(tableId);
+        };
+    
+        // Xử lý khi xác nhận
+        const handleConfirm = () => {
+            if (selectedTable) {
+                onSelectTable(selectedTable);
+            } else {
+                alert("Vui lòng chọn một bàn trước khi xác nhận!");
+            }
+        };
+    
+        if (!isOpen) return null;
+    
+        return (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="bg-white rounded-lg shadow-lg p-6 w-96">
+                    <h2 className="text-lg font-semibold mb-4 text-center">Chọn Bàn Mới</h2>
+                    <ul className="space-y-2">
+                        {availableTables.map((table) => (
+                            <li key={table.id} className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    name="table"
+                                    
+                                    checked={selectedTable === table.id}
+                                    onChange={() => handleTableSelect(table.id)}
+                                    className="mr-2"
+                                />
+                                <label>Bàn số {table.tableNum} - {table.type.name} - {table.tableStatus}</label>
+                            </li>
+                        ))}
+                    </ul>
+                    <div className="mt-4 flex space-x-2">
+                        <button
+                            className="flex-1 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+                            onClick={handleConfirm}
+                        >
+                            Xác Nhận
+                        </button>
+                        <button
+                            className="flex-1 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700"
+                            onClick={onClose}
+                        >
+                            Hủy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+    
     
 
     return (
@@ -935,470 +1044,498 @@ const StaffBooking = () => {
             <div className="flex flex-1">
                 <StaffSidebar className="w-1/4 bg-gray-200 p-4" />
                 <main className="flex-1 p-6">
-                    <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Đơn Đặt</h1>
-                    {error && <p className="text-red-500 text-center">{error}</p>}
                     
-                    <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mb-4">
-                        Làm Mới
-                    </button>
+                        {/* <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Đơn Đặt</h1> */}
+                        {error && <p className="text-red-500 text-center">{error}</p>}
+                        
+                        <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mb-4 flex items-center gap-1">
+                            <FaSyncAlt className="text-white" /> Làm Mới
+                        </button>
 
                 
 
-                    <Tabs>
-                        <TabList className="mb-4">
-                            <Tab className="react-tabs__tab">Chờ Xác Nhận</Tab> 
-                            <Tab className="react-tabs__tab">Đã Xác Nhận</Tab>
-                            <Tab className="react-tabs__tab">Đã Hủy</Tab>
-                            <Tab className="react-tabs__tab">Đã Nhận Bàn</Tab>
-                        </TabList>
+                        <Tabs>
+                            <TabList className="mb-4">
+                                <Tab className="react-tabs__tab">Chờ Xác Nhận</Tab> 
+                                <Tab className="react-tabs__tab">Đã Xác Nhận</Tab>
+                                <Tab className="react-tabs__tab">Đã Hủy</Tab>
+                                <Tab className="react-tabs__tab">Đã Nhận Bàn</Tab>
+                            </TabList>
 
-                        {/* Tab "Chờ Xác Nhận" */}
-                        <TabPanel>
-                            {/* Thanh tìm kiếm */}
-                            <div className="flex justify-between mb-4">
-                                <input
-                                type="text"
-                                placeholder="Search..."
-                                className="border px-4 py-2 rounded w-1/3"
-                                value={searchTerm['Chờ Xác Nhận']}
-                                onChange={(e) => handleSearchChange('Chờ Xác Nhận', e.target.value)}
-                                />
-                                <button
-                                onClick={() => handleSearch('Chờ Xác Nhận')}
-                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
-                                >
-                                Tìm kiếm
-                                </button>
-                            </div>
-
-
-                            <div className="mt-4 overflow-x-auto">
-                                <table className="min-w-full bg-white border border-gray-300">
-                                    <thead>
-                                        <tr>
-                                            <th className="border px-4 py-2 text-center">Mã Đơn</th>
-                                            <th className="border px-4 py-2 text-center">Thời Gian Đặt</th>
-                                            <th className="border px-4 py-2 text-center">Thời Gian Hết Hạn</th>
-                                            <th className="border px-4 py-2 text-center">Trạng Thái</th>
-                                            <th className="border px-4 py-2 text-center">Tên Người Dùng</th>
-                                            <th className="border px-4 py-2 text-center">Số Bàn</th>
-                                            <th className="border px-4 py-2 text-center">Loại Bàn</th>
-                                            <th className="border px-4 py-2 text-center">Hành Động</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    {/* {filterBookingsByStatus('Chờ Xác Nhận').map(booking => ( */}
-                                    {getPaginatedBookings('Chờ Xác Nhận').map(booking => (
-                                            <tr key={booking.id}>
-                                                <td className="border px-4 py-2 text-center">{booking.id}</td>
-                                                <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
-                                                <td className="py-2 px-4 border-b border-r text-center">
-                                                    {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
-                                                </td>
-                                                <td className="border px-4 py-2 text-center">{booking.status}</td>
-                                                <td className="border px-4 py-2 text-center">{booking.fullName}</td>
-                                                {/* <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td> */}
-                                                <td className="border px-4 py-2 text-center">{booking.tableNumbers.join(', ')}</td>
-                                                <td className="border px-4 py-2 text-center">{booking.tableTypes.join(', ')}</td>
-                                             
-                                                <td className="border px-4 py-2 text-center">
-                                                    <button onClick={() => handleEdit(booking)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">
-                                                        Cập Nhật
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Phân trang */}
-                            <div className="mt-4">
-                                <p className="text-sm">Trang {currentPage['Chờ Xác Nhận']} / {totalPages('Chờ Xác Nhận')}</p>
-                                <div className="flex justify-center">
-                                    {Array.from({ length: totalPages('Chờ Xác Nhận') }, (_, index) => (
+                            {/* Tab "Chờ Xác Nhận" */}
+                            <TabPanel>
+                                {/* Thanh tìm kiếm */}
+                                <div className="flex justify-between mb-4">
+                                    <input
+                                    type="text"
+                                    placeholder="Search..."
+                                    className="border px-4 py-2 rounded w-1/3"
+                                    value={searchTerm['Chờ Xác Nhận']}
+                                    onChange={(e) => handleSearchChange('Chờ Xác Nhận', e.target.value)}
+                                    />
                                     <button
-                                        key={index}
-                                        onClick={() => handlePageChange('Chờ Xác Nhận', index + 1)}
-                                        className={`mx-1 px-3 py-1 rounded ${currentPage['Chờ Xác Nhận'] === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                                    onClick={() => handleSearch('Chờ Xác Nhận')}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
                                     >
-                                        {index + 1}
+                                    Tìm kiếm
                                     </button>
-                                    ))}
                                 </div>
-                            </div>
-                        </TabPanel>
 
-                        {/* Tab "Đã Xác Nhận" */}
-                        <TabPanel>
-                             {/* Thanh tìm kiếm */}
-                            <div className="flex justify-between mb-4">
-                                <input
-                                type="text"
-                                placeholder="Search..."
-                                className="border px-4 py-2 rounded w-1/3"
-                                value={searchTerm['Đã Xác Nhận']}
-                                onChange={(e) => handleSearchChange('Đã Xác Nhận', e.target.value)}
-                                />
-                                <button
-                                onClick={() => handleSearch('Đã Xác Nhận')}
-                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
-                                >
-                                Tìm kiếm
-                                </button>
-                            </div>
-                            <div className="mt-4 overflow-x-auto">
-                                <table className="min-w-full bg-white border border-gray-300">
-                                    <thead>
-                                        <tr>
-                                            <th className="border px-4 py-2 text-center w-1/10">Mã Đơn</th>
-                                            <th className="border px-4 py-2 text-center w-1/10">Thời Gian Đặt</th>
-                                            <th className="border px-4 py-2 text-center w-1/10">Thời Gian Hết Hạn</th>
-                                            <th className="border px-4 py-2 text-center w-1/12">Đếm Ngược</th>
-                                            <th className="border px-4 py-2 text-center w-1/10">Trạng Thái</th>
-                                            <th className="border px-4 py-2 text-center w-1/10">Tên Người Dùng</th>
-                                            <th className="border px-4 py-2 text-center w-10">Số Bàn</th>
-                                            <th className="border px-4 py-2 text-center w-10">Loại Bàn</th>
-                                            
-                                            <th className="border px-4 py-2 text-center w-1/5">Hành Động</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    {/* {filterBookingsByStatus('Đã Xác Nhận').map(booking => ( */}
-                                    {getPaginatedBookings('Đã Xác Nhận').map(booking => (
-                                            <tr key={booking.id}>
-                                                <td className="border px-4 py-2 text-center">{booking.id}</td>
-                                                <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
-                                                <td className="py-2 px-4 border-b border-r text-center">
-                                                    {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
-                                                </td>
-                                                <td className="border px-4 py-2 text-center">
-                                                    {timeLeft[booking.id] > 0 ? formatTimeLeft(timeLeft[booking.id]) : "Trong ít phút nữa"}
-                                                </td>
-                                                <td className="border px-4 py-2 text-center">{booking.status}</td>
-                                                <td className="border px-4 py-2 text-center">{booking.fullName}</td>
-                                                <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td>
-                                                {/* <td className="border px-4 py-2 text-center">{booking.tableNumbers.join(', ')}</td> */}
-                                                <td className="border px-4 py-2 text-center">{booking.tableTypes.join(', ')}</td>
-                                                <td className="border px-4 py-2 text-center">
-                                                    <button onClick={() => handleConfirm(booking)} className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700">
-                                                        Nhận Bàn
-                                                    </button>
 
-                                                    <button onClick={() => handleChange(booking)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700 ml-2">
-                                                        Chuyển Bàn
-                                                    </button>
-
-                                                    {/* Thêm nút hủy bàn */}
-                                                    {booking.tableIds.length > 1 && (
-                                                        <button onClick={() => handleCancelTable(booking)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700 ml-2">
-                                                            Hủy Bàn
-                                                        </button>
-                                                    )}
-                                                </td>
+                                <div className="mt-4 overflow-x-auto">
+                                    <table className="min-w-full bg-white border border-gray-300">
+                                        <thead>
+                                            <tr>
+                                                <th className="border px-4 py-2 text-center">Mã Đơn</th>
+                                                <th className="border px-4 py-2 text-center">Thời Gian Đặt</th>
+                                                <th className="border px-4 py-2 text-center">Thời Gian Hết Hạn</th>
+                                                <th className="border px-4 py-2 text-center">Trạng Thái</th>
+                                                <th className="border px-4 py-2 text-center">Tên Người Dùng</th>
+                                                <th className="border px-4 py-2 text-center">Số Bàn</th>
+                                                <th className="border px-4 py-2 text-center">Loại Bàn</th>
+                                                <th className="border px-4 py-2 text-center">Hành Động</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Phân trang */}
-                            <div className="mt-4">
-                                <p className="text-sm">Trang {currentPage['Đã Xác Nhận']} / {totalPages('Đã Xác Nhận')}</p>
-                                <div className="flex justify-center">
-                                    {Array.from({ length: totalPages('Đã Xác Nhận') }, (_, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => handlePageChange('Đã Xác Nhận', index + 1)}
-                                        className={`mx-1 px-3 py-1 rounded ${currentPage['Đã Xác Nhận'] === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                                    >
-                                        {index + 1}
-                                    </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </TabPanel>
-
-                        {/* Tab "Đã Hủy" */}
-                        <TabPanel>
-                            {/* Thanh tìm kiếm */}
-                            <div className="flex justify-between mb-4">
-                                <input
-                                type="text"
-                                placeholder="Search..."
-                                className="border px-4 py-2 rounded w-1/3"
-                                value={searchTerm['Đã Hủy']}
-                                onChange={(e) => handleSearchChange('Đã Hủy', e.target.value)}
-                                />
-                                <button
-                                onClick={() => handleSearch('Đã Hủy')}
-                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
-                                >
-                                Tìm kiếm
-                                </button>
-                            </div>
-                            <div className="mt-4 overflow-x-auto">
-                                <table className="min-w-full bg-white border border-gray-300">
-                                    <thead>
-                                        <tr>
-                                            <th className="border px-4 py-2 text-center">ID</th>
-                                            <th className="border px-4 py-2 text-center">Thời Gian Đặt</th>
-                                            <th className="border px-4 py-2 text-center">Thời Gian Hết Hạn</th>
-                                            <th className="border px-4 py-2 text-center">Đếm Ngược</th>
-                                            <th className="border px-4 py-2 text-center">Trạng Thái</th>
-                                            <th className="border px-4 py-2 text-center">Tên Người Dùng</th>
-                                            <th className="border px-4 py-2 text-center">Số Bàn</th>
-                                            <th className="border px-4 py-2 text-center">Loại Bàn</th>
-                                           
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    {/* {filterBookingsByStatus('Đã Hủy').map(booking => ( */}
-                                    {getPaginatedBookings('Đã Hủy').map(booking => (
-                                            <tr key={booking.id}>
-                                                <td className="border px-4 py-2 text-center">{booking.id}</td>
-                                                <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
-                                                <td className="py-2 px-4 border-b border-r text-center">
-                                                    {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
-                                                </td>
-                                                <td className="border px-4 py-2 text-center">
-                                                    {timeLeft[booking.id] > 0 ? formatTimeLeft(timeLeft[booking.id]) : "Hết hạn"}
-                                                </td>
-                                                <td className="border px-4 py-2 text-center">{booking.status}</td>
-                                                <td className="border px-4 py-2 text-center">{booking.fullName}</td>
-                                                {/* <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td> */}
-                                                <td className="border px-4 py-2 text-center">{booking.tableNumbers.join(', ')}</td>
-                                                <td className="border px-4 py-2 text-center">{booking.tableTypes.join(', ')}</td>
+                                        </thead>
+                                        <tbody>
+                                        {/* {filterBookingsByStatus('Chờ Xác Nhận').map(booking => ( */}
+                                        {getPaginatedBookings('Chờ Xác Nhận').map(booking => (
+                                                <tr key={booking.id}>
+                                                    <td className="border px-4 py-2 text-center">{booking.id}</td>
+                                                    <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                    {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
+                                                    <td className="py-2 px-4 border-b border-r text-center">
+                                                        {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                    </td>
+                                                    <td className="border px-4 py-2 text-center">{booking.status}</td>
+                                                    <td className="border px-4 py-2 text-center">{booking.fullName}</td>
+                                                    {/* <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td> */}
+                                                    <td className="border px-4 py-2 text-center">{booking.tableNumbers.join(', ')}</td>
+                                                    <td className="border px-4 py-2 text-center">{booking.tableTypes.join(', ')}</td>
                                                 
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Phân trang */}
-                            <div className="mt-4">
-                                <p className="text-sm">Trang {currentPage['Đã Hủy']} / {totalPages('Đã Hủy')}</p>
-                                <div className="flex justify-center">
-                                    {Array.from({ length: totalPages('Đã Hủy') }, (_, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => handlePageChange('Đã Hủy', index + 1)}
-                                        className={`mx-1 px-3 py-1 rounded ${currentPage['Đã Hủy'] === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                                    >
-                                        {index + 1}
-                                    </button>
-                                    ))}
+                                                    <td className="border px-4 py-2 text-center">
+                                                        <button onClick={() => handleEdit(booking)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">
+                                                            Cập Nhật
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
-                            </div>
-                        </TabPanel>
 
-                        {/* Tab "Đã Nhận Bàn" */}
-                        <TabPanel>
-                            {/* Thanh tìm kiếm */}
-                            <div className="flex justify-between mb-4">
-                                <input
-                                type="text"
-                                placeholder="Search..."
-                                className="border px-4 py-2 rounded w-1/3"
-                                value={searchTerm['Đã Nhận Bàn']}
-                                onChange={(e) => handleSearchChange('Đã Nhận Bàn', e.target.value)}
-                                />
-                                <button
-                                onClick={() => handleSearch('Đã Nhận Bàn')}
-                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
-                                >
-                                Tìm kiếm
-                                </button>
-                            </div>
-
-                            <div className="mt-4 overflow-x-auto">
-                                <table className="min-w-full bg-white border border-gray-300">
-                                    <thead>
-                                        <tr>
-                                            <th className="border px-4 py-2 text-center">ID</th>
-                                            <th className="border px-4 py-2 text-center">Thời Gian Đặt</th>
-                                            <th className="border px-4 py-2 text-center">Thời Gian Hết Hạn</th>
-                                            <th className="border px-4 py-2 text-center">Trạng Thái</th>
-                                            <th className="border px-4 py-2 text-center">Tên Người Dùng</th>
-                                            <th className="border px-4 py-2 text-center">Số Bàn</th>
-                                            <th className="border px-4 py-2 text-center">Loại Bàn</th>
-                                            <th className="border px-4 py-2 text-center">Hành Động</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    {/* {filterBookingsByStatus('Đã Nhận Bàn').map(booking => ( */}
-                                    {getPaginatedBookings('Đã Nhận Bàn').map(booking => (
-                                            <tr key={booking.id}>
-                                                <td className="border px-4 py-2 text-center">{booking.id}</td>
-                                                <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
-                                                <td className="py-2 px-4 border-b border-r text-center">
-                                                    {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
-                                                </td>
-                                                <td className="border px-4 py-2 text-center">{booking.status}</td>
-                                                <td className="border px-4 py-2 text-center">{booking.fullName}</td>
-                                                {/* <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td> */}
-                                                <td className="border px-4 py-2 text-center">{booking.tableNumbers.join(', ')}</td>
-                                                <td className="border px-4 py-2 text-center">{booking.tableTypes.join(', ')}</td>
-                                                <td className="border px-4 py-2 text-center">
-                                                    {/* <button onClick={() => handleRecieved(booking)} className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700">
-                                                        Kết Thúc
-                                                    </button> */}
-                                                    <button
-                                                        onClick={() => handleEndClick(booking)}  // Gọi hàm handleEndClick
-                                                        className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700"
-                                                    >
-                                                        Kết Thúc
-                                                    </button>
-
-                                                </td>
-                                            </tr>
+                                {/* Phân trang */}
+                                <div className="mt-4">
+                                    <p className="text-sm">Trang {currentPage['Chờ Xác Nhận']} / {totalPages('Chờ Xác Nhận')}</p>
+                                    <div className="flex justify-center">
+                                        {Array.from({ length: totalPages('Chờ Xác Nhận') }, (_, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handlePageChange('Chờ Xác Nhận', index + 1)}
+                                            className={`mx-1 px-3 py-1 rounded ${currentPage['Chờ Xác Nhận'] === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                                        >
+                                            {index + 1}
+                                        </button>
                                         ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Phân trang */}
-                            <div className="mt-4">
-                                <p className="text-sm">Trang {currentPage['Đã Nhận Bàn']} / {totalPages('Đã Nhận Bàn')}</p>
-                                <div className="flex justify-center">
-                                    {Array.from({ length: totalPages('Đã Nhận Bàn') }, (_, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => handlePageChange('Đã Nhận Bàn', index + 1)}
-                                        className={`mx-1 px-3 py-1 rounded ${currentPage['Đã Nhận Bàn'] === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-                                    >
-                                        {index + 1}
-                                    </button>
-                                    ))}
+                                    </div>
                                 </div>
-                            </div>
-                        </TabPanel>
-                    </Tabs>
+                            </TabPanel>
 
-                    {/* Form chỉnh sửa trạng thái booking */}
-                    {isEditing && (
-                        <div className="mt-6 p-4 border border-gray-300 bg-white">
-                            <h2 className="text-2xl mb-4">Cập Nhật Trạng Thái Đơn Đặt</h2>
-                            <form onSubmit={handleUpdateStatus}>
-                                <div>
-                                    <label className="block mb-2">Trạng Thái:</label>
-                                    <select
-                                        value={currentBooking.status}
-                                        onChange={(e) => setCurrentBooking({ ...currentBooking, status: e.target.value })}
-                                        className="border rounded px-3 py-2"
+                            {/* Tab "Đã Xác Nhận" */}
+                            <TabPanel>
+                                {/* Thanh tìm kiếm */}
+                                <div className="flex justify-between mb-4">
+                                    <input
+                                    type="text"
+                                    placeholder="Search..."
+                                    className="border px-4 py-2 rounded w-1/3"
+                                    value={searchTerm['Đã Xác Nhận']}
+                                    onChange={(e) => handleSearchChange('Đã Xác Nhận', e.target.value)}
+                                    />
+                                    <button
+                                    onClick={() => handleSearch('Đã Xác Nhận')}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
                                     >
-                                        <option value="Chờ Xác Nhận">Chờ Xác Nhận</option>
-                                        <option value="Đã Xác Nhận">Đã Xác Nhận</option>
-                                        <option value="Đã Hủy">Đã Hủy</option>
+                                    Tìm kiếm
+                                    </button>
+                                </div>
+                                <div className="mt-4 overflow-x-auto">
+                                    <table className="min-w-full bg-white border border-gray-300">
+                                        <thead>
+                                            <tr>
+                                                <th className="border px-4 py-2 text-center w-1/10">Mã Đơn</th>
+                                                <th className="border px-4 py-2 text-center w-1/10">Thời Gian Đặt</th>
+                                                <th className="border px-4 py-2 text-center w-1/10">Thời Gian Hết Hạn</th>
+                                                <th className="border px-4 py-2 text-center w-1/12">Đếm Ngược</th>
+                                                <th className="border px-4 py-2 text-center w-1/10">Trạng Thái</th>
+                                                <th className="border px-4 py-2 text-center w-1/10">Tên Người Dùng</th>
+                                                <th className="border px-4 py-2 text-center w-10">Số Bàn</th>
+                                                <th className="border px-4 py-2 text-center w-10">Loại Bàn</th>
+                                                
+                                                <th className="border px-4 py-2 text-center w-1/5">Hành Động</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        {/* {filterBookingsByStatus('Đã Xác Nhận').map(booking => ( */}
+                                        {getPaginatedBookings('Đã Xác Nhận').map(booking => (
+                                                <tr key={booking.id}>
+                                                    <td className="border px-4 py-2 text-center">{booking.id}</td>
+                                                    <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                    {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
+                                                    <td className="py-2 px-4 border-b border-r text-center">
+                                                        {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                    </td>
+                                                    <td className="border px-4 py-2 text-center">
+                                                        {timeLeft[booking.id] > 0 ? formatTimeLeft(timeLeft[booking.id]) : "Trong ít phút nữa"}
+                                                    </td>
+                                                    <td className="border px-4 py-2 text-center">{booking.status}</td>
+                                                    <td className="border px-4 py-2 text-center">{booking.fullName}</td>
+                                                    <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td>
+                                                    {/* <td className="border px-4 py-2 text-center">{booking.tableNumbers.join(', ')}</td> */}
+                                                    <td className="border px-4 py-2 text-center">{booking.tableTypes.join(', ')}</td>
+                                                    <td className="border px-4 py-2 text-center">
+                                                        <div className="flex text-center justify-center">
+                                                            <button onClick={() => handleConfirm(booking)} className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700 flex items-center gap-1">
+                                                            <FaCheckCircle className="text-white" /> Nhận Bàn
+                                                            </button>
+                                                        </div>
+                                                       
+
+                                                        {/* <button onClick={() => handleChange(booking)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700 ml-2 flex items-center">
+                                                            <FaExchangeAlt className="text-white" /> Chuyển Bàn
+                                                        </button>
+
+                                                        
+                                                        {booking.tableIds.length > 1 && (
+                                                            <button onClick={() => handleCancelTable(booking)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700 ml-2 mt-2 flex items-center">
+                                                                <FaTimes className="text-white" /> Hủy Bàn
+                                                            </button>
+                                                        )} */}
+
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Phân trang */}
+                                <div className="mt-4">
+                                    <p className="text-sm">Trang {currentPage['Đã Xác Nhận']} / {totalPages('Đã Xác Nhận')}</p>
+                                    <div className="flex justify-center">
+                                        {Array.from({ length: totalPages('Đã Xác Nhận') }, (_, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handlePageChange('Đã Xác Nhận', index + 1)}
+                                            className={`mx-1 px-3 py-1 rounded ${currentPage['Đã Xác Nhận'] === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                                        >
+                                            {index + 1}
+                                        </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </TabPanel>
+
+                            {/* Tab "Đã Hủy" */}
+                            <TabPanel>
+                                {/* Thanh tìm kiếm */}
+                                <div className="flex justify-between mb-4">
+                                    <input
+                                    type="text"
+                                    placeholder="Search..."
+                                    className="border px-4 py-2 rounded w-1/3"
+                                    value={searchTerm['Đã Hủy']}
+                                    onChange={(e) => handleSearchChange('Đã Hủy', e.target.value)}
+                                    />
+                                    <button
+                                    onClick={() => handleSearch('Đã Hủy')}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                    >
+                                    Tìm kiếm
+                                    </button>
+                                </div>
+                                <div className="mt-4 overflow-x-auto">
+                                    <table className="min-w-full bg-white border border-gray-300">
+                                        <thead>
+                                            <tr>
+                                                <th className="border px-4 py-2 text-center">ID</th>
+                                                <th className="border px-4 py-2 text-center">Thời Gian Đặt</th>
+                                                <th className="border px-4 py-2 text-center">Thời Gian Hết Hạn</th>
+                                                <th className="border px-4 py-2 text-center">Đếm Ngược</th>
+                                                <th className="border px-4 py-2 text-center">Trạng Thái</th>
+                                                <th className="border px-4 py-2 text-center">Tên Người Dùng</th>
+                                                <th className="border px-4 py-2 text-center">Số Bàn</th>
+                                                <th className="border px-4 py-2 text-center">Loại Bàn</th>
+                                            
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        {/* {filterBookingsByStatus('Đã Hủy').map(booking => ( */}
+                                        {getPaginatedBookings('Đã Hủy').map(booking => (
+                                                <tr key={booking.id}>
+                                                    <td className="border px-4 py-2 text-center">{booking.id}</td>
+                                                    <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                    {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
+                                                    <td className="py-2 px-4 border-b border-r text-center">
+                                                        {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                    </td>
+                                                    <td className="border px-4 py-2 text-center">
+                                                        {timeLeft[booking.id] > 0 ? formatTimeLeft(timeLeft[booking.id]) : "Hết hạn"}
+                                                    </td>
+                                                    <td className="border px-4 py-2 text-center">{booking.status}</td>
+                                                    <td className="border px-4 py-2 text-center">{booking.fullName}</td>
+                                                    {/* <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td> */}
+                                                    <td className="border px-4 py-2 text-center">{booking.tableNumbers.join(', ')}</td>
+                                                    <td className="border px-4 py-2 text-center">{booking.tableTypes.join(', ')}</td>
+                                                    
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Phân trang */}
+                                <div className="mt-4">
+                                    <p className="text-sm">Trang {currentPage['Đã Hủy']} / {totalPages('Đã Hủy')}</p>
+                                    <div className="flex justify-center">
+                                        {Array.from({ length: totalPages('Đã Hủy') }, (_, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handlePageChange('Đã Hủy', index + 1)}
+                                            className={`mx-1 px-3 py-1 rounded ${currentPage['Đã Hủy'] === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                                        >
+                                            {index + 1}
+                                        </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </TabPanel>
+
+                            {/* Tab "Đã Nhận Bàn" */}
+                            <TabPanel>
+                                {/* Thanh tìm kiếm */}
+                                <div className="flex justify-between mb-4">
+                                    <input
+                                    type="text"
+                                    placeholder="Search..."
+                                    className="border px-4 py-2 rounded w-1/3"
+                                    value={searchTerm['Đã Nhận Bàn']}
+                                    onChange={(e) => handleSearchChange('Đã Nhận Bàn', e.target.value)}
+                                    />
+                                    <button
+                                    onClick={() => handleSearch('Đã Nhận Bàn')}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                    >
+                                    Tìm kiếm
+                                    </button>
+                                </div>
+
+                                <div className="mt-4 overflow-x-auto">
+                                    <table className="min-w-full bg-white border border-gray-300">
+                                        <thead>
+                                            <tr>
+                                                <th className="border px-4 py-2 text-center">ID</th>
+                                                <th className="border px-4 py-2 text-center">Thời Gian Đặt</th>
+                                                <th className="border px-4 py-2 text-center">Thời Gian Hết Hạn</th>
+                                                <th className="border px-4 py-2 text-center">Trạng Thái</th>
+                                                <th className="border px-4 py-2 text-center">Tên Người Dùng</th>
+                                                <th className="border px-4 py-2 text-center">Số Bàn</th>
+                                                <th className="border px-4 py-2 text-center">Loại Bàn</th>
+                                                <th className="border px-4 py-2 text-center">Hành Động</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        {/* {filterBookingsByStatus('Đã Nhận Bàn').map(booking => ( */}
+                                        {getPaginatedBookings('Đã Nhận Bàn').map(booking => (
+                                                <tr key={booking.id}>
+                                                    <td className="border px-4 py-2 text-center">{booking.id}</td>
+                                                    <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                    {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
+                                                    <td className="py-2 px-4 border-b border-r text-center">
+                                                        {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                    </td>
+                                                    <td className="border px-4 py-2 text-center">{booking.status}</td>
+                                                    <td className="border px-4 py-2 text-center">{booking.fullName}</td>
+                                                    {/* <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td> */}
+                                                    <td className="border px-4 py-2 text-center">{booking.tableNumbers.join(', ')}</td>
+                                                    <td className="border px-4 py-2 text-center">{booking.tableTypes.join(', ')}</td>
+                                                    <td className="flex border px-4 py-2 text-center justify-center">
+                                                        {/* <button onClick={() => handleRecieved(booking)} className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700">
+                                                            Kết Thúc
+                                                        </button> */}
+                                                        <button
+                                                            onClick={() => handleEndClick(booking)}  // Gọi hàm handleEndClick
+                                                            className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700 flex items-center gap-1"
+                                                        >
+                                                            <FaCheckCircle className="text-white" /> Kết Thúc
+                                                        </button>
+
+                                                        {/* <button
+                                                            onClick={() => handleSwitchTableInPlayClick(booking)}  // Gọi hàm handleSwitchTableInPlayClick khi chuyển bàn
+                                                            className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700 ml-2 flex items-center gap-1"
+                                                        >
+                                                             <FaExchangeAlt className="text-white" /> Chuyển Bàn
+                                                        </button> */}
+
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Phân trang */}
+                                <div className="mt-4">
+                                    <p className="text-sm">Trang {currentPage['Đã Nhận Bàn']} / {totalPages('Đã Nhận Bàn')}</p>
+                                    <div className="flex justify-center">
+                                        {Array.from({ length: totalPages('Đã Nhận Bàn') }, (_, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handlePageChange('Đã Nhận Bàn', index + 1)}
+                                            className={`mx-1 px-3 py-1 rounded ${currentPage['Đã Nhận Bàn'] === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                                        >
+                                            {index + 1}
+                                        </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </TabPanel>
+                        </Tabs>
+
+                        {/* Form chỉnh sửa trạng thái booking */}
+                        {isModalEditingOpen && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                                <div className="bg-white rounded-lg p-6 w-96">
+                                    <h2 className="text-2xl mb-4 font-bold text-center">Cập Nhật Trạng Thái Đơn Đặt</h2>
+                                    <form onSubmit={handleUpdateStatus}>
+                                        <div>
+                                            <label className="block mb-2">Trạng Thái:</label>
+                                            <select
+                                                value={currentBooking.status}
+                                                onChange={(e) => setCurrentBooking({ ...currentBooking, status: e.target.value })}
+                                                className="w-full border rounded px-3 py-2"
+                                            >
+                                                <option value="Chờ Xác Nhận">Chờ Xác Nhận</option>
+                                                <option value="Đã Xác Nhận">Đã Xác Nhận</option>
+                                                <option value="Đã Hủy">Đã Hủy</option>
+                                                
+                                            </select>
+                                        </div>
+
+                                        <div className="flex mt-4 space-x-2">
+                                            <button type="submit" className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4">
+                                                Cập Nhật
+                                            </button>
+                                            <button type="button" onClick={() => setIsModalEdittingOpen(false)} className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 mt-4 ml-2">
+                                                Hủy
+                                            </button>
+                                        </div>
                                         
-                                    </select>
+                                    </form>
                                 </div>
-                                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4">
-                                    Cập Nhật
-                                </button>
-                                <button type="button" onClick={() => setIsEditing(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 mt-4 ml-2">
-                                    Hủy
-                                </button>
-                            </form>
-                        </div>
-                    )}
-
-                    {/* Form xác nhận hủy bàn */}
-                    {isModalOpen && selectedBooking && (
-                        <div className="mt-6 p-4 border border-gray-300 bg-white">
-                            <h3 className="text-2xl mb-4">Chọn các bàn cần hủy</h3>
-                            {selectedBooking.tableIds.map((tableId) => (
-                                <div key={tableId}>
-                                    <label>
-                                        <input
-                                            type="checkbox"
-                                            value={tableId}
-                                            checked={selectedTables.includes(tableId)}
-                                            onChange={() => handleTableSelect(tableId)}
-                                        />
-                                        Bàn {tableId}
-                                    </label>
-                                </div>
-                            ))}
-                            <button onClick={handleCancelSelectedTables} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
-                                Xác Nhận
-                            </button>
-                            <button onClick={() => setIsModalOpen(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2">
-                                Hủy
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Modal để chọn bàn mới */}
-                    {isChangeNewModalOpen && selectedBooking && (
-                        <div className="mt-6 p-4 border border-gray-300 bg-white">
-                            <h2 className="text-2xl mb-4">Chọn bàn mới</h2>
+                            </div>
                             
-                            {/* Hiển thị bàn cũ */}
-                            {selectedBooking.tables && selectedBooking.tables.length > 0 && (
-                                <div className="mb-4">
-                                    <h3>Bàn hiện tại</h3>
-                                    {selectedBooking.tables.map((table) => (
-                                        <div key={table.id}>
+                        )}
+
+                        {/* Form xác nhận hủy bàn */}
+                        {isModalCancelOpen && selectedBooking && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                                <div className="bg-white rounded-lg p-6 w-96">
+                                    <h3 className="text-2xl mb-4 font-bold text-center">Chọn Các Bàn Cần Hủy</h3>
+                                    {selectedBooking.tableIds.map((tableId) => (
+                                        <div key={tableId}>
                                             <label>
                                                 <input
                                                     type="checkbox"
-                                                    value={table.id}
-                                                    checked={selectedOldTables.includes(table.id)}
-                                                    onChange={() => handleOldTableSelect(table.id)} // Chọn bàn cũ
+                                                    value={tableId}
+                                                    checked={selectedTables.includes(tableId)}
+                                                    onChange={() => handleTableSelect(tableId)}
                                                 />
-                                                Bàn {table.tableNum || "Không"} - {table.tableStatus} - {table.typeName}
+                                                Bàn {tableId}
                                             </label>
                                         </div>
                                     ))}
-                                </div>
-                            )}
-                            
-                            {/* Hiển thị bàn mới */}
-                            <div className="mb-4">
-                                <h3>Chọn bàn mới</h3>
-                                {availableTables.map((table) => (
-                                    <div key={table.id}>
-                                        <label>
-                                            <input
-                                                type="checkbox"
-                                                value={table.id}
-                                                checked={selectedNewTables.includes(table.id)}
-                                                onChange={() => handleNewTableSelect(table.id)} // Chọn bàn mới
-                                            />
-                                            Bàn {table.tableNum} - {table.tableStatus} - {table.type?.name}
-                                        </label>
+                                    <div className="flex mt-4 space-x-2">
+                                        <button onClick={handleCancelSelectedTables} className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                            Xác Nhận
+                                        </button>
+                                        <button onClick={() => setIsModalCancelOpen(false)} className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2">
+                                            Hủy
+                                        </button>
                                     </div>
-                                ))}
+                                    
+                                </div>
                             </div>
+                            
+                        )}
 
-                            {/* Các nút xác nhận hoặc hủy */}
-                            <div className="mt-4">
-                                <button onClick={handleConfirmChange} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
-                                    Xác Nhận
-                                </button>
-                                <button onClick={() => setIsChangeNewModalOpen(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2">
-                                    Hủy
-                                </button>
+                        {/* Modal để chọn bàn mới khi chuyển bàn */}
+                        {isChangeNewModalOpen && selectedBooking && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+                                <div className="bg-white rounded-lg p-6 w-96">
+                                    <h2 className="text-2xl mb-4 font-bold text-center">Chuyển Bàn</h2>
+                                    
+                                    {/* Hiển thị bàn cũ */}
+                                    {selectedBooking.tables && selectedBooking.tables.length > 0 && (
+                                        <div className="mb-4">
+                                            <h3 className="font-bold">Bàn Hiện Tại</h3>
+                                            {selectedBooking.tables.map((table) => (
+                                                <div key={table.id}>
+                                                    <label>
+                                                        <input
+                                                            type="checkbox"
+                                                            value={table.id}
+                                                            checked={selectedOldTables.includes(table.id)}
+                                                            onChange={() => handleOldTableSelect(table.id)} // Chọn bàn cũ
+                                                        />
+                                                        Bàn {table.tableNum || "Không"} - {table.tableStatus} - {table.typeName}
+                                                    </label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    
+                                    {/* Hiển thị bàn mới */}
+                                    <div className="mb-4">
+                                        <h3 className="font-bold">Chọn Bàn Mới</h3>
+                                        {availableTables.map((table) => (
+                                            <div key={table.id}>
+                                                <label>
+                                                    <input
+                                                        type="checkbox"
+                                                        value={table.id}
+                                                        checked={selectedNewTables.includes(table.id)}
+                                                        onChange={() => handleNewTableSelect(table.id)} // Chọn bàn mới
+                                                    />
+                                                    Bàn {table.tableNum} - {table.tableStatus} - {table.type?.name}
+                                                </label>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Các nút xác nhận hoặc hủy */}
+                                    <div className="flex mt-4 space-x-2">
+                                        <button onClick={handleConfirmChange} className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                            Xác Nhận
+                                        </button>
+                                        <button onClick={() => setIsChangeNewModalOpen(false)} className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2">
+                                            Hủy
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    )}
+                            
+                        )}
 
 
-                    {/* mở form để chọn xác nhận kết thúc */}
-                    {isChangeModalOpen && (
-                            <ConfirmEndModal
-                                booking={selectedBooking}
-                                onClose={() => setIsChangeModalOpen(false)}
-                                // onEndAll={handleConfirmEndAll} //kết thúc tất cả
-                                onEndPartial={handleConfirmEndPartial} //kết thúc bàn mu
-                            />
-                    )}
+                        {/* mở form để chọn xác nhận kết thúc */}
+                        {isEndModalOpen && (
+                                <ConfirmEndModal
+                                    booking={selectedBooking}
+                                    onClose={() => setIsEndModalOpen(false)}
+                                    // onEndAll={handleConfirmEndAll} //kết thúc tất cả
+                                    onEndPartial={handleConfirmEndPartial} //kết thúc bàn mu
+                                />
+                        )}
 
                     {/* {showPartialModal  && (
                         <SelectTablesModal
@@ -1408,15 +1545,26 @@ const StaffBooking = () => {
                         />
                     )} */}
 
-                {showPartialModal && (
-                    <SelectTablesModal
-                        booking={selectedBooking}
-                        onClose={() => setShowPartialModal(false)}  // Đóng modal khi người dùng hủy
-                        onConfirm={handleRecievedPartial}  // Khi xác nhận
-                        selectedTableIds={selectedTableIds}  // Truyền danh sách bàn đã chọn vào modal
-                        setSelectedTableIds={setSelectedTableIds}  // Truyền hàm cập nhật bàn đã chọn
-                    />
-                )}
+                        {showPartialModal && (
+                            <SelectTablesModal
+                                booking={selectedBooking}
+                                onClose={() => setShowPartialModal(false)}  // Đóng modal khi người dùng hủy
+                                onConfirm={handleRecievedPartial}  // Khi xác nhận
+                                selectedTableIds={selectedTableIds}  // Truyền danh sách bàn đã chọn vào modal
+                                setSelectedTableIds={setSelectedTableIds}  // Truyền hàm cập nhật bàn đã chọn
+                            />
+                        )}
+
+                
+                        <TableSelectModal
+                            isOpen={isSwitchModalOpen}
+                            onClose={() => setIsSwitchNewModalOpen(false)}
+                            availableTables={availableTables}
+                            initialSelectedTable={currentSelectedTable} // Truyền trạng thái bàn hiện tại
+                            onSelectTable={handleSelectTable}
+                        />
+                    
+                    
 
                 </main>
             </div>

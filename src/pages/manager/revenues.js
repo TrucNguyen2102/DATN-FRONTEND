@@ -6,6 +6,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import 'chart.js/auto';
 import ManagerHeader from '../components/Header/ManagerHeader';
 import ManagerSidebar from '../components/Sidebar/ManagerSidebar';
+import { FaSyncAlt  } from "react-icons/fa"
 
 const StatisticsPage = () => {
   const [ordersToday, setOrdersToday] = useState(0);
@@ -105,8 +106,8 @@ const StatisticsPage = () => {
         <main className="flex-1 p-6">
           <h1 className="text-3xl font-semibold mb-8 text-center">Thống Kê</h1>
 
-          <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">
-            Làm Mới
+          <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-1">
+          <FaSyncAlt className="text-white" /> Làm Mới
           </button>
 
           <div className="flex justify-center mb-6">

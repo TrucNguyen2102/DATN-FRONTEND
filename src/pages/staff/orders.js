@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import StaffHeader from "../components/Header/StaffHeader";
 import StaffSidebar from "../components/Sidebar/StaffSidebar";
+import { FaPlus, FaSyncAlt  } from "react-icons/fa"
 
 const MenuManagement = () => {
     const [tables, setTables] = useState([]); // Danh sách bàn
@@ -265,78 +266,103 @@ const MenuManagement = () => {
                 <StaffSidebar className="w-1/4 bg-gray-200 p-4" />
                 <main className="flex-1 p-6">
                     <div className="p-4">
-                        <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Đơn Món</h1>
+                        <h1 className="text-3xl font-semibold mb-8 text-center">Danh Sách Đơn Món</h1>
                         {error && <p className="text-red-500 text-center">{error}</p>}
 
-                        <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mb-4">
-                            Làm Mới
-                        </button>
+                        <div className="flex">
+                            <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mb-4 flex items-center gap-1">
+                                <FaSyncAlt className="text-white" />
+                                Làm Mới
+                            </button>
 
-                        {/* Nút "Thêm" */}
-                        <button
-                            onClick={toggleAddForm}
-                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4 ml-4"
-                        >
-                            {isAdding ? 'Ẩn Form' : 'Thêm Đơn'}
-                        </button>
+                            {/* Nút "Thêm" */}
+                            <button
+                                onClick={toggleAddForm}
+                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4 ml-2 flex items-center gap-1"
+                            >
+                                {/* <FaPlus  className="text-white" /> {isAdding ? 'Ẩn Form' : 'Thêm Đơn'} */}
+                                <FaPlus  className="text-white" /> Thêm Đơn
+                            </button>
+                        </div>
+                        
 
                         {/* Hiển thị form khi isAdding là true */}
                         {isAdding && (
-                            <div>
-                                {/* Chọn bàn */}
-                                <div className="mb-4">
-                                    <label className="block mb-2 font-semibold">Chọn bàn:</label>
-                                    <select
-                                        className="border rounded px-4 py-2 w-full"
-                                        value={selectedTable}
-                                        onChange={(e) => setSelectedTable(e.target.value)}
-                                       
-                                    >
-                                        <option value="">-- Chọn bàn --</option>
-                                        {tables.map((table) => (
-                                            <option key={table.id} value={table.id}>
-                                                Bàn số {table.tableNum} ({table.tableStatus})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                            <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+                                <div className="bg-white p-6 rounded shadow-lg w-96">
+                                    <div className="mb-8">
+                                        {/* Chọn bàn */}
+                                        <div className="mb-4">
+                                            <h2 className="text-xl text-center font-bold mb-4">Thêm Món</h2>
+                                            <label className="block mb-2 font-semibold">Chọn Bàn</label>
+                                            <select
+                                                className="border rounded px-4 py-2 w-full"
+                                                value={selectedTable}
+                                                onChange={(e) => setSelectedTable(e.target.value)}
+                                            
+                                            >
+                                                <option value="">-- Chọn Bàn --</option>
+                                                {tables.map((table) => (
+                                                    <option key={table.id} value={table.id}>
+                                                        Bàn Số {table.tableNum} ({table.tableStatus})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
 
-                                {/* Chọn món */}
-                                <div className="mb-4">
-                                    <label className="block mb-2 font-semibold">Chọn món:</label>
-                                    <select
-                                        className="border rounded px-4 py-2 w-full"
-                                        value={selectedMenu}
-                                        onChange={(e) => setSelectedMenu(e.target.value)}
-                                    >
-                                        <option value="">-- Chọn món --</option>
-                                        {menuItems.map((menu) => (
-                                            <option key={menu.id} value={menu.id}>
-                                                {menu.itemName} ({formatCurrency(menu.price)} VND)
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <label className="block mt-4 mb-2 font-semibold">Số lượng:</label>
-                                    <input
-                                        type="number"
-                                        className="border rounded px-4 py-2 w-full"
-                                        value={quantity}
-                                        onChange={(e) => setQuantity(Number(e.target.value))}
-                                        min="1"
-                                    />
-                                    <button
-                                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                                        onClick={handleAddOrder}
-                                    >
-                                        Thêm vào hóa đơn
-                                    </button>
+                                        {/* Chọn món */}
+                                        <div className="mb-4">
+                                            <label className="block mb-2 font-semibold">Chọn Món</label>
+                                            <select
+                                                className="border rounded px-4 py-2 w-full"
+                                                value={selectedMenu}
+                                                onChange={(e) => setSelectedMenu(e.target.value)}
+                                            >
+                                                <option value="">-- Chọn Món --</option>
+                                                {menuItems.map((menu) => (
+                                                    <option key={menu.id} value={menu.id}>
+                                                        {menu.itemName} ({formatCurrency(menu.price)} VND)
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <label className="block mt-4 mb-2 font-semibold">Số Lượng</label>
+                                            <input
+                                                type="number"
+                                                className="border rounded px-4 py-2 w-full"
+                                                value={quantity}
+                                                onChange={(e) => setQuantity(Number(e.target.value))}
+                                                min="1"
+                                            />
+
+                                            <div className="mt-4 flex space-x-2">
+                                                <button
+                                                    className="flex-1 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
+                                                    onClick={handleAddOrder}
+                                                >
+                                                    Thêm 
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsAdding(false)}
+                                                    className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2"
+                                                    >
+                                                        Hủy
+                                                </button>
+                                            </div>
+
+                                            
+                                        </div>
+                                    </div>
                                 </div>
+                                
                             </div>
+                            
                         )}
 
                         {/* Danh sách đơn món */}
                          <div>
-                             <h2 className="text-xl font-bold mb-2 text-center">Danh Sách Đơn Món</h2>
+                             {/* <h2 className="text-xl font-bold mb-2 text-center">Danh Sách Đơn Món</h2> */}
                              <table className="min-w-full bg-white border border-gray-300 table-fixed">
                                     <thead>
                                      <tr>

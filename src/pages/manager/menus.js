@@ -3,6 +3,7 @@ import { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import AuthContext from '../contexts/AuthContext';
 import ManagerSidebar from "../components/Sidebar/ManagerSidebar";
+import { FaSyncAlt, FaPlus, FaEdit, FaTrash  } from "react-icons/fa"
 
 const MenusPage = () => {
     const [menus, setMenus] = useState([]);
@@ -16,35 +17,65 @@ const MenusPage = () => {
     });
     const [isEditing, setIsEditing] = useState(false);
 
+    // Thêm state để quản lý phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [pageSize, setPageSize] = useState(5); // Số bản ghi mỗi trang
+
     const { user } = useContext(AuthContext);
     console.log(user);
 
-    const fetchMenus = async () => {
-        try {
+    // const fetchMenus = async () => {
+    //     try {
             
     
-            const response = await axios.get('/api/menus/all', {
+    //         const response = await axios.get('/api/menus/all', {
                 
+    //         });
+    
+    //         if (Array.isArray(response.data)) {
+    //             // Xử lý dữ liệu trả về
+    //             const processedData = response.data.map(item => ({
+    //                 id: item.id,
+    //                 itemName: item.itemName,
+    //                 price: item.price,
+                    
+    //             }));
+                
+    //             setMenus(processedData);
+    //         } else {
+    //             setError('Dữ liệu không hợp lệ.');
+    //         }
+    //     } catch (error) {
+    //         setError('Không thể tải danh sách menu.');
+    //         console.error(error);
+    //     }
+    // };
+
+    const fetchMenus = async (page = 1, size = 5) => {
+        try {
+            const response = await axios.get('/api/menus/pages/all', {
+                params: { page: page - 1, size }, // Backend sử dụng page bắt đầu từ 0
             });
     
-            if (Array.isArray(response.data)) {
-                // Xử lý dữ liệu trả về
-                const processedData = response.data.map(item => ({
-                    id: item.id,
-                    itemName: item.itemName,
-                    price: item.price,
-                    
-                }));
-                
-                setMenus(processedData);
-            } else {
-                setError('Dữ liệu không hợp lệ.');
-            }
+            const { content, totalPages } = response.data;
+            setMenus(content); // `content` chứa danh sách menu
+            setTotalPages(totalPages); // Tổng số trang
+            setCurrentPage(page); // Cập nhật trang hiện tại
         } catch (error) {
             setError('Không thể tải danh sách menu.');
             console.error(error);
         }
     };
+    
+
+    const handlePageChange = (newPage) => {
+        if (newPage > 0 && newPage <= totalPages) {
+            fetchMenus(newPage, pageSize); // Gọi API với trang mới
+        }
+    };
+    
+    
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -107,14 +138,31 @@ const MenusPage = () => {
     };
 
     const handleDeleteMenu = async (id) => {
-        if (window.confirm(`Bạn có chắc chắn muốn xóa menu này không?`)) {
-            try {
-                await axios.delete(`/api/menus/delete/${id}`);
-                setMenus(menus.filter(menu => menu.id !== id));
-            } catch (error) {
-                console.error("Lỗi khi xóa menu", error);
-            }
+        try {
+            // Kiểm tra xem loại bàn có được sử dụng trong bất kỳ bàn chơi nào không
+            const response = await axios.get(`/api/orders/check-menu-used/${id}`);
+            console.log("Response:", response.data);
+
+            if (response.data) {
+                // Nếu loại bàn đang được sử dụng, hiển thị thông báo và không xóa
+                alert('Menu này đang được sử dụng trong một đơn hoặc nhiều đơn món, không thể xóa.');
+            } else {
+                if (window.confirm(`Bạn có chắc chắn muốn xóa menu này không?`)) {
+                    try {
+                        await axios.delete(`/api/menus/delete/${id}`);
+                        setMenus(menus.filter(menu => menu.id !== id));
+                    } catch (error) {
+                        console.error("Lỗi khi xóa menu", error);
+                    }
+                }
+            } 
+        }catch (error) {
+            console.error("Lỗi khi kiểm tra/xóa menu", error);
         }
+        
+        
+
+        
     };
 
     const formatPrice = (price) => {
@@ -141,51 +189,80 @@ const MenusPage = () => {
                         <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Menu</h1>
                         {error && <p className="text-red-500 text-center">{error}</p>}
 
-                        <button
-                            onClick={() => {
-                                setShowForm(!showForm); setNewMenu({ id: null, itemName: '', price: ''}); }} 
-                            className="bg-blue-500 text-white px-4 py-2 mb-4 rounded hover:bg-blue-700 mr-5"
-                        >
-                            {showForm ? 'Ẩn Form' : 'Thêm Menu'}
-                        </button>
+                        <div className="flex mb-4">
+                            <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-1">
+                                <FaSyncAlt className="text-white" />   Làm Mới
+                            </button>
 
-                        <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">
-                                Làm Mới
-                        </button>
+                            <button
+                                onClick={() => {
+                                    setShowForm(!showForm); setNewMenu({ id: null, itemName: '', price: ''}); }} 
+                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 ml-2 flex items-center gap-1"
+                            >
+                                <FaPlus className="text-white" />
+                                {/* {showForm ? 'Ẩn Form' : 'Thêm Menu'} */}
+                                Thêm Menu
+                            </button>
+                        </div>
+                        
+
+                        
 
                         {showForm && (
-                            <form onSubmit={handleAddOrUpdateMenu} className="mb-4">
-                                <div className="mb-4">
-                                    <label className="block text-gray-700 font-bold">Tên Món</label>
-                                    <input
-                                        type="text"
-                                        name="itemName"
-                                        value={newMenu.itemName}
-                                        onChange={handleInputChange}
-                                        className="w-full border px-3 py-2"
-                                        required
-                                        disabled={!!newMenu.id} // Vô hiệu hóa trường nhập khi đang sửa
-                                    />
-                                </div>
+                            <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+                                <div className="bg-white p-6 rounded shadow-lg w-96">
+                                <h2 className="text-xl font-bold mb-4 text-center">{newMenu.id ? 'Sửa Menu' : 'Thêm Menu'}</h2>
+                                    <form onSubmit={handleAddOrUpdateMenu} className="mb-4">
+                                        <div className="mb-4">
+                                            <label className="block text-gray-700 font-bold">
+                                                Tên Món <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="itemName"
+                                                value={newMenu.itemName}
+                                                onChange={handleInputChange}
+                                                className="w-full border px-3 py-2"
+                                                required
+                                                disabled={!!newMenu.id} // Vô hiệu hóa trường nhập khi đang sửa
+                                            />
+                                        </div>
 
-                                <div className="mb-4">
-                                    <label className="block text-gray-700 font-bold">Giá</label>
-                                    <input
-                                        type="number"
-                                        name="price"
-                                        value={newMenu.price}
-                                        onChange={handleInputChange}
-                                        className="w-full border px-3 py-2"
-                                        required
-                                    />
-                                </div>
+                                        <div className="mb-4">
+                                            <label className="block text-gray-700 font-bold">
+                                                Giá <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="number"
+                                                name="price"
+                                                value={newMenu.price}
+                                                onChange={handleInputChange}
+                                                className="w-full border px-3 py-2"
+                                                required
+                                            />
+                                        </div>
 
+                                        <div className="flex mt-4 space-x-2">
+                                            <button type="submit" className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                                {newMenu.id ? 'Chỉnh Sửa' : 'Thêm'}
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowForm(false)}
+                                                className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2"
+                                            >
+                                                Hủy
+                                            </button>
+                                        </div>
+
+                                        
+
+                                    </form>
+                                </div>
                                 
-
-                                <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">
-                                    {newMenu.id ? 'Cập Nhật' : 'Thêm'}
-                                </button>
-                            </form>
+                            </div>
+                            
                         )}
 
                         <table className="min-w-full bg-white border border-gray-300 table-fixed">
@@ -206,12 +283,12 @@ const MenusPage = () => {
                                         <td className="py-2 px-4 border text-center">{formatPrice(menu.price)}</td>
                                         
 
-                                        <td className="py-2 px-4 border text-center">
-                                            <button onClick={() => handleEditMenu(menu)} className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-700">
-                                                Sửa
+                                        <td className="flex py-2 px-4 border text-center justify-center">
+                                            <button onClick={() => handleEditMenu(menu)} className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-700 flex items-center gap-1">
+                                                <FaEdit className="text-white" /> Sửa
                                             </button>
-                                            <button onClick={() => handleDeleteMenu(menu.id)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700 ml-2">
-                                                Xóa
+                                            <button onClick={() => handleDeleteMenu(menu.id)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700 ml-2 flex items-center gap-1">
+                                                <FaTrash className="text-white" /> Xóa
                                             </button>
                                         </td>
                                     </tr>
@@ -219,6 +296,26 @@ const MenusPage = () => {
                             </tbody>
 
                         </table>
+
+                        {/* phân trang */}
+                        <div className="flex justify-center mt-4">
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 mb-4"
+                            >
+                                Trước
+                            </button>
+                            <span className="px-4 py-2">{`Trang ${currentPage} / ${totalPages}`}</span>
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700 mb-4"
+                            >
+                                Sau
+                            </button>
+                        </div>
+
 
                     </main>
                 </div>

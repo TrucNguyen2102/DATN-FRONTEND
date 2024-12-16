@@ -7,10 +7,12 @@ import axios from 'axios';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
 import { jsPDF } from "jspdf";
+import { FaSyncAlt, FaPlus  } from "react-icons/fa"
 
 const StaffInvoices = () => {
     const [error, setError] = useState('');
     const [invoices, setInvoices] = useState([]);
+    const [payments, setPayments] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
     const [orderItems, setOrderItems] = useState([]);
     const [bookingTables, setBookingTables] = useState([]); 
@@ -31,8 +33,10 @@ const StaffInvoices = () => {
     const [tableDetails, setTableDetails] = useState([]);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [showConfirmPrint, setShowConfirmPrint] = useState(false);
+    const [showSelectPayment, setShowSelectPayment] = useState(false);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
 
-    const [currentPage, setCurrentPage] = useState({ 'Chưa Thanh Toán': 1, 'Chờ Thanh Toán': 1, 'Đã Thanh Toán': 1 });
+    const [currentPage, setCurrentPage] = useState({ 'Chưa Thanh Toán': 1, 'Chờ Thanh Toán': 1, 'Đang Thanh Toán': 1, 'Đã Thanh Toán': 1 });
     const itemsPerPage = 8;
 
     const formatCurrency = (value) => {
@@ -81,6 +85,27 @@ const StaffInvoices = () => {
             setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
         }
     };
+
+    //hàm lấy phuương thứcs
+    const fetchPayments = async () => {
+        try {
+            const response = await axios.get('/api/invoices/payments/all');
+            const paymentsData = response.data;
+            console.log("Payments Data:", paymentsData);
+            setPayments(paymentsData);
+        } catch (error) {
+            setError('Không thể tải dữ liệu. Vui lòng thử lại sau.');
+        }
+    };
+
+    const getMethodName = (methodId) => {
+        const method = payments.find(m => m.id === methodId);
+        return method ? method.name : "Chưa Có";
+    };
+
+    useEffect(() => {
+        fetchPayments();
+    }, []);
 
     //hàm lấy bàn chơi
     const fetchBookingTables = async () => {
@@ -274,6 +299,16 @@ const StaffInvoices = () => {
         setShowConfirmPrint(true);
     };
 
+    //nút chọn phương thức
+    const handlePaymentChoice = (invoice) => {
+        if (!invoice) {
+            alert('Vui lòng chọn một hóa đơn.');
+            return;
+        }
+        setSelectedInvoice(invoice);
+        setShowSelectPayment(true);
+    };
+
     // Hàm để cập nhật trạng thái của các bàn
     const updateTablesStatus = async (tableIds, status) => {
         try {
@@ -326,7 +361,7 @@ const StaffInvoices = () => {
             // Cập nhật trạng thái của hóa đơn thành "Đã Thanh Toán"
             const updatedInvoice = {
                 ...selectedBooking,
-                status: 'Đã Thanh Toán',
+                status: 'Đang Thanh Toán',
             };
     
             // Gửi yêu cầu cập nhật trạng thái hóa đơn
@@ -339,7 +374,7 @@ const StaffInvoices = () => {
             //     params: { newStatus: "Trống" }, // Truyền trạng thái mới qua query
             // });
             await axios.put(`/api/tables/${tableId}/status`, {
-                tableStatus: "Trống" // Trạng thái mới
+                tableStatus: "Đang Tiến Hành Thanh Toán" // Trạng thái mới
             });
     
             // Cập nhật trạng thái đơn đặt bàn và bàn liên quan
@@ -371,6 +406,69 @@ const StaffInvoices = () => {
             alert('Có lỗi xảy ra khi cập nhật hóa đơn. Vui lòng thử lại.');
         }
     };
+
+    const handleConfirmPayment = async () => {
+
+        if (!selectedInvoice) {
+            alert('Vui lòng chọn một đơn đặt.');
+            return;
+        }
+
+        if (!selectedPaymentMethod) {
+            alert('Vui lòng chọn phương thức thanh toán.');
+            return;
+        }
+
+        try {
+
+            // Gửi yêu cầu cập nhật trạng thái Booking
+            const bookingId = selectedInvoice.bookingId;
+            console.log("Booking ID:", bookingId);
+
+            // Cập nhật trạng thái của hóa đơn thành "Đã Thanh Toán"
+            const updatedInvoice = {
+                ...selectedBooking,
+                status: 'Đã Thanh Toán',
+                methodId: selectedPaymentMethod,
+            };
+    
+            // Gửi yêu cầu cập nhật trạng thái hóa đơn
+            await axios.put(`/api/invoices/update/${selectedInvoice.id}`, updatedInvoice);
+
+            // Cập nhật trạng thái bàn
+            const tableId = selectedInvoice.tableId; // Lấy tableId từ hóa đơn
+            console.log("Updating table with ID:", tableId);
+            // await axios.put(`/api/tables/update-status/${tableId}`, null, {
+            //     params: { newStatus: "Trống" }, // Truyền trạng thái mới qua query
+            // });
+            await axios.put(`/api/tables/${tableId}/status`, {
+                tableStatus: "Trống" // Trạng thái mới
+
+                
+            });
+
+            // Cập nhật trạng thái đơn đặt bàn và bàn liên quan
+            const response = await axios.put(`/api/bookings/booking_table/update/${bookingId}/status/paying`);
+            console.log("Booking update response:", response);
+    
+            
+            // Thông báo thành công và thực hiện xuất hóa đơn
+            alert('Hóa đơn đã được cập nhật thành công và trạng thái của bàn và booking đã được cập nhật!');
+
+            // Tải lại danh sách hóa đơn
+            fetchInvoices();
+    
+             // Đóng modal
+            setShowSelectPayment(false);
+            setSelectedBooking(null);
+            setSelectedPaymentMethod(null);
+
+        }catch (error) {
+            console.error('Error updating invoice:', error);
+            alert('Có lỗi xảy ra khi cập nhật hóa đơn. Vui lòng thử lại.');
+        }
+
+    }
 
     // Hàm để xuất hóa đơn ra PDF
     // const handleSaveAsPDF = (invoice) => {
@@ -512,14 +610,15 @@ const StaffInvoices = () => {
                     <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Hóa Đơn</h1>
                     {error && <p className="text-red-500 text-center">{error}</p>}
                     
-                    <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mb-4">
-                        Làm Mới
+                    <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mb-4 flex items-center gap-1">
+                    <FaSyncAlt className="text-white" /> Làm Mới
                     </button>
 
                     <Tabs>
                         <TabList className="mb-4">
                             <Tab className="react-tabs__tab">Chưa Thanh Toán</Tab>
                             <Tab className="react-tabs__tab">Chờ Thanh Toán</Tab>
+                            <Tab className="react-tabs__tab">Đang Thanh Toán</Tab>
                             <Tab className="react-tabs__tab">Đã Thanh Toán</Tab>
                         </TabList>
 
@@ -533,6 +632,7 @@ const StaffInvoices = () => {
                                             <th className="border px-4 py-2 text-center">Thời Gian Kết Thúc</th>
                                             <th className="border px-4 py-2 text-center">Ngày Lập Hóa Đơn</th>
                                             <th className="border px-4 py-2 text-center">Tổng Tiền</th>
+                                            <th className="border px-4 py-2 text-center">Phương Thức Thanh Toán</th>
                                             <th className="border px-4 py-2 text-center">Trạng Thái</th>
                                             <th className="border px-4 py-2 text-center">Mã Đơn Đặt</th>
                                             <th className="border px-4 py-2 text-center">Bàn</th>
@@ -551,12 +651,14 @@ const StaffInvoices = () => {
                                                 <td className="border px-4 py-2 text-center">{invoice.endTime ? formatDate(invoice.endTime) : 'Chưa Có'}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.billDate ? formatDate(invoice.billDate): 'Chưa Có'}</td>
                                                 <td className="border px-4 py-2 text-center">{formatCurrency(invoice.totalMoney)} VND</td>
+                                                <td className="border px-4 py-2 text-center">{getMethodName(invoice.methodId) || "Chưa Có"}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.status}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.bookingId}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.tableId || 'Không có dữ liệu'}</td>
                                                 <td className="border px-4 py-2 text-center">
                                                     <button onClick={() => handleSelectBooking(invoice)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">
-                                                        Tạo Hóa Đơn
+                                                    {/* <FaPlus  className="text-white" /> Tạo Hóa Đơn */}
+                                                    Tạo Hóa Đơn
                                                     </button>
                                                 </td>
                                             </tr>
@@ -594,6 +696,7 @@ const StaffInvoices = () => {
                                             <th className="border px-4 py-2 text-center">Thời Gian Kết Thúc</th>
                                             <th className="border px-4 py-2 text-center">Ngày Lập Hóa Đơn</th>
                                             <th className="border px-4 py-2 text-center">Tổng Tiền</th>
+                                            <th className="border px-4 py-2 text-center">Phương Thức Thanh Toán</th>
                                             <th className="border px-4 py-2 text-center">Trạng Thái</th>
                                             <th className="border px-4 py-2 text-center">Mã Đơn Đặt</th>
                                             <th className="border px-4 py-2 text-center">Bàn</th>
@@ -609,6 +712,7 @@ const StaffInvoices = () => {
                                                 <td className="border px-4 py-2 text-center">{formatDate(invoice.endTime)}</td>
                                                 <td className="border px-4 py-2 text-center">{formatDate(invoice.billDate)}</td>
                                                 <td className="border px-4 py-2 text-center">{formatCurrency(invoice.totalMoney)} VND</td>
+                                                <td className="border px-4 py-2 text-center">{getMethodName(invoice.methodId) || "Chưa Có"}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.status}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.bookingId}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.tableId || 'Không có dữ liệu'}</td>
@@ -650,6 +754,65 @@ const StaffInvoices = () => {
                                             <th className="border px-4 py-2 text-center">Thời Gian Kết Thúc</th>
                                             <th className="border px-4 py-2 text-center">Ngày Lập Hóa Đơn</th>
                                             <th className="border px-4 py-2 text-center">Tổng Tiền</th>
+                                            <th className="border px-4 py-2 text-center">Phương Thức Thanh Toán</th>
+                                            <th className="border px-4 py-2 text-center">Trạng Thái</th>
+                                            <th className="border px-4 py-2 text-center">Mã Đơn Đặt</th>
+                                            <th className="border px-4 py-2 text-center">Bàn</th>
+                                            <th className="border px-4 py-2 text-center">Hành Động</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {/* {filterInvoicesByStatus('Chờ Thanh Toán').map(invoice => ( */}
+                                        {getPaginatedInvoices('Đang Thanh Toán').map(invoice => (
+                                            <tr key={invoice.id}>
+                                                <td className="border px-4 py-2 text-center">{invoice.id}</td>
+                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.startTime)}</td>
+                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.endTime)}</td>
+                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.billDate)}</td>
+                                                <td className="border px-4 py-2 text-center">{formatCurrency(invoice.totalMoney)} VND</td>
+                                                <td className="border px-4 py-2 text-center">{getMethodName(invoice.methodId) || "Chưa Có"}</td>
+                                                <td className="border px-4 py-2 text-center">{invoice.status}</td>
+                                                <td className="border px-4 py-2 text-center">{invoice.bookingId}</td>
+                                                <td className="border px-4 py-2 text-center">{invoice.tableId || 'Không có dữ liệu'}</td>
+                                                <td className="border px-4 py-2 text-center">
+                                                    <button onClick={() => handlePaymentChoice(invoice)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">
+                                                        Chọn Phương Thức
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Phân trang */}
+                            <div className="mt-4">
+                                <p className="text-sm">Trang {currentPage['Đang Thanh Toán']} / {totalPages('Đang Thanh Toán')}</p>
+                                <div className="flex justify-center">
+                                    {Array.from({ length: totalPages('Đang Thanh Toán') }, (_, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => handlePageChange('Đang Thanh Toán', index + 1)}
+                                        className={`mx-1 px-3 py-1 rounded ${currentPage['Đang Thanh Toán'] === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                                    >
+                                        {index + 1}
+                                    </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </TabPanel>
+
+                        <TabPanel>
+                            <div className="mt-4 overflow-x-auto">
+                                <table className="min-w-full bg-white border border-gray-300">
+                                    <thead>
+                                        <tr>
+                                            <th className="border px-4 py-2 text-center">ID</th>
+                                            <th className="border px-4 py-2 text-center">Thời Gian Bắt Đầu</th>
+                                            <th className="border px-4 py-2 text-center">Thời Gian Kết Thúc</th>
+                                            <th className="border px-4 py-2 text-center">Ngày Lập Hóa Đơn</th>
+                                            <th className="border px-4 py-2 text-center">Tổng Tiền</th>
+                                            <th className="border px-4 py-2 text-center">Phương Thức Thanh Toán</th>
                                             <th className="border px-4 py-2 text-center">Trạng Thái</th>
                                             <th className="border px-4 py-2 text-center">Mã Đơn Đặt</th>
                                             <th className="border px-4 py-2 text-center">Bàn</th>
@@ -665,6 +828,7 @@ const StaffInvoices = () => {
                                                 <td className="border px-4 py-2 text-center">{formatDate(invoice.endTime)}</td>
                                                 <td className="border px-4 py-2 text-center">{formatDate(invoice.billDate)}</td>
                                                 <td className="border px-4 py-2 text-center">{formatCurrency(invoice.totalMoney)} VND</td>
+                                                <td className="border px-4 py-2 text-center">{getMethodName(invoice.methodId)|| "Chưa Có"}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.status}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.bookingId}</td>
                                                 <td className="border px-4 py-2 text-center">{invoice.tableId || 'Không có dữ liệu'}</td>
@@ -697,156 +861,171 @@ const StaffInvoices = () => {
 
                 
                     {showForm && invoice && (
-                        <div className="bg-white p-6 mt-4 rounded shadow">
-                            <h2 className="text-2xl font-semibold mb-4 text-center">Thông Tin Chi Tiết</h2>
-                            <div className="grid grid-cols-2 gap-4">
-                                
-                                <div>
-
-                                    <div className="mt-6">
-                                        <h3 className="text-xl font-semibold mb-2">Thông Tin Đơn Đặt</h3>
-                                        <label className="block mb-2 font-bold">Mã Đơn Đặt:</label>
-                                        <input
-                                            type="text"
-                                            value={invoice.bookingId || "Không có dữ liệu"}
-                                            readOnly
-                                            className="border border-gray-300 rounded p-2 w-full"
-                                        />
-
-                                        <label className="block mb-2 font-bold">Bàn Được Chọn:</label>
-                                        <input
-                                            type="text"
-                                            value={invoice.tableId || "Không có dữ liệu"}
-                                            readOnly
-                                            className="border border-gray-300 rounded p-2 w-full"
-                                        />
-
-                                        <label className="block mb-2 font-bold">Loại Bàn:</label>
-                                        <input
-                                            type="text"
-                                            value={invoice.tableType || "Không có dữ liệu"}
-                                            readOnly
-                                            className="border border-gray-300 rounded p-2 w-full"
-                                        />
-
-                                        <label className="block mb-2 font-bold">Giá Loại Bàn:</label>
-                                        <input
-                                            type="text"
-                                            value={`${formatCurrency(invoice.tablePrice || 0)} VND`}
-                                            readOnly
-                                            className="border border-gray-300 rounded p-2 w-full"
-                                        />
-                                    </div>
-
+                        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+                            <div className="bg-white mt-16 mb-16 rounded-lg shadow-lg p-6 w-500">
+                                <h2 className="text-2xl font-semibold mb-4 text-center">Thông Tin Chi Tiết</h2>
+                                <div className="grid grid-cols-2 gap-4">
                                     
+                                    <div>
 
-                                    {invoice?.orderItems?.length > 0 ? (
-                                        <div className="mt-6">
-                                            <h3 className="text-xl font-semibold mb-2">Thông Tin OrderItem</h3>
-                                            <table className="w-full table-auto border-collapse">
-                                                <thead>
-                                                    <tr>
-                                                        <th className="border px-4 py-2 text-center">Món</th>
-                                                        <th className="border px-4 py-2 text-center">Đơn Giá</th>
-                                                        <th className="border px-4 py-2 text-center">Số Lượng</th>
-                                                        <th className="border px-4 py-2 text-center">Tổng Giá Món</th>
-                                                        {/* <th className="border px-4 py-2 text-center">Tổng OrderItem</th> */}
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {invoice.orderItems.map((item, index) => (
-                                                        <tr key={index}>
-                                                            <td className="border px-4 py-2 text-center">{getMenuNameById(item.menuId)}</td> {/* Lấy tên món từ menuItems */}
-                                                            <td className="border px-4 py-2 text-center">{formatCurrency(getMenuPriceById(item.menuId))} VND</td>
-                                                            {/* <td className="border px-4 py-2">{item.itemName || "Không có tên món"}</td> */}
-                                                            <td className="border px-4 py-2 text-center">{item.quantity}</td>
-                                                            <td className="border px-4 py-2 text-center">{formatCurrency(item.totalPriceItem)} VND</td>
-                                                            {/* <td className="border px-4 py-2 text-center">{formatCurrency(item.quantity * item.price)} VND</td> */}
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
+                                        <div className="mt-7">
+                                            <h3 className="text-xl font-semibold mb-2">Thông Tin Đơn Đặt</h3>
+                                            <label className="block mb-2 font-bold">Mã Đơn Đặt</label>
+                                            <input
+                                                type="text"
+                                                value={invoice.bookingId || "Không có dữ liệu"}
+                                                readOnly
+                                                className="border border-gray-300 rounded p-2 w-full"
+                                            />
+
+                                            <label className="block mb-2 mt-2 font-bold">Bàn Được Chọn</label>
+                                            <input
+                                                type="text"
+                                                value={invoice.tableId || "Không có dữ liệu"}
+                                                readOnly
+                                                className="border border-gray-300 rounded p-2 w-full"
+                                            />
+
+                                            <label className="block mb-2 mt-2 font-bold">Loại Bàn</label>
+                                            <input
+                                                type="text"
+                                                value={invoice.tableType || "Không có dữ liệu"}
+                                                readOnly
+                                                className="border border-gray-300 rounded p-2 w-full"
+                                            />
+
+                                            <label className="block mb-2 mt-2 font-bold">Giá Loại Bàn</label>
+                                            <input
+                                                type="text"
+                                                value={`${formatCurrency(invoice.tablePrice || 0)} VND`}
+                                                readOnly
+                                                className="border border-gray-300 rounded p-2 w-full"
+                                            />
                                         </div>
-                                    ) : (
-                                        <p className="text-center mt-4">Không có OrderItem nào được chọn.</p>
-                                    )}
 
-                                </div>
+                                        
 
+                                        {invoice?.orderItems?.length > 0 ? (
+                                            <div className="mt-6">
+                                                <h3 className="text-xl font-semibold mb-2">Thông Tin OrderItem</h3>
+                                                <table className="w-full table-auto border-collapse">
+                                                    <thead>
+                                                        <tr>
+                                                            <th className="border px-4 py-2 text-center">Món</th>
+                                                            <th className="border px-4 py-2 text-center">Đơn Giá</th>
+                                                            <th className="border px-4 py-2 text-center">Số Lượng</th>
+                                                            <th className="border px-4 py-2 text-center">Tổng Giá Món</th>
+                                                            {/* <th className="border px-4 py-2 text-center">Tổng OrderItem</th> */}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {invoice.orderItems.map((item, index) => (
+                                                            <tr key={index}>
+                                                                <td className="border px-4 py-2 text-center">{getMenuNameById(item.menuId)}</td> {/* Lấy tên món từ menuItems */}
+                                                                <td className="border px-4 py-2 text-center">{formatCurrency(getMenuPriceById(item.menuId))} VND</td>
+                                                                {/* <td className="border px-4 py-2">{item.itemName || "Không có tên món"}</td> */}
+                                                                <td className="border px-4 py-2 text-center">{item.quantity}</td>
+                                                                <td className="border px-4 py-2 text-center">{formatCurrency(item.totalPriceItem)} VND</td>
+                                                                {/* <td className="border px-4 py-2 text-center">{formatCurrency(item.quantity * item.price)} VND</td> */}
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ) : (
+                                            <p className="text-center mt-4">Không có OrderItem nào được chọn.</p>
+                                        )}
 
-                                <div>
-                                    <div className="mt-6">
-                                        <h3 className="text-xl font-semibold mb-2">Thông Tin Hóa Đơn</h3>
-                                        <label className="block mb-2 font-bold">Mã Hóa Đơn:</label>
-                                        <input
-                                            type="text"
-                                            value={invoice.id || "Không có dữ liệu"}
-                                            readOnly
-                                            className="border border-gray-300 rounded p-2 w-full"
-                                        />
-
-                                        <label className="block mb-2 font-bold">Thời Gian Bắt Đầu:</label>
-                                        <input
-                                            type="text"
-                                            value={invoice.startTime || "Chưa có"}
-                                            readOnly
-                                            className="border border-gray-300 rounded p-2 w-full"
-                                        />
-
-                                        <label className="block mb-2 font-bold">Thời Gian Kết Thúc:</label>
-                                        <input
-                                            type="text"
-                                            value={invoice.endTime || "Chưa có"}
-                                            readOnly
-                                            className="border border-gray-300 rounded p-2 w-full"
-                                        />
-
-                                        <label className="block mb-2 font-bold">Ngày Lập Hóa Đơn:</label>
-                                        <input
-                                            type="text"
-                                            value={invoice.billDate || "Chưa có"}
-                                            readOnly
-                                            className="border border-gray-300 rounded p-2 w-full"
-                                        />
-
-                                        <label className="block mb-2 font-bold">Tổng Thời Gian:</label>
-                                        <input
-                                            type="text"
-                                            value={invoice.totalTime || "Không có dữ liệu"}
-                                            readOnly
-                                            className="border border-gray-300 rounded p-2 w-full"
-                                        />
-
-                                        <label className="block mb-2 font-bold">Tổng Tiền Chơi:</label>
-                                        <input
-                                            type="text"
-                                            value={`${formatCurrency(invoice.totalInvoice || 0)} VND`}
-                                            readOnly
-                                            className="border border-gray-300 rounded p-2 w-full"
-                                        />
-
-                                        <label className="block mb-2 font-bold">Tổng Tiền Thanh Toán:</label>
-                                        <input
-                                            type="text"
-                                            value={`${formatCurrency(invoice.totalMoney || 0)} VND`}
-                                            readOnly
-                                            className="border border-gray-300 rounded p-2 w-full"
-                                        />
                                     </div>
-                                    
+
+
+                                    <div>
+                                        <div className="grid grid-cols-2 gap-4">
+
+                                            <div className="mt-7">
+                                                <h3 className="text-xl font-semibold mb-2">Thông Tin Hóa Đơn</h3>
+                                                <label className="block mb-2 font-bold ">Mã Hóa Đơn</label>
+                                                <input
+                                                    type="text"
+                                                    value={invoice.id || "Không có dữ liệu"}
+                                                    readOnly
+                                                    className="border border-gray-300 rounded p-2 w-full"
+                                                />
+
+                                                <label className="block mb-2 mt-2 font-bold">Thời Gian Bắt Đầu</label>
+                                                <input
+                                                    type="text"
+                                                    value={invoice.startTime || "Chưa có"}
+                                                    readOnly
+                                                    className="border border-gray-300 rounded p-2 w-full"
+                                                />
+
+                                                <label className="block mb-2 mt-2 font-bold">Thời Gian Kết Thúc</label>
+                                                <input
+                                                    type="text"
+                                                    value={invoice.endTime || "Chưa có"}
+                                                    readOnly
+                                                    className="border border-gray-300 rounded p-2 w-full"
+                                                />
+
+                                                <label className="block mb-2 mt-2 font-bold">Ngày Lập Hóa Đơn</label>
+                                                <input
+                                                    type="text"
+                                                    value={invoice.billDate || "Chưa có"}
+                                                    readOnly
+                                                    className="border border-gray-300 rounded p-2 w-full"
+                                                />
+                                            </div>
+
+                                            <div> 
+
+                                                <div className="mt-16">
+                                                <label className="block mb-2 font-bold">Tổng Thời Gian</label>
+                                                <input
+                                                    type="text"
+                                                    value={invoice.totalTime || "Không có dữ liệu"}
+                                                    readOnly
+                                                    className="border border-gray-300 rounded p-2 w-full"
+                                                />
+
+                                                <label className="block mb-2 mt-2 font-bold">Tổng Tiền Chơi</label>
+                                                <input
+                                                    type="text"
+                                                    value={`${formatCurrency(invoice.totalInvoice || 0)} VND`}
+                                                    readOnly
+                                                    className="border border-gray-300 rounded p-2 w-full"
+                                                />
+
+                                                <label className="block mb-2 mt-2 font-bold">Tổng Tiền Thanh Toán</label>
+                                                <input
+                                                    type="text"
+                                                    value={`${formatCurrency(invoice.totalMoney || 0)} VND`}
+                                                    readOnly
+                                                    className="border border-gray-300 rounded p-2 w-full"
+                                                />
+                                                </div>
+
+                                                
+                                            </div>
+
+                                        </div>
+                                        
+                                        
+                                    </div>
                                 </div>
+
+                                
+
+                                <button onClick={handleUpdateInvoice} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                    Lưu
+                                </button>
+
+                                <button onClick={handleCloseForm} className="mt-4 ml-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">
+                                    Hủy
+                                </button>
                             </div>
-
-                            
-
-                            <button onClick={handleUpdateInvoice} className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
-                                Lưu
-                            </button>
-
-                            <button onClick={handleCloseForm} className="mt-4 ml-2 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">
-                                Hủy
-                            </button>
                         </div>
+                        
                     )}
 
 
@@ -854,19 +1033,64 @@ const StaffInvoices = () => {
                     {showConfirmPrint && (
                         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
                             <div className="bg-white p-6 rounded shadow-lg">
-                                <h2 className="text-lg font-semibold mb-4">Xác Nhận In Hóa Đơn</h2>
+                                <h2 className="text-lg font-semibold mb-4 text-center">Xác Nhận In Hóa Đơn</h2>
                                 <p>Bạn có chắc chắn muốn in hóa đơn này?</p>
-                                <div className="mt-4">
-                                    <button onClick={handleConfirmInvoice} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mr-2">
+                                <div className="flex mt-4 space-x-2">
+                                    <button onClick={handleConfirmInvoice} className="flex-1 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mr-2">
                                         Xác Nhận
                                     </button>
-                                    <button onClick={() => setShowConfirmPrint(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">
+                                    <button onClick={() => setShowConfirmPrint(false)} className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">
                                         Hủy
                                     </button>
                                 </div>
                             </div>
                         </div>
                     )}
+
+
+                    {/* Xác nhận phương thức thanh toán của khách */}
+                    {showSelectPayment && (
+                        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                            <div className="bg-white p-6 rounded shadow-lg">
+                                <h2 className="text-lg font-semibold mb-4">Phương Thức Thanh Toán Của Khách Hàng</h2>
+                                {payments.length > 0 ? (
+                                    <form>
+                                        {payments.map((payment) => (
+                                            <div key={payment.id} className="mb-2">
+                                                <label className="flex items-center">
+                                                    <input
+                                                        type="radio"
+                                                        name="paymentMethod"
+                                                        value={payment.id}
+                                                        onChange={() => setSelectedPaymentMethod(payment.id)}
+                                                        className="mr-2"
+                                                    />
+                                                    {payment.name}
+                                                </label>
+                                            </div>
+                                        ))}
+                                    </form>
+                                ) : (
+                                    <p>Đang tải phương thức thanh toán...</p>
+                                )}
+                                <div className="mt-4 flex space-x-2">
+                                    <button
+                                        onClick={handleConfirmPayment}
+                                        className="flex-1 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mr-2"
+                                    >
+                                        Xác Nhận
+                                    </button>
+                                    <button
+                                        onClick={() => setShowSelectPayment(false)}
+                                        className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700"
+                                    >
+                                        Hủy
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
 
 {/* {showConfirmPrint && (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">

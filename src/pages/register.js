@@ -53,7 +53,14 @@ const RegisterPage = () => {
       alert("Đăng Ký Thành Công. Bạn có thể đăng nhập ngay.");
       router.push('/login');
     } catch (error) {
-      setError('Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.');
+      // setError('Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.');
+      // console.error(error);
+      if (error.response && error.response.status === 400) {
+        // Lấy thông báo lỗi từ backend
+        setError(error.response.data);
+      } else {
+        setError('Đăng ký không thành công. Vui lòng kiểm tra lại thông tin.');
+      }
       console.error(error);
     }
   };
@@ -70,7 +77,7 @@ const RegisterPage = () => {
 
         <div className="mb-4">
           <label className="block text-sm font-semibold mb-2" htmlFor="fullName">
-            Họ và tên
+            Họ Và Tên <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -78,13 +85,14 @@ const RegisterPage = () => {
             id="fullName"
             value={formData.fullName}
             onChange={handleChange}
+            required
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
           />
         </div>
 
         <div className="mb-4">
           <label className="block text-sm font-semibold mb-2" htmlFor="birthDay">
-            Ngày Sinh
+            Ngày Sinh <span className="text-red-500">*</span>
           </label>
           <input
             type="date"
@@ -92,13 +100,14 @@ const RegisterPage = () => {
             id="birthDay"
             value={formData.birthDay}
             onChange={handleChange}
+            required
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
           />
         </div>
 
         <div className="mb-4">
           <label className="block text-sm font-semibold mb-2" htmlFor="phone">
-            Số điện thoại
+            Số Điện Thoại <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -106,13 +115,14 @@ const RegisterPage = () => {
             id="phone"
             value={formData.phone}
             onChange={handleChange}
+            required
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
           />
         </div>
 
         <div className="mb-4">
           <label className="block text-sm font-semibold mb-2" htmlFor="email">
-            Email
+            Email <span className="text-red-500">*</span>
           </label>
           <input
             type="email"
@@ -120,13 +130,14 @@ const RegisterPage = () => {
             id="email"
             value={formData.email}
             onChange={handleChange}
+            required
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
           />
         </div>
 
         <div className="mb-4">
           <label className="block text-sm font-semibold mb-2" htmlFor="password">
-            Mật khẩu
+            Mật Khẩu <span className="text-red-500">*</span>
           </label>
           <input
             type={showPassword ? 'text' : 'password'} // Hiển thị mật khẩu nếu showPassword là true
@@ -134,6 +145,7 @@ const RegisterPage = () => {
             id="password"
             value={formData.password}
             onChange={handleChange}
+            required
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
           />
         </div>
@@ -143,7 +155,7 @@ const RegisterPage = () => {
             className="block text-sm font-semibold mb-2"
             htmlFor="confirmPassword"
           >
-            Xác nhận mật khẩu
+            Xác Nhận Mật Khẩu <span className="text-red-500">*</span>
           </label>
           <input
             type={showPassword ? 'text' : 'password'} // Hiển thị mật khẩu xác nhận nếu showPassword là true
@@ -151,6 +163,7 @@ const RegisterPage = () => {
             id="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleChange}
+            required
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
           />
         </div>

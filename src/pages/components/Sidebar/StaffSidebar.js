@@ -15,7 +15,8 @@ const StaffSidebar = () => {
     }
 
     const staffLinks = [
-        { href: "/staff/tables", label: "Quản Lý Bàn" },
+        { href: "/staff/directs", label: "Hỗ Trợ Đặt Bàn" },
+        { href: "/staff/tables", label: "Quản Lý Tình Trạng Bàn" },
         { href: "/staff/orders", label: "Quản Lý Đơn Món" },
         { href: "/staff/bookings", label: "Quản Lý Đơn Đặt" },
         { href: "/staff/invoices", label: "Quản Lý Hóa Đơn" },
@@ -38,8 +39,9 @@ const StaffSidebar = () => {
                             href={`/${user.role.toLowerCase()}/home`} 
                             className={`block p-4 ${currentPath === `/${user.role.toLowerCase()}/home` ? 'bg-blue-300' : 'hover:bg-blue-200'} focus:outline-none`}
                         >
-                            Trang chủ
+                            Trang Chủ
                         </Link>
+                        
                     </li>
                     {links[user.role]?.map((link) => (
                         <li key={link.href}>

@@ -6,6 +6,7 @@ import axios from 'axios';
 import AddStaffForm from '../components/manager/AddStaffForm';
 import { format } from 'date-fns'; // Import format từ date-fns
 import ManagerSidebar from '../components/Sidebar/ManagerSidebar';
+import { FaSyncAlt, FaPlus, FaEdit, FaLock, FaUnlock  } from "react-icons/fa"
 
 
 const StaffsPage = () => {
@@ -16,6 +17,11 @@ const StaffsPage = () => {
     const [selectedUser, setSelectedUser] = useState(null); // Thông tin nhân viên được chọn để sửa
     const [editingStaff, setEditingStaff] = useState(null);
 
+    // Thêm state để quản lý phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [pageSize, setPageSize] = useState(5); // Số bản ghi mỗi trang
+
 
     // Lấy thông tin người dùng từ AuthContext
     const { user } = useContext(AuthContext);
@@ -23,30 +29,63 @@ const StaffsPage = () => {
 
     
 
-    const fetchStaffs = async () => {
+    // const fetchStaffs = async () => {
+    //     try {
+    //         const response = await axios.get('/api/users/managers/staffs/all', {
+    //             headers: {
+    //                 'Authorization': `Bearer ${localStorage.getItem('token')}`
+    //             }
+    //         });
+    //         console.log(response.data); // Kiểm tra dữ liệu trả về
+    //         if (Array.isArray(response.data)) {
+    //             setStaffs(response.data);
+    //         } else {
+    //             setError('Dữ liệu không hợp lệ. Vui lòng kiểm tra API.');
+    //         }
+    //     } catch (err) {
+    //         setError('Không thể tải dữ liệu nhân viên.');
+    //         console.error(err);
+    //     }
+    // };
+
+    const fetchStaffs = async (page = 1, size = 5) => {
         try {
-            const response = await axios.get('/api/users/managers/staffs/all', {
+            const response = await axios.get('/api/users/managers/staffs/pages/all', {
+                params: { page: page - 1, size }, 
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
             });
-            console.log(response.data); // Kiểm tra dữ liệu trả về
-            if (Array.isArray(response.data)) {
-                setStaffs(response.data);
-            } else {
-                setError('Dữ liệu không hợp lệ. Vui lòng kiểm tra API.');
-            }
+    
+            console.log("Response:", response.data); // Xem toàn bộ dữ liệu trả về
+            const { content, totalPages } = response.data; 
+            setStaffs(content);
+            setTotalPages(totalPages);
+            setCurrentPage(page);
         } catch (err) {
-            setError('Không thể tải dữ liệu nhân viên.');
+            setError('Không thể tải dữ liệu khách hàng.');
             console.error(err);
         }
     };
     
     
 
+    // useEffect(() => {
+    //     fetchStaffs();
+    // }, []);
+
     useEffect(() => {
-        fetchStaffs();
-    }, []);
+        fetchStaffs(currentPage, pageSize).then(() => {
+            console.log(staffs); // Xem cấu trúc dữ liệu
+        });
+    }, [currentPage, pageSize]);
+    
+
+    const handlePageChange = (newPage) => {
+        if (newPage > 0 && newPage <= totalPages) {
+            setCurrentPage(newPage); // Cập nhật trang hiện tại
+        }
+    };
 
     const handleAddStaff = () => {
         setShowForm(!showForm); // Chuyển đổi trạng thái hiển thị form
@@ -127,14 +166,19 @@ const StaffsPage = () => {
                     {error && <p className="text-red-500 text-center">{error}</p>}
 
                     
-                    <div className="mb-4">
-                        <button onClick={handleAddStaff} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 mr-5">
-                            {showForm ? 'Ẩn Form' : 'Thêm Nhân Viên'}
+                    <div className="flex mb-4">
+
+                        <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-1">
+                            <FaSyncAlt className="text-white" /> Làm Mới
                         </button>
 
-                        <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">
-                            Làm Mới
+                        <button onClick={handleAddStaff} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 ml-2 flex items-center gap-1">
+                            <FaPlus className="text-white" />
+                            {/* {showForm ? 'Ẩn Form' : 'Thêm Nhân Viên'} */}
+                            Thêm Nhân Viên
                         </button>
+
+                        
                     </div>
 
 
@@ -198,24 +242,47 @@ const StaffsPage = () => {
                                             Sửa 
                                         </button> */}
 
-                                        <button onClick={() => handleEdit(user)} className="bg-yellow-400 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-500 transition duration-200">
-                                            Sửa 
-                                        </button>
-                                        {user.status === "BLOCKED" ? (
-                                            <button onClick={() => handleUnlock(user.id)} className="bg-green-400 text-white py-1 px-2 rounded hover:bg-green-500 transition duration-200">
-                                                Mở Khóa
+                                        <div className='flex'>
+                                            <button onClick={() => handleEdit(user)} className="bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-700 transition duration-200 flex items-center gap-1">
+                                                <FaEdit className="text-white" /> Sửa 
                                             </button>
-                                        ) : (
-                                            <button onClick={() => handleLock(user.id)} className="bg-red-400 text-white py-1 px-2 rounded hover:bg-red-500 transition duration-200">
-                                                Khóa
-                                            </button>
-                                        )}
+                                            {user.status === "BLOCKED" ? (
+                                                <button onClick={() => handleUnlock(user.id)} className="bg-green-500 text-white py-1 px-2 rounded hover:bg-green-700 transition duration-200 flex items-center gap-1">
+                                                     <FaUnlock className="text-white" /> Mở Khóa
+                                                </button>
+                                            ) : (
+                                                <button onClick={() => handleLock(user.id)} className="bg-red-500 text-white py-1 px-2 rounded hover:bg-red-700 transition duration-200 flex items-center gap-1">
+                                                    <FaLock className="text-white" /> Khóa
+                                                </button>
+                                            )}
+                                        </div>
+                                        
                                     </td>
 
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+
+                    {/* phân trang */}
+                    <div className="flex justify-center mt-4">
+                        <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700"
+                        >
+                            Trước
+                        </button>
+                        <span className="px-4 py-2">{`Trang ${currentPage} / ${totalPages}`}</span>
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700"
+                        >
+                            Sau
+                        </button>
+                    </div>
+
                 </main>
             </div>
         </div>

@@ -25,6 +25,8 @@ const LoginForm = () => {
       const response = await axios.post('api/users/login', formData);
       console.log('SignIn success:', response.data);
 
+      
+
       // Tạo đối tượng user với thông tin từ API trả về
       const userData = {
         id: response.data.id,
@@ -54,13 +56,32 @@ const LoginForm = () => {
       } else if (response.data.role === 'CUSTOMER') {
         router.push('/customer/home');
       }
+      // Kiểm tra vai trò của người dùng
+      if (response.data.role === 'GUEST') {
+        alert('Tài khoản của bạn không có quyền truy cập.');
+        return; // Dừng quá trình đăng nhập
+      }
       alert('Đăng nhập thành công.')
     } catch (error) {
-      // Kiểm tra mã trạng thái để xác định nguyên nhân thất bại
-      if (error.response && error.response.status === 403) {
-        alert('Tài khoản của bạn đã bị khóa.');
+      // // Kiểm tra mã trạng thái để xác định nguyên nhân thất bại
+      // if (error.response && error.response.status === 403) {
+      //   alert('Tài khoản của bạn đã bị khóa.');
+      // } else {
+      //   alert('Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin.');
+      // }
+      if (error.response) {
+        // Nếu có response từ server
+        if (error.response.status === 401) {
+          alert('Tài khoản hoặc mật khẩu không chính xác.');
+        } else if (error.response.status === 404) {
+          alert('Tài khoản của bạn chưa tồn tại trong hệ thống.');
+        } else if (error.response.status === 403) {
+          alert('Tài khoản của bạn đã bị khóa.');
+        } else {
+          alert('Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin.');
+        }
       } else {
-        alert('Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin.');
+        alert('Đăng nhập không thành công. Vui lòng thử lại sau.');
       }
     }
   };

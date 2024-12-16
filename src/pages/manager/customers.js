@@ -4,39 +4,82 @@ import AuthContext from '../contexts/AuthContext';
 import axios from 'axios';
 import { format } from 'date-fns'; // Import format từ date-fns
 import ManagerSidebar from '../components/Sidebar/ManagerSidebar';
+import { FaSyncAlt  } from "react-icons/fa"
 
 const ManagerCustomer = () => {
     const [customers, setCustomers] = useState([]);
     const [error, setError] = useState('');
 
+    // Thêm state để quản lý phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [pageSize, setPageSize] = useState(5); // Số bản ghi mỗi trang
+
     // Lấy thông tin người dùng từ AuthContext
     const { user } = useContext(AuthContext);
     console.log(user);
 
-    const fetchCustomers = async () => {
-        try {
-            const response = await axios.get('/api/users/managers/customers/all', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            }
+    // const fetchCustomers = async () => {
+    //     try {
+    //         const response = await axios.get('/api/users/managers/customers/all', {
+    //             headers: {
+    //                 'Authorization': `Bearer ${localStorage.getItem('token')}`
+    //             }
+    //         }
                 
-            );
-            console.log(response.data); // Kiểm tra dữ liệu trả về
-            if (Array.isArray(response.data)) {
-                setCustomers(response.data);
-            } else {
-                setError('Dữ liệu không hợp lệ. Vui lòng kiểm tra API.');
-            }
+    //         );
+    //         console.log(response.data); // Kiểm tra dữ liệu trả về
+    //         if (Array.isArray(response.data)) {
+    //             setCustomers(response.data);
+    //         } else {
+    //             setError('Dữ liệu không hợp lệ. Vui lòng kiểm tra API.');
+    //         }
+    //     } catch (err) {
+    //         setError('Không thể tải dữ liệu khách hàng.');
+    //         console.error(err);
+    //     }
+    // };
+
+    const fetchCustomers = async (page = 1, size = 5) => {
+        try {
+            const response = await axios.get('/api/users/managers/customers/pages/all', {
+                params: { page: page - 1, size }, 
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+    
+            console.log("Response:", response.data); // Xem toàn bộ dữ liệu trả về
+            const { content, totalPages } = response.data; 
+            setCustomers(content);
+            setTotalPages(totalPages);
+            setCurrentPage(page);
         } catch (err) {
             setError('Không thể tải dữ liệu khách hàng.');
             console.error(err);
         }
     };
+    
+    
+
+    // useEffect(() => {
+    //     fetchCustomers();
+    // }, []);
 
     useEffect(() => {
-        fetchCustomers();
-    }, []);
+        fetchCustomers(currentPage, pageSize).then(() => {
+            console.log(customers); // Xem cấu trúc dữ liệu
+        });
+    }, [currentPage, pageSize]);
+    
+
+    const handlePageChange = (newPage) => {
+        if (newPage > 0 && newPage <= totalPages) {
+            setCurrentPage(newPage); // Cập nhật trang hiện tại
+        }
+    };
+    
+    
 
     const handleRefresh = () => {
         window.location.reload(); // Tải lại trang
@@ -55,8 +98,8 @@ const ManagerCustomer = () => {
                     {error && <p className="text-red-500 text-center">{error}</p>}
 
                    <div className="mb-4">
-                    <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">
-                                    Làm Mới
+                        <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-1">
+                            <FaSyncAlt className="text-white" /> Làm Mới
                         </button>
                    </div>
 
@@ -118,6 +161,26 @@ const ManagerCustomer = () => {
                             ))}
                         </tbody>
                     </table>
+
+                    {/* phân trang */}
+                    <div className="flex justify-center mt-4">
+                        <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700"
+                        >
+                            Trước
+                        </button>
+                        <span className="px-4 py-2">{`Trang ${currentPage} / ${totalPages}`}</span>
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700"
+                        >
+                            Sau
+                        </button>
+                    </div>
+
 
                 </main>
             </div>

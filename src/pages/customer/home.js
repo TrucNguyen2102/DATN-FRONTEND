@@ -16,6 +16,9 @@ const CustomerHome = () => {
     //     </div>
     // )
 
+
+    
+
     return (
         <div className="bg-gray-100 min-h-screen flex flex-col">
           <CustomerHeader/>
@@ -23,10 +26,10 @@ const CustomerHome = () => {
             {/* Banner giới thiệu */}
             <div className="relative bg-[url('/images/billiards_banner.jpg')] h-80 bg-cover bg-center rounded-lg shadow-md">
               <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center">
-                <h1 className="text-4xl text-white font-bold">Chào mừng đến với hệ thống giải trí</h1>
+                <h1 className="text-4xl text-white font-bold">Chào Mừng Đến Với Hệ Thống Giải Trí</h1>
                 <p className="text-white mt-2">Billiards</p>
                 <Link href="/customer/bookings" className="mt-4 px-6 py-2 bg-yellow-500 text-white rounded-lg text-lg hover:bg-yellow-600 transition">
-                Đặt bàn ngay
+                Đặt Bàn Ngay
                 </Link>
               </div>
             </div>
@@ -36,10 +39,10 @@ const CustomerHome = () => {
               {/* Đặt bàn */}
               <div className="bg-white p-6 rounded-lg shadow-md text-center">
                 <img src="/icons/booking.png" alt="Đặt bàn" className="w-16 h-16 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Đặt bàn</h2>
+                <h2 className="text-xl font-semibold mb-2">Đặt Bàn</h2>
                 <p>Đặt trước bàn cho hoạt động giải trí của bạn.</p>
                 <Link href="/customer/bookings" className="inline-block mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                Đặt bàn
+                Đặt Bàn
                 </Link>
               </div>
       

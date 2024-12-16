@@ -3,6 +3,8 @@ import CustomerHeader from "../components/Header/CustomerHeader";
 import CustomerSidebar from "../components/Sidebar/CustomerSidebar";
 import AuthContext from "../contexts/AuthContext";
 import axios from "axios";
+import { FaSyncAlt, FaEdit} from "react-icons/fa";
+import Chatbox from "../components/Chatbox";
 
 const Modal = ({ isOpen, onClose, onSave, initialData }) => {
     const [id, setId] = useState("");
@@ -40,9 +42,9 @@ const Modal = ({ isOpen, onClose, onSave, initialData }) => {
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white p-6 rounded-md shadow-lg w-1/3">
-                <h2 className="text-xl font-bold mb-4">Cập nhật thông tin</h2>
+                <h2 className="text-xl font-bold mb-4 text-center">Cập Nhật Thông Tin</h2>
                 <form className="space-y-4">
-                    <div>
+                    {/* <div>
                         <label htmlFor="id" className="block text-sm font-semibold">Mã</label>
                         <input
                             id="id"
@@ -52,10 +54,10 @@ const Modal = ({ isOpen, onClose, onSave, initialData }) => {
                             className="w-full p-3 border rounded-md mt-1"
                             disabled
                         />
-                    </div>
+                    </div> */}
 
                     <div>
-                        <label htmlFor="fullName" className="block text-sm font-semibold">Họ tên</label>
+                        <label htmlFor="fullName" className="block text-sm font-semibold">Họ Tên</label>
                         <input
                             id="fullName"
                             type="text"
@@ -66,7 +68,7 @@ const Modal = ({ isOpen, onClose, onSave, initialData }) => {
                     </div>
 
                     <div>
-                        <label htmlFor="birthDay" className="block text-sm font-semibold">Ngày sinh</label>
+                        <label htmlFor="birthDay" className="block text-sm font-semibold">Ngày Sinh</label>
                         <input
                             id="birthDay"
                             type="date"
@@ -77,7 +79,7 @@ const Modal = ({ isOpen, onClose, onSave, initialData }) => {
                     </div>
 
                     <div>
-                        <label htmlFor="phone" className="block text-sm font-semibold">Số điện thoại</label>
+                        <label htmlFor="phone" className="block text-sm font-semibold">Số Điện Thoại</label>
                         <input
                             id="phone"
                             type="text"
@@ -98,21 +100,24 @@ const Modal = ({ isOpen, onClose, onSave, initialData }) => {
                         />
                     </div>
 
-                    <div className="flex justify-end space-x-4 mt-4">
+                    <div className="flex space-x-2 mt-4">
+                        
                         <button
                             type="button"
-                            className="bg-gray-300 text-black py-2 px-4 rounded-md hover:bg-gray-400"
+                            className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+                            onClick={handleSave}
+                        >
+                            Lưu Thông Tin
+                        </button>
+
+                        <button
+                            type="button"
+                            className="flex-1 bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-700"
                             onClick={onClose}
                         >
                             Hủy
                         </button>
-                        <button
-                            type="button"
-                            className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-                            onClick={handleSave}
-                        >
-                            Lưu thông tin
-                        </button>
+
                     </div>
                 </form>
             </div>
@@ -192,10 +197,10 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white p-6 rounded-md shadow-lg w-1/3">
-                <h2 className="text-xl font-bold mb-4">Đổi Mật Khẩu</h2>
+                <h2 className="text-xl font-bold mb-4 text-center">Đổi Mật Khẩu</h2>
                 <form className="space-y-4">
                     <div>
-                        <label htmlFor="oldPassword" className="block text-sm font-semibold">Mật khẩu cũ</label>
+                        <label htmlFor="oldPassword" className="block text-sm font-semibold">Mật Khẩu Cũ</label>
                         <input
                             id="oldPassword"
                             type="password"
@@ -206,7 +211,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                     </div>
 
                     <div>
-                        <label htmlFor="newPassword" className="block text-sm font-semibold">Mật khẩu mới</label>
+                        <label htmlFor="newPassword" className="block text-sm font-semibold">Mật Khẩu Mới</label>
                         <input
                             id="newPassword"
                             type="password"
@@ -217,7 +222,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                     </div>
 
                     <div>
-                        <label htmlFor="confirmPassword" className="block text-sm font-semibold">Xác nhận mật khẩu mới</label>
+                        <label htmlFor="confirmPassword" className="block text-sm font-semibold">Xác Nhận Mật Khẩu Mới</label>
                         <input
                             id="confirmPassword"
                             type="password"
@@ -234,26 +239,29 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                             checked={showPassword}
                             onChange={() => setShowPassword(!showPassword)} // Thay đổi trạng thái showPassword
                         />
-                        <label className="ml-2 text-sm" htmlFor="showPassword">Hiển thị mật khẩu</label>
+                        <label className="ml-2 text-sm" htmlFor="showPassword">Hiển Thị Mật Khẩu</label>
                     </div>
 
                     {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
 
-                    <div className="flex justify-end space-x-4 mt-4">
+                    <div className="flex space-x-2 mt-4">
+                        
                         <button
                             type="button"
-                            className="bg-gray-300 text-black py-2 px-4 rounded-md hover:bg-gray-400"
+                            className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+                            onClick={() => handlePasswordChange(oldPassword, newPassword)}
+                        >
+                            Đổi Mật Khẩu
+                        </button>
+
+                        <button
+                            type="button"
+                            className="flex-1 bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-700"
                             onClick={onClose}
                         >
                             Hủy
                         </button>
-                        <button
-                            type="button"
-                            className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-                            onClick={() => handlePasswordChange(oldPassword, newPassword)}
-                        >
-                            Đổi mật khẩu
-                        </button>
+
                     </div>
                 </form>
             </div>
@@ -310,6 +318,14 @@ const CustomerAccount = () => {
                 setUserInfo(response.data); // Cập nhật thông tin người dùng sau khi lưu
                 alert("Cập nhật thành công!");
                 handleCloseModal();
+
+                // Cập nhật thời gian updatedAt
+                await axios.put(`/api/users/${updatedData.id}/updateAt`, {}, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                });
             }
         } catch (error) {
             console.error("Có lỗi khi cập nhật thông tin:", error);
@@ -347,20 +363,20 @@ const CustomerAccount = () => {
                     <h1 className="text-3xl font-semibold mb-8 text-center">QUẢN LÝ TÀI KHOẢN</h1>
 
                         <div className="mb-4">
-                            <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">
-                                        Làm Mới
+                            <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-1">
+                                <FaSyncAlt className="text-white" />        Làm Mới
                             </button>
                         </div>
 
                     <div className="bg-white shadow p-6 rounded-lg max mx-auto">
 
                         
-                        <h2 className="text-2xl font-bold mb-4">Thông Tin Cá Nhân</h2>
+                        <h2 className="text-2xl font-bold mb-4 text-center">Thông Tin Cá Nhân</h2>
 
                         {userInfo && (
                             <div className="space-y-4">
 
-                                <div>
+                                {/* <div>
                                     <label className="block text-sm font-semibold">Mã</label>
                                     <input 
                                         type="text" 
@@ -369,11 +385,11 @@ const CustomerAccount = () => {
                                         onChange={(e) => setUserInfo({ ...userInfo, id: e.target.value })}
                                         disabled
                                     />
-                                    {/* <input type = "text" value={userInfo.id || "Chưa"} className="w-full p-3 border rounded-md" disabled /> */}
-                                </div>
+                                    
+                                </div> */}
 
                                 <div>
-                                    <label className="block text-sm font-semibold">Họ tên</label>
+                                    <label className="block text-sm font-semibold">Họ Tên</label>
                                     <input className="w-full p-3 border rounded-md"
                                         type="text" 
                                         value={userInfo.fullName || "Chưa có"} 
@@ -384,7 +400,7 @@ const CustomerAccount = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold">Ngày sinh</label>
+                                    <label className="block text-sm font-semibold">Ngày Sinh</label>
                                     <input className="w-full p-3 border rounded-md"
                                         type="text" 
                                         value={userInfo.birthDay || "Chưa có"} 
@@ -395,7 +411,7 @@ const CustomerAccount = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold">Số điện thoại</label>
+                                    <label className="block text-sm font-semibold">Số Điện Thoại</label>
                                     <input className="w-full p-3 border rounded-md"
                                         type="text" 
                                         value={userInfo.phone || "Chưa có"} 
@@ -416,24 +432,28 @@ const CustomerAccount = () => {
                                     {/* <input value={userInfo.email || "Chưa"} className="w-full p-3 border rounded-md" disabled /> */}
                                 </div>
 
-                                <button
-                                    className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-                                    onClick={handleOpenModal}
-                                >
-                                    Cập nhật
-                                </button>
+                                <div className="flex">
+                                    <button
+                                        className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700 flex items-center gap-1"
+                                        onClick={handleOpenModal}
+                                    >
+                                        <FaEdit className="text-white" /> Cập Nhật
+                                    </button>
 
-                                <button
-                                    className="bg-blue-500 text-white py-2 px-4 rounded-md ml-4 hover:bg-blue-700"
-                                    onClick={handleOpenPasswordModal}
-                                >
-                                    Đổi mật khẩu
-                                </button>
+                                    <button
+                                        className="bg-blue-500 text-white py-2 px-4 rounded-md ml-4 hover:bg-blue-700 flex items-center gap-1"
+                                        onClick={handleOpenPasswordModal}
+                                    >
+                                        <FaEdit className="text-white" /> Đổi Mật Khẩu
+                                    </button>
+                                </div>
+                                
 
                             </div>
                         )}
                     </div>
                 </main>
+                <Chatbox/>
             </div>
             {/* Modal */}
             <Modal

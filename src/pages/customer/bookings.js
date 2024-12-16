@@ -3,6 +3,8 @@ import axios from 'axios';
 import AuthContext from '../contexts/AuthContext';
 import CustomerHeader from '../components/Header/CustomerHeader';
 import CustomerSidebar from '../components/Sidebar/CustomerSidebar';
+import { FaSyncAlt} from "react-icons/fa"
+import Chatbox from '../components/Chatbox';
 
 const CustomerBookingTable = () => {
   const { user } = useContext(AuthContext);
@@ -102,6 +104,20 @@ const CustomerBookingTable = () => {
   
   
     try {
+
+      // Kiểm tra đơn đặt bàn chưa kết thúc
+      const activeBookingsResponse = await axios.get(`/api/bookings/check-active`, {
+        params: { userId: user.id },
+      });
+      const activeBookings = activeBookingsResponse.data;
+      console.log("Active Bookings:", activeBookings);
+
+
+      if (activeBookings.length > 0) {
+          alert('Bạn đang có đơn đặt bàn chưa kết thúc. Vui lòng kiểm tra lại.');
+          return;
+      }
+
       const bookingResponse = await axios.post('/api/bookings/add', {
         bookingTime: formatDate(selectedBookingTime),
         expiryTime: '',
@@ -145,8 +161,8 @@ const CustomerBookingTable = () => {
           <h1 className="text-3xl font-semibold mb-8 text-center">Danh Sách Bàn</h1>
 
           <div className='mb-4'>
-            <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">
-              Làm Mới
+            <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-1">
+              <FaSyncAlt className="text-white" /> Làm Mới
             </button>
           </div>
 
@@ -233,24 +249,24 @@ const CustomerBookingTable = () => {
           {showConfirmModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
               <div className="bg-white rounded p-6 shadow-lg w-96">
-                <h2 className="text-xl font-bold">Xác nhận đặt bàn</h2>
+                <h2 className="text-xl font-bold text-center">Xác Nhận Đặt Bàn</h2>
                 
                 {/* Thông tin thời gian đặt */}
-                <p><strong>Thời gian đặt:</strong> {new Date(bookingTime).toLocaleString()}</p>
+                <p className='mt-2'>Thời gian đặt: {new Date(bookingTime).toLocaleString()}</p>
 
                 <p>Bạn có chắc chắn muốn đặt các bàn sau:</p>
                 <ul className="list-disc ml-5">
                   {selectedTables.map(table => (
                     <li key={`${table.id}-${table.tableNum}`}>
-                      Bàn {table.tableNum} - Loại: {table.name} - Giá: {table.price} VND
+                      Bàn {table.tableNum} - Loại: {table.name} - Giá: {formatCurrency(table.price)} VND
                     </li>
                   ))}
                 </ul>
-                <div className="mt-4">
-                  <button onClick={handleBookingConfirm} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 h-12">
+                <div className="flex mt-4 space-x-2">
+                  <button onClick={handleBookingConfirm} className="flex-1 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 h-12">
                     Xác Nhận
                   </button>
-                  <button onClick={() => setShowConfirmModal(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2 h-12">
+                  <button onClick={() => setShowConfirmModal(false)} className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2 h-12">
                     Hủy
                   </button>
                 </div>
@@ -259,8 +275,11 @@ const CustomerBookingTable = () => {
           )}
 
         </main>
+        <Chatbox/>
       </div>
     </div>
+
+    
   );
 };
 

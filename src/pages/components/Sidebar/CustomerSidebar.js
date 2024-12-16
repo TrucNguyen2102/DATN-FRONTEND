@@ -30,14 +30,14 @@ const CustomerSidebar = () => {
 
     return (
         <div className="bg-white w-60 h-full shadow-md">
-            <h2 className="text-lg font-bold p-4">Quản Lý</h2>
+            {/* <h2 className="text-lg font-bold p-4">Quản Lý</h2> */}
                 <ul className="space-y-2">
                     <li>
                         <Link 
                             href={`/${user.role.toLowerCase()}/home`} 
                             className={`block p-4 ${currentPath === `/${user.role.toLowerCase()}/home` ? 'bg-blue-300' : 'hover:bg-blue-200'} focus:outline-none`}
                         >
-                            Trang chủ
+                            Trang Chủ
                         </Link>
                     </li>
                     {links[user.role]?.map((link) => (

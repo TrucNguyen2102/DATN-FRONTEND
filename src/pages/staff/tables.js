@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import axios from "axios";
 import StaffSidebar from "../components/Sidebar/StaffSidebar";
 import { FaRegClock } from 'react-icons/fa';
+import { FaEdit, FaSyncAlt  } from "react-icons/fa"
 
 const TablePlay = () => {
     const [tables, setTables] = useState([]);
@@ -290,7 +291,7 @@ const TablePlay = () => {
             <div className="flex flex-1">
                 <StaffSidebar className="w-1/4 bg-gray-200 p-4" />
                 <main className="flex-1 p-6">
-                    <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Bàn</h1>
+                    <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Tình Trạng Bàn</h1>
                     {error && <p className="text-red-500 text-center">{error}</p>}
                     
                     {loading ? <p>Đang tải...</p> : null}
@@ -302,59 +303,82 @@ const TablePlay = () => {
                         {showForm ? 'Ẩn Form' : 'Thêm Bàn'}
                     </button> */}
 
-                    <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mb-4">
+                    <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mb-4 flex items-center gap-1">
+                        
+                    {/* <FaPlus className="text-white" /> */}
+                    <FaSyncAlt className="text-white" />
                         Làm Mới
                     </button>
 
                     {showForm && (
-                        <div className="mb-8">
-                            <div className="mb-4">
-                                <label className="block text-gray-700 font-bold">Số Bàn</label>
-                                <input 
-                                    type="text" 
-                                    className="border border-gray-300 rounded px-4 py-2 w-full" 
-                                    value={newTable.tableNum}
-                                    onChange={e => setNewTable({ ...newTable, tableNum: e.target.value })}
-                                    disabled={!!newTable.tableNum}
-                                />
-                            </div>
+                        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+                            <div className="bg-white p-6 rounded shadow-lg w-96">
+                                <h2 className="text-xl font-bold mb-4 text-center">Chỉnh Sửa</h2>
+                                <div className="mb-8">
+                                    <div className="mb-4">
+                                        <label className="block text-gray-700 font-bold">Số Bàn</label>
+                                        <input 
+                                            type="text" 
+                                            className="border border-gray-300 rounded px-4 py-2 w-full" 
+                                            value={newTable.tableNum}
+                                            onChange={e => setNewTable({ ...newTable, tableNum: e.target.value })}
+                                            disabled={!!newTable.tableNum}
+                                        />
+                                    </div>
 
-                            <div className="mb-4">
-                                <label className="block text-gray-700 font-bold">Trạng Thái Bàn</label>
-                                <select 
-                                    className="border border-gray-300 rounded px-4 py-2 w-full" 
-                                    value={newTable.tableStatus}
-                                    onChange={e => setNewTable({ ...newTable, tableStatus: e.target.value })}
-                                >
-                                    <option value="Chọn">Chọn</option>
-                                    <option value="Trống">Trống</option>
-                                    <option value="Đã Đặt">Đã Đặt</option>
-                                    <option value="Đang Chơi">Đang Chơi</option>
-                                </select>
-                            </div>
+                                    <div className="mb-4">
+                                        <label className="block text-gray-700 font-bold">Trạng Thái Bàn</label>
+                                        <select 
+                                            className="border border-gray-300 rounded px-4 py-2 w-full" 
+                                            value={newTable.tableStatus}
+                                            onChange={e => setNewTable({ ...newTable, tableStatus: e.target.value })}
+                                        >
+                                            <option value="">Chọn Trạng Thái</option>
+                                            <option value="Trống">Trống</option>
+                                            <option value="Đã Đặt">Đã Đặt</option>
+                                            <option value="Đang Chơi">Đang Chơi</option>
+                                        </select>
+                                    </div>
 
-                            <div className="mb-4">
-                                <label className="block text-gray-700 font-bold">Loại Bàn</label>
-                                <select 
-                                    className="border border-gray-300 rounded px-4 py-2 w-full" 
-                                    value={newTable.typeId}
-                                    onChange={e => setNewTable({ ...newTable, typeId: e.target.value })}
-                                    disabled={!!newTable.typeId}
-                                >
-                                    <option value="">Chọn loại bàn</option>
-                                    {types.map(type => (
-                                        <option key={type.id} value={type.id}>{type.name}</option> 
-                                    ))}
-                                </select>
-                            </div>
+                                    <div className="mb-4">
+                                        <label className="block text-gray-700 font-bold">Loại Bàn</label>
+                                        <select 
+                                            className="border border-gray-300 rounded px-4 py-2 w-full" 
+                                            value={newTable.typeId}
+                                            onChange={e => setNewTable({ ...newTable, typeId: e.target.value })}
+                                            disabled={!!newTable.typeId}
+                                        >
+                                            <option value="">Chọn Loại Bàn</option>
+                                            {types.map(type => (
+                                                <option key={type.id} value={type.id}>{type.name}</option> 
+                                            ))}
+                                        </select>
+                                    </div>
 
-                            <button 
-                                onClick={handleAddOrUpdateTable} 
-                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
-                            >
-                                {isEdit ? 'Cập Nhật' : 'Thêm Bàn'}
-                            </button>
+                                    <div className="mt-4 flex space-x-2">
+                                        <button 
+                                            onClick={handleAddOrUpdateTable} 
+                                            className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                        >
+                                            {isEdit ? 'Cập Nhật' : 'Thêm Bàn'}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowForm(false)}
+                                            className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2"
+                                            >
+                                                Hủy
+                                        </button>
+                                    </div>
+
+                                    
+
+                                </div>
+                            </div>
+                            
                         </div>
+                        
                     )}
 
                     <table className="min-w-full bg-white border border-gray-300 table-fixed">
@@ -377,11 +401,12 @@ const TablePlay = () => {
                                         {/* {types.find(type => type.id === table.type.id)?.name || 'Chưa xác định'} */}
                                         {table.type.name}
                                     </td>
-                                    <td className="py-2 px-4 border text-center">
+                                    <td className="py-2 px-4 border flex justify-center items-center">
                                         {/* <button onClick={() => handleViewTable(table)} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-700">
                                             Xem
                                         </button> */}
-                                        <button onClick={() => handleEditTable(table)} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-700">
+                                        <button onClick={() => handleEditTable(table)} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-700 flex items-center gap-1">
+                                        <FaEdit className="text-white" />
                                             Sửa
                                         </button>
                                         {/* <button onClick={() => handleDeleteTable(table.id)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2">
@@ -443,7 +468,7 @@ const TablePlay = () => {
                                                         table.type.priceIds && table.type.priceIds.length > 0
                                                             ? formatCurrency(getPriceById(table.type.priceIds[0])) // Lấy giá từ bảng giá
                                                             : "Chưa có giá"
-                                                    } VND
+                                                    } VND/giờ
                                                 </p>
                                             </div>
                                         </div>

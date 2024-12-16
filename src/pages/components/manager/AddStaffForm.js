@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const AddStaffForm = ({ staffData, onClose }) => {
     const [fullName, setFullName] = useState(staffData?.fullName || '');
+    const [birthDay, setBirthDay] = useState(staffData?.birthDay || '');
     const [email, setEmail] = useState(staffData?.email || '');
     const [phone, setPhone] = useState(staffData?.phone || '');
     const [password, setPassword] = useState('');
@@ -11,12 +12,13 @@ const AddStaffForm = ({ staffData, onClose }) => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
 
-        if (!fullName || !email || !phone || (staffData ? false : !password || !confirmPassword)) {
+        if (!fullName || !birthDay || !email || !phone || (staffData ? false : !password || !confirmPassword)) {
             alert('Tất cả các trường đánh dấu * là bắt buộc.');
             return;
         }
@@ -33,14 +35,15 @@ const AddStaffForm = ({ staffData, onClose }) => {
             await axios({
                 method: method,
                 url: url,
-                data: {
-                    fullName,
-                    email,
-                    phone,
-                    password: staffData ? undefined : password,
-                    role: 'STAFF',
-                    status: 'Đang hoạt động'
-                },
+                // data: {
+                //     fullName,
+                //     birthDay,
+                //     email,
+                //     phone,
+                //     password: staffData ? undefined : password,
+                //     role: 'STAFF',
+                //     status: 'Đang hoạt động'
+                // },
 
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -56,59 +59,21 @@ const AddStaffForm = ({ staffData, onClose }) => {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md">
-            {error && <p className="text-red-500">{error}</p>}
-            {success && <p className="text-green-500">{success}</p>}
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+            <form onSubmit={handleSubmit} >
+                <div className="bg-white p-6 rounded shadow-lg w-96">
+                <h2 className="text-xl font-bold mb-4 text-center">{staffData ? 'Chỉnh Sửa' : 'Thêm Thông Tin'}</h2>
+                    {error && <p className="text-red-500">{error}</p>}
+                    {success && <p className="text-green-500">{success}</p>}
 
-            <div className="mb-4">
-                <label className="block text-gray-700 font-bold">
-                    Họ Tên <span className="text-red-500">*</span>
-                </label>
-                <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="border border-gray-300 rounded p-2 w-full"
-                    required
-                />
-            </div>
-
-            <div className="mb-4">
-                <label className="block text-gray-700 font-bold">
-                    Số Điện Thoại <span className="text-red-500">*</span>
-                </label>
-                <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="border border-gray-300 rounded p-2 w-full"
-                    required
-                />
-            </div>
-
-            <div className="mb-4">
-                <label className="block text-gray-700 font-bold">
-                    Email <span className="text-red-500">*</span>
-                </label>
-                <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="border border-gray-300 rounded p-2 w-full"
-                    required
-                />
-            </div>
-
-            {!staffData && (
-                <>
                     <div className="mb-4">
                         <label className="block text-gray-700 font-bold">
-                            Mật Khẩu <span className="text-red-500">*</span>
+                            Họ Tên <span className="text-red-500">*</span>
                         </label>
                         <input
-                            type={showPassword ? 'text' : 'password'} // Kiểm tra để ẩn/hiện mật khẩu
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            type="text"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
                             className="border border-gray-300 rounded p-2 w-full"
                             required
                         />
@@ -116,35 +81,105 @@ const AddStaffForm = ({ staffData, onClose }) => {
 
                     <div className="mb-4">
                         <label className="block text-gray-700 font-bold">
-                            Xác Nhận Mật Khẩu <span className="text-red-500">*</span>
+                            Ngày Sinh <span className="text-red-500">*</span>
                         </label>
                         <input
-                            type={showPassword ? 'text' : 'password'} // Kiểm tra để ẩn/hiện mật khẩu
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            type="date"
+                            value={birthDay}
+                            onChange={(e) => setBirthDay(e.target.value)}
                             className="border border-gray-300 rounded p-2 w-full"
                             required
                         />
                     </div>
 
                     <div className="mb-4">
-                        <label className="inline-flex items-center">
-                            <input
-                                type="checkbox"
-                                checked={showPassword}
-                                onChange={() => setShowPassword(!showPassword)} // Chuyển đổi giữa ẩn và hiện mật khẩu
-                                className="mr-2"
-                            />
-                            Hiển thị mật khẩu
+                        <label className="block text-gray-700 font-bold">
+                            Số Điện Thoại <span className="text-red-500">*</span>
                         </label>
+                        <input
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className="border border-gray-300 rounded p-2 w-full"
+                            required
+                        />
                     </div>
-                </>
-            )}
 
-            <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">
-                {staffData ? 'Cập Nhật Nhân Viên' : 'Thêm Nhân Viên'}
-            </button>
-        </form>
+                    <div className="mb-4">
+                        <label className="block text-gray-700 font-bold">
+                            Email <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="border border-gray-300 rounded p-2 w-full"
+                            required
+                        />
+                    </div>
+
+                    {!staffData && (
+                        <>
+                            <div className="mb-4">
+                                <label className="block text-gray-700 font-bold">
+                                    Mật Khẩu <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type={showPassword ? 'text' : 'password'} // Kiểm tra để ẩn/hiện mật khẩu
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="border border-gray-300 rounded p-2 w-full"
+                                    required
+                                />
+                            </div>
+
+                            <div className="mb-4">
+                                <label className="block text-gray-700 font-bold">
+                                    Xác Nhận Mật Khẩu <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type={showPassword ? 'text' : 'password'} // Kiểm tra để ẩn/hiện mật khẩu
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="border border-gray-300 rounded p-2 w-full"
+                                    required
+                                />
+                            </div>
+
+                            <div className="mb-4">
+                                <label className="inline-flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={showPassword}
+                                        onChange={() => setShowPassword(!showPassword)} // Chuyển đổi giữa ẩn và hiện mật khẩu
+                                        className="mr-2"
+                                    />
+                                    Hiển thị mật khẩu
+                                </label>
+                            </div>
+                        </>
+                    )}
+
+
+                    <div className="mt-4 flex space-x-2">
+                        <button type="submit" className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
+                            {staffData ? 'Chỉnh Sửa' : 'Thêm'}
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={(onClose)}
+                            className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2"
+                            >
+                                Hủy
+                        </button>
+                    </div>
+                    
+                </div>
+                
+            </form>
+        </div>
+        
     );
 };
 

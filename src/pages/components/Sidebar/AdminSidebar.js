@@ -19,7 +19,7 @@ const AdminSidebar = () => {
         { href: "/admin/users", label: "Quản Lý Người Dùng" },
         // { href: "/admin/permissions", label: "Quản Lý Quyền Hạn" },
         { href: "/admin/apis", label: "Quản Lý API" },
-        { href: "/admin/logs", label: "Xem Logs Hệ Thống" }
+        // { href: "/admin/logs", label: "Xem Logs Hệ Thống" }
     ];
 
     const links = {
@@ -37,7 +37,7 @@ const AdminSidebar = () => {
                             href={`/${user.role.toLowerCase()}/home`} 
                             className={`block p-4 ${currentPath === `/${user.role.toLowerCase()}/home` ? 'bg-blue-300' : 'hover:bg-blue-200'} focus:outline-none`}
                         >
-                            Trang chủ
+                            Trang Chủ
                         </Link>
                     </li>
                     {links[user.role]?.map((link) => (

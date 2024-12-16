@@ -6,8 +6,11 @@ import AdminSidebar from '../components/Sidebar/AdminSidebar';
 const Dashboard = () => {
     const [error, setError] = useState('');
     const [totalUsers, setTotalUsers] = useState(0);
-    const [totalRevenue, setTotalRevenue] = useState(0);
-    const [totalApiCalls, setTotalApiCalls] = useState(0);
+    const [isActiveUsers, setIsActiveUsers] = useState(0);
+    const [isInActiveUsers, setIsInActiveUsers] = useState(0);
+    const [isLockUsers, setIsLockUsers] = useState(0);
+    const [isGuest, setIsGuest] = useState(0);
+
     const [logs, setLogs] = useState([]);
 
     // Gọi API khi component được load
@@ -20,28 +23,45 @@ const Dashboard = () => {
                 if (!token) throw new Error('Chưa đăng nhập hoặc token không tồn tại.');
 
                 // Gọi API lấy tổng số người dùng
-                const usersResponse = await axios.get('/api/users/admins/total-users', {
+                const totalUsersResponse = await axios.get('/api/users/admins/total-users', {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
-                setTotalUsers(usersResponse.data);
 
-                // Gọi API lấy tổng doanh thu
-                // const revenueResponse = await axios.get('/api/users/admins/total-revenue');
-                // setTotalRevenue(revenueResponse.data);
-
-                // Gọi API lấy tổng số API được gọi
-                const apiCallsResponse = await axios.get('/api/users/admins/total-api-calls', {
+                // Gọi API lấy tổng số người dùng hoạt động
+                const activeUsersResponse = await axios.get('/api/users/admins/active/count', {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
-                setTotalApiCalls(apiCallsResponse.data);
 
-                // Gọi API lấy logs hệ thống
-                // const logsResponse = await axios.get('/api/admin/logs');
-                // setLogs(logsResponse.data);
+                // Gọi API lấy tổng số người dùng không hoạt động
+                const inActiveUsersResponse = await axios.get('/api/users/admins/in_active/count', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                // Gọi API lấy tổng số người dùng bị khóa
+                const lockUsersResponse = await axios.get('/api/users/admins/lock/count', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                // Gọi API lấy tổng số người dùng là khách vãng lai
+                const guestsResponse = await axios.get('/api/users/admins/guest/count', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                setTotalUsers(totalUsersResponse.data); 
+                setIsActiveUsers(activeUsersResponse.data);
+                setIsInActiveUsers(inActiveUsersResponse.data);
+                setIsLockUsers(lockUsersResponse.data);
+                setIsGuest(guestsResponse.data);
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
@@ -70,32 +90,32 @@ const Dashboard = () => {
                         </div>
 
                         <div className="bg-white p-6 rounded-lg shadow-md">
-                            <h2 className="text-xl font-bold">Tổng Doanh Thu</h2>
-                            <p className="text-3xl mt-4">{totalRevenue.toLocaleString()} VNĐ</p>
+                            <h2 className="text-xl font-bold">Số Người Dùng Hoạt Động</h2>
+                            <p className="text-3xl mt-4">{isActiveUsers}</p>
                         </div>
 
                         <div className="bg-white p-6 rounded-lg shadow-md">
-                            <h2 className="text-xl font-bold">Tổng Số API Được Gọi</h2>
-                            <p className="text-3xl mt-4">{totalApiCalls}</p>
+                            <h2 className="text-xl font-bold">Số Người Dùng Không Hoạt Động</h2>
+                            <p className="text-3xl mt-4">{isInActiveUsers}</p>
                         </div>
+
+                        <div className="bg-white p-6 rounded-lg shadow-md">
+                            <h2 className="text-xl font-bold">Số Người Dùng Bị Khóa</h2>
+                            <p className="text-3xl mt-4">{isLockUsers}</p>
+                        </div>
+
+                        <div className="bg-white p-6 rounded-lg shadow-md">
+                            <h2 className="text-xl font-bold">Số Người Dùng Là Khách Vãng Lai</h2>
+                            <p className="text-3xl mt-4">{isGuest}</p>
+                        </div>
+
+                        
                     </div>
 
-                    {/* Biểu đồ thống kê (nếu cần) */}
-                    <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-                        <h2 className="text-xl font-bold">Biểu đồ thống kê</h2>
-                        {/* Placeholder cho biểu đồ */}
-                        <div className="w-full h-64 bg-gray-200 mt-4"></div>
-                    </div>
+                    
 
-                    {/* Logs hệ thống */}
-                    <div className="bg-white p-6 rounded-lg shadow-md">
-                        <h2 className="text-xl font-bold mb-4">Logs Hệ Thống Gần Đây</h2>
-                        <ul className="space-y-2">
-                            {logs.map((log, index) => (
-                                <li key={index} className="border-b py-2">{log.message}</li>
-                            ))}
-                        </ul>
-                    </div>
+                  
+                    
                 </main>
 
                 

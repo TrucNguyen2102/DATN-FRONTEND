@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import ManagerHeader from '../components/Header/ManagerHeader';
 import ManagerSidebar from '../components/Sidebar/ManagerSidebar';
+import { FaSyncAlt, FaPlus, FaEdit, FaTrash  } from "react-icons/fa"
 
 const TypeTable = () => {
     const [types, setTypes] = useState([]);
@@ -126,17 +127,40 @@ const TypeTable = () => {
         setShowForm(true);
     };
 
+    // const handleDeleteType = async (id) => {
+    //     if (window.confirm(`Bạn có chắc chắn muốn xóa loại bàn này không?`)) {
+    //         try {
+    //             await axios.delete(`/api/tables/types/delete/${id}`);
+    //             setTypes(types.filter((type) => type.id !== id));
+    //             setSuccessMessage('Xóa loại bàn thành công!');
+    //         } catch (error) {
+    //             console.error("Lỗi khi xóa loại bàn", error);
+    //         }
+    //     }
+    // };
+
     const handleDeleteType = async (id) => {
-        if (window.confirm(`Bạn có chắc chắn muốn xóa loại bàn này không?`)) {
-            try {
-                await axios.delete(`/api/tables/types/delete/${id}`);
-                setTypes(types.filter((type) => type.id !== id));
-                setSuccessMessage('Xóa loại bàn thành công!');
-            } catch (error) {
-                console.error("Lỗi khi xóa loại bàn", error);
+        try {
+            // Kiểm tra xem loại bàn có được sử dụng trong bất kỳ bàn chơi nào không
+            const response = await axios.get(`/api/tables/types/check-used/${id}`);
+            console.log("Response:", response.data);
+            
+            if (response.data.isUsed) {
+                // Nếu loại bàn đang được sử dụng, hiển thị thông báo và không xóa
+                alert('Loại bàn này đang được sử dụng trong một hoặc nhiều bàn chơi, không thể xóa.');
+            } else {
+                // Nếu loại bàn chưa được sử dụng, hỏi xác nhận và xóa loại bàn
+                if (window.confirm(`Bạn có chắc chắn muốn xóa loại bàn này không?`)) {
+                    await axios.delete(`/api/tables/types/delete/${id}`);
+                    setTypes(types.filter((type) => type.id !== id));
+                    setSuccessMessage('Xóa loại bàn thành công!');
+                }
             }
+        } catch (error) {
+            console.error("Lỗi khi kiểm tra/xóa loại bàn", error);
         }
     };
+    
 
     const priceMap = prices.reduce((acc, price) => {
         acc[price.id] = price.price;
@@ -158,56 +182,114 @@ const TypeTable = () => {
                     <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Loại Bàn</h1>
                     {error && <p className="text-red-500 text-center">{error}</p>}
                     {successMessage && <p className="text-green-500 text-center">{successMessage}</p>}
-                    
-                    <button 
-                        onClick={() => setShowForm(!showForm)} 
-                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 mb-4 mr-5"
-                    >
-                        {showForm ? 'Ẩn Form' : 'Thêm Loại'}
-                    </button>
 
-                    <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">
-                        Làm Mới
-                    </button>
+                    <div className='flex mb-4'>
+                        <button onClick={handleRefresh} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-1">
+                            <FaSyncAlt className="text-white" /> Làm Mới
+                        </button>
+                        
+                        <button 
+                            onClick={() => setShowForm(!showForm)} 
+                            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 ml-2 flex items-center gap-1"
+                        >
+                            <FaPlus className="text-white" />
+                            {/* {showForm ? 'Ẩn Form' : 'Thêm Loại'} */}
+                            Thêm Loại
+                        </button>
+                    </div>
+                    
+
+                    
 
                     {showForm && (
-                        <form onSubmit={isEditing ? handleEditExistingType : handleAddType} className="mb-4">
-                            <div>
-                                <label className="block text-gray-700 font-bold">Tên Loại Bàn</label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    value={newType.name}
-                                    onChange={handleInputChange}
-                                    className="border px-3 py-2"
-                                    required
-                                    disabled={isEditing} // Vô hiệu hóa trường giá nếu đang trong chế độ chỉnh sửa
-                                />
-                            </div>
+                        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+                            <div className="bg-white p-6 rounded shadow-lg w-96">
+                            <h2 className="text-xl font-bold mb-4 text-center">{newType.id ? 'Sửa Loại Bàn' : 'Thêm Loại Bàn'}</h2>
+                                <form onSubmit={isEditing ? handleEditExistingType : handleAddType} className="mb-4">
+                                    <div>
+                                        <label className="block text-gray-700 font-bold">
+                                            Tên Loại Bàn <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value={newType.name}
+                                            onChange={handleInputChange}
+                                            className="border px-3 py-2 w-full"
+                                            required
+                                            disabled={isEditing} // Vô hiệu hóa trường giá nếu đang trong chế độ chỉnh sửa
+                                        />
+                                    </div>
 
-                            <div className="mt-4">
-                                <label className="block text-gray-700 font-bold">Chọn Giá Áp Dụng</label>
-                                <select
-                                    name="priceId"
-                                    value={newType.priceId}
-                                    onChange={handleInputChange}
-                                    className="border px-3 py-2 w-full"
-                                    required
-                                   
-                                >
-                                    <option value="">Chọn một giá</option>
-                                    {prices.map((price) => (
-                                        <option key={price.id} value={price.id}>
-                                            {formatPrice(price.price)} (Áp dụng từ: {price.startDate} đến {price.endDate})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                                    <div className="mt-4">
+                                        <label className="block text-gray-700 font-bold">
+                                            Chọn Giá Áp Dụng <span className="text-red-500">*</span>
+                                        </label>
+                                        {/* <select
+                                            name="priceId"
+                                            value={newType.priceId}
+                                            onChange={handleInputChange}
+                                            className="border px-3 py-2 w-full"
+                                            required
+                                        
+                                        >
+                                            <option value="">Chọn một giá</option>
+                                            {prices.map((price) => (
+                                                <option key={price.id} value={price.id}>
+                                                    {formatPrice(price.price)} (Áp dụng từ: {price.startDate} đến {price.endDate})
+                                                </option>
+                                            ))}
+                                        </select> */}
 
-                            <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mt-2">
-                                {isEditing ? 'Chỉnh Sửa' : 'Thêm Loại'}
-                            </button>
-                        </form>
+                                        <select
+                                            name="priceId"
+                                            value={newType.priceId}
+                                            onChange={handleInputChange}
+                                            className="border px-3 py-2 w-full"
+                                            required
+                                        >
+                                            <option value="">Chọn một giá</option>
+                                            {prices.map((price) => {
+                                                // Kiểm tra nếu có ngày kết thúc và ngày kết thúc nhỏ hơn ngày hiện tại, hoặc nếu không có ngày kết thúc
+                                                const isActive = price.endDate && new Date(price.endDate) < new Date();
+                                                const endDateMessage = price.endDate ? `Đã hết hạn từ: ${price.endDate}` : "Chưa có ngày kết thúc"; // Tin nhắn cho giá đã hết hạn
+                                                return (
+                                                    <option
+                                                        key={price.id}
+                                                        value={price.id}
+                                                        disabled={isActive} // Vô hiệu hóa giá đã hết hạn
+                                                        title={isActive ? endDateMessage : ""}
+                                                    >
+                                                        {formatPrice(price.price)} (Áp dụng từ: {price.startDate} đến {price.endDate || "Chưa Có"})
+                                                    </option>
+                                                );
+                                            })}
+                                        </select>
+
+
+                                    </div>
+
+                                    <div className="mt-4 flex space-x-2">
+                                        <button type="submit" className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
+                                            {isEditing ? 'Chỉnh Sửa' : 'Thêm'}
+                                        </button>
+
+                                        <button
+                                                type="button"
+                                                onClick={() => setShowForm(false)}
+                                                className="flex-1 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2"
+                                            >
+                                                Hủy
+                                        </button>
+
+                                    </div>
+
+                                    
+                                </form>
+                            </div>
+                            
+                        </div>
+                        
                     )}
 
                     {loading ? ( // Hiển thị spinner khi đang tải
@@ -241,12 +323,12 @@ const TypeTable = () => {
                                                 : 'Chưa có giá'}
                                         </td>
 
-                                        <td className="py-2 px-4 border text-center">
-                                            <button onClick={() => handleEditType(type)} className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-700 mr-2">
-                                                Sửa
+                                        <td className="flex py-2 px-4 border text-center justify-center">
+                                            <button onClick={() => handleEditType(type)} className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-700 mr-2 flex items-center gap-1">
+                                                <FaEdit className="text-white" /> Sửa
                                             </button>
-                                            <button onClick={() => handleDeleteType(type.id)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700">
-                                                Xóa
+                                            <button onClick={() => handleDeleteType(type.id)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700 flex items-center gap-1">
+                                                <FaTrash className="text-white" /> Xóa
                                             </button>
                                         </td>
                                     </tr>
