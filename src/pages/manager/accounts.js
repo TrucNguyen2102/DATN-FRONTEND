@@ -11,6 +11,7 @@ const Modal = ({ isOpen, onClose, onSave, initialData }) => {
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
     const [birthDay, setBirthDay] = useState("");
+    
 
     const [errors, setErrors] = useState({
         fullName: '',
@@ -213,6 +214,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [errors, setErrors] = useState({
         oldPassword: '',
@@ -341,7 +343,8 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                         </label>
                         <input
                             id="oldPassword"
-                            type="password"
+                            // type="password"
+                            type={showPassword ? 'text' : 'password'}
                             value={oldPassword}
                             // onChange={(e) => setOldPassword(e.target.value)}
                             onChange={handleInputChange}
@@ -355,7 +358,8 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                         </label>
                         <input
                             id="newPassword"
-                            type="password"
+                            // type="password"
+                            type={showPassword ? 'text' : 'password'}
                             value={newPassword}
                             //onChange={(e) => setNewPassword(e.target.value)}
                             onChange={handleInputChange}
@@ -369,12 +373,23 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                         </label>
                         <input
                             id="confirmPassword"
-                            type="password"
+                            // type="password"
+                            type={showPassword ? 'text' : 'password'}
                             value={confirmPassword}
                             //onChange={(e) => setConfirmPassword(e.target.value)}
                             onChange={handleInputChange}
                             className="w-full p-3 border rounded-md mt-1"
                         />
+                    </div>
+
+                    <div className="mb-4">
+                        <input
+                            type="checkbox"
+                            id="showPassword"
+                            checked={showPassword}
+                            onChange={() => setShowPassword(!showPassword)} // Thay đổi trạng thái showPassword
+                        />
+                        <label className="ml-2 text-sm" htmlFor="showPassword">Hiển Thị Mật Khẩu</label>
                     </div>
 
                     
@@ -457,6 +472,14 @@ const ManagerAccount = () => {
                 setUserInfo(response.data); // Cập nhật thông tin người dùng sau khi lưu
                 alert("Cập nhật thành công!");
                 handleCloseModal();
+
+                // Cập nhật thời gian updatedAt
+                await axios.put(`/api/users/${updatedData.id}/updateAt`, {}, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                });
             }
         } catch (error) {
             console.error("Có lỗi khi cập nhật thông tin:", error);

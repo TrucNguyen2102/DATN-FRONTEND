@@ -257,9 +257,15 @@ const StaffInvoices = () => {
         const billDateParts = now.toLocaleString('sv-SE', options).split(','); // 'YYYY-MM-DD HH:mm:ss'
         const billDate = billDateParts.join(' ').replace(' ', ' '); // Kết hợp lại thành 'YYYY-MM-DD HH:mm:ss'
     
+        
+        // // Cập nhật trạng thái đơn đặt bàn
+        // await axios.put(`/api/bookings/update/${selectedBooking.bookingId}/status`, {
+        //     status: "Chờ Thanh Toán" // Cập nhật trạng thái đơn đặt thành "Chờ Thanh Toán"
+        // });
+
         // Cập nhật trạng thái đơn đặt bàn
-        await axios.put(`/api/bookings/update/${selectedBooking.bookingId}/status`, {
-            status: "Chờ Thanh Toán" // Cập nhật trạng thái đơn đặt thành "Chờ Thanh Toán"
+        await axios.put(`/api/bookings/booking_table/update/${selectedBooking.bookingId}/status/paymentProcessing`, {
+            //status: "Chờ Thanh Toán" // Cập nhật trạng thái đơn đặt thành "Chờ Thanh Toán"
         });
             
             const updatedInvoice = {

@@ -122,33 +122,41 @@ const AdminUsers = () => {
         setShowRoleForm(true);
     };
     
-    const handleSaveRole = async (role) => {
-        if (editingUser) {
-            try {
-                // Cập nhật vai trò cho người dùng hiện tại
-                const response = await axios.put(
-                    `/api/users/admins/managers/update/${editingUser.id}`, 
-                    { role },
-                    {
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${localStorage.getItem("token")}`,
-                        },
-                    }
-                );
-                console.log("Response:", response.data)
+    // const handleSaveRole = async (role) => {
+    //     if (editingUser) {
+    //         try {
+    //             // Cập nhật vai trò cho người dùng hiện tại
+    //             const response = await axios.put(
+    //                 `/api/users/admins/managers/update/${editingUser.id}`, 
+    //                 { role },
+    //                 {
+    //                     headers: {
+    //                         "Content-Type": "application/json",
+    //                         Authorization: `Bearer ${localStorage.getItem("token")}`,
+    //                     },
+    //                 }
+    //             );
+    //             console.log("Response:", response.data)
+
+    //             // Cập nhật thời gian updatedAt
+    //             await axios.put(`/api/users/${editingUser.id}/updateAt`, {}, {
+    //                 headers: {
+    //                     "Content-Type": "application/json",
+    //                     Authorization: `Bearer ${localStorage.getItem("token")}`,
+    //                 },
+    //             });
                 
-                // Reload the users list after update
-                fetchUsers(); 
-                alert("Cập nhật thành công.")
+    //             // Reload the users list after update
+    //             fetchUsers(); 
+    //             alert("Cập nhật thành công.")
     
-                // Đóng form thay đổi vai trò
-                setShowRoleForm(false);
-            } catch (error) {
-                console.error("Error updating user role:", error);
-            }
-        }
-    };
+    //             // Đóng form thay đổi vai trò
+    //             setShowRoleForm(false);
+    //         } catch (error) {
+    //             console.error("Error updating user role:", error);
+    //         }
+    //     }
+    // };
     
 
 
@@ -288,7 +296,7 @@ const AdminUsers = () => {
                         <RoleForm 
                             // roleData={editingUser?.role} 
                             user={editingUser} // Truyền user đang chỉnh sửa
-                            onSave={handleSaveRole} 
+                            //onSave={handleSaveRole} 
                             onClose={() => setShowRoleForm(false)} 
                         />
                     )}

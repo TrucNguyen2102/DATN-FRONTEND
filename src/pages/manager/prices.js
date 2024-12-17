@@ -18,37 +18,54 @@ const PricesPage = () => {
 
     });
 
+    // Thêm state để quản lý phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [pageSize, setPageSize] = useState(5); // Số bản ghi mỗi trang
+
     const { user } = useContext(AuthContext);
     console.log(user);
      
 
 
-    const fetchPrices = async () => {
+    const fetchPrices = async (page = 0, size = 5) => {
         try {
             const token = localStorage.getItem('token');
             if (!token) throw new Error('Chưa đăng nhập hoặc token không tồn tại.');
     
-            const response = await axios.get('/api/tables/prices/all', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
+            const response = await axios.get('/api/tables/prices/pages/all', {
+                params: {
+                    page: page,
+                    size: size
                 }
+
+                // headers: {
+                //     'Authorization': `Bearer ${token}`
+                // }
             });
 
             console.log("Response:", response.data);
     
-            if (Array.isArray(response.data)) {
-                // Xử lý dữ liệu trả về
-                const processedData = response.data.map(item => ({
-                    id: item.id,
-                    price: item.price,
-                    startDate: item.startDate,
-                    endDate: item.endDate,
-                    active: item.active
-                }));
+            // if (Array.isArray(response.data)) {
+            //     // Xử lý dữ liệu trả về
+            //     const processedData = response.data.map(item => ({
+            //         id: item.id,
+            //         price: item.price,
+            //         startDate: item.startDate,
+            //         endDate: item.endDate,
+            //         active: item.active
+            //     }));
                 
-                setPrices(processedData);  // Gán dữ liệu đã xử lý cho state 'prices'
+            //     setPrices(processedData);  // Gán dữ liệu đã xử lý cho state 'prices'
+            // } else {
+            //     setError('Dữ liệu không hợp lệ.');
+            // }
+
+            if (response.data.content) {
+                setPrices(response.data.content);
+                setTotalPages(response.data.totalPages);
             } else {
-                setError('Dữ liệu không hợp lệ.');
+                console.error('Dữ liệu trả về không đúng định dạng:', response.data);
             }
         } catch (error) {
             setError('Không thể tải danh sách giá.');
@@ -57,12 +74,21 @@ const PricesPage = () => {
     };
     
     
-    
+    // Hàm thay đổi trang
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        fetchPrices(page - 1, pageSize); // Lưu ý: page trong API bắt đầu từ 0
+    };
     
 
     useEffect(() => {
         fetchPrices();
     }, []);
+
+    // Gọi fetchTables với tham số phân trang
+    useEffect(() => {
+        fetchPrices(currentPage - 1, pageSize);
+    }, [currentPage, pageSize]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -120,6 +146,7 @@ const PricesPage = () => {
         setShowForm(true); // Hiển thị form để sửa
     };
 
+    
     // const handleDeletePrice = async (id) => {
     //     if (window.confirm(`Bạn có chắc chắn muốn xóa giá này không?`)) {
     //         try {
@@ -298,6 +325,21 @@ const PricesPage = () => {
                         ))}
                         </tbody>
                     </table>
+
+                    <div className="mt-4">
+                        <p className="text-sm">Trang {currentPage} / {totalPages}</p>
+                            <div className="flex justify-center">
+                                {Array.from({ length: totalPages }, (_, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => handlePageChange(index + 1)}
+                                        className={`mx-1 px-3 py-1 rounded ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                                    >
+                                        {index + 1}
+                                    </button>
+                                ))}
+                            </div>
+                    </div>
                     
                 </main>
             </div>

@@ -39,14 +39,45 @@
 // export default RoleForm;
 
 
+import axios from 'axios';
 import React, { useState } from 'react';
 
 const RoleForm = ({ user, onSave, onClose }) => {
     const [selectedRole, setSelectedRole] = useState(user?.roles[0] || ''); // Vai trò hiện tại
 
-    const handleSave = () => {
+    // const handleSave = () => {
+    //     if (selectedRole) {
+    //         onSave(selectedRole); // Truyền vai trò mới qua onSave
+    //     } else {
+    //         alert('Vui lòng chọn vai trò.');
+    //     }
+    // };
+
+    const handleSave = async () => {
         if (selectedRole) {
-            onSave(selectedRole); // Truyền vai trò mới qua onSave
+            try {
+                const response = await axios.put(`/api/users/${user.id}/role`, {
+                    // method: 'PUT',
+                    // headers: {
+                    //     'Content-Type': 'application/json',
+                    // },
+                    // body: JSON.stringify(selectedRole),
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                });
+
+                if (response.ok) {
+                    alert('Cập nhật vai trò thành công!');
+                    onSave(selectedRole); // Truyền vai trò mới về cha
+                } else {
+                    alert('Cập nhật vai trò thất bại.');
+                }
+            } catch (error) {
+                console.error('Có lỗi xảy ra:', error);
+                alert('Có lỗi xảy ra.');
+            }
         } else {
             alert('Vui lòng chọn vai trò.');
         }

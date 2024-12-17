@@ -24,7 +24,7 @@ const ManagerSidebar = () => {
         { href: "/manager/tables", label: "Quản Lý Bàn Chơi" },
         { href: "/manager/menus", label: "Quản Lý Menu" },
         { href: "/manager/invoices", label: "Quản Lý Hóa Đơn" },
-        { href: "/manager/notifications", label: "Quản Lý Thông Báo" },
+        // { href: "/manager/notifications", label: "Quản Lý Thông Báo" },
         { href: "/manager/accounts", label: "Quản Lý Tài Khoản" }
     ];
 

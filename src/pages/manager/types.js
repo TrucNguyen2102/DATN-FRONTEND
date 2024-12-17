@@ -13,20 +13,49 @@ const TypeTable = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [loading, setLoading] = useState(false); // State for loading
+    // Thêm state để quản lý phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [pageSize, setPageSize] = useState(5); // Số bản ghi mỗi trang
 
-    const fetchTypes = async () => {
+    // const fetchTypes = async () => {
+    //     setLoading(true);
+    //     try {
+    //         const response = await axios.get('/api/tables/types/all');
+    //         console.log('Phản hồi từ API:', response.data); // Ghi log phản hồi
+    //         if (Array.isArray(response.data)) {
+    //             setTypes(response.data);
+    //         } else {
+    //             console.error('Dữ liệu trả về không phải là một mảng:', response.data);
+    //             setTypes([]); // Hoặc xử lý khác
+    //         }
+    //     } catch (error) {
+    //         setError('Không thể tải danh sách loại bàn.');
+    //         console.error(error);
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+
+    const fetchTypes = async (page = 0, size = 5) => {
         setLoading(true);
         try {
-            const response = await axios.get('/api/tables/types/all');
-            console.log('Phản hồi từ API:', response.data); // Ghi log phản hồi
-            if (Array.isArray(response.data)) {
-                setTypes(response.data);
+            const response = await axios.get('/api/tables/types/pages/all', {
+                params: {
+                    page: page,
+                    size: size
+                }
+            });
+            console.log('Phản hồi từ API:', response.data);
+            if (response.data.content) {
+                setTypes(response.data.content);
+                setTotalPages(response.data.totalPages);
             } else {
-                console.error('Dữ liệu trả về không phải là một mảng:', response.data);
-                setTypes([]); // Hoặc xử lý khác
+                console.error('Dữ liệu trả về không đúng định dạng:', response.data);
             }
         } catch (error) {
-            setError('Không thể tải danh sách loại bàn.');
+            setError('Không thể tải danh sách bàn.');
             console.error(error);
         } finally {
             setLoading(false);
@@ -126,6 +155,17 @@ const TypeTable = () => {
         setIsEditing(true);
         setShowForm(true);
     };
+
+    // Hàm thay đổi trang
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        fetchPrices(page - 1, pageSize); // Lưu ý: page trong API bắt đầu từ 0
+    };
+
+    // Gọi fetchTables với tham số phân trang
+    useEffect(() => {
+        fetchPrices(currentPage - 1, pageSize);
+    }, [currentPage, pageSize]);
 
     // const handleDeleteType = async (id) => {
     //     if (window.confirm(`Bạn có chắc chắn muốn xóa loại bàn này không?`)) {
@@ -338,6 +378,22 @@ const TypeTable = () => {
 
                         </table>
                     )}
+
+                    <div className="mt-4">
+                        <p className="text-sm">Trang {currentPage} / {totalPages}</p>
+                            <div className="flex justify-center">
+                                {Array.from({ length: totalPages }, (_, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => handlePageChange(index + 1)}
+                                        className={`mx-1 px-3 py-1 rounded ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                                    >
+                                        {index + 1}
+                                    </button>
+                                ))}
+                            </div>
+                    </div>
+
                 </main>
             </div>
         </div>

@@ -12,6 +12,7 @@ const Modal = ({ isOpen, onClose, onSave, initialData }) => {
     const [phone, setPhone] = useState("");
     const [email, setEmail] = useState("");
     const [birthDay, setBirthDay] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     // Cập nhật state khi initialData thay đổi
     useEffect(() => {
@@ -57,7 +58,9 @@ const Modal = ({ isOpen, onClose, onSave, initialData }) => {
                     </div> */}
 
                     <div>
-                        <label htmlFor="fullName" className="block text-sm font-semibold">Họ Tên</label>
+                        <label htmlFor="fullName" className="block text-sm font-semibold">
+                            Họ Tên <span className="text-red-500">*</span>
+                            </label>
                         <input
                             id="fullName"
                             type="text"
@@ -79,7 +82,9 @@ const Modal = ({ isOpen, onClose, onSave, initialData }) => {
                     </div>
 
                     <div>
-                        <label htmlFor="phone" className="block text-sm font-semibold">Số Điện Thoại</label>
+                        <label htmlFor="phone" className="block text-sm font-semibold">
+                            Số Điện Thoại <span className="text-red-500">*</span>
+                            </label>
                         <input
                             id="phone"
                             type="text"
@@ -90,7 +95,9 @@ const Modal = ({ isOpen, onClose, onSave, initialData }) => {
                     </div>
 
                     <div>
-                        <label htmlFor="email" className="block text-sm font-semibold">Email</label>
+                        <label htmlFor="email" className="block text-sm font-semibold">
+                            Email <span className="text-red-500">*</span>
+                            </label>
                         <input
                             id="email"
                             type="email"
@@ -200,10 +207,13 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                 <h2 className="text-xl font-bold mb-4 text-center">Đổi Mật Khẩu</h2>
                 <form className="space-y-4">
                     <div>
-                        <label htmlFor="oldPassword" className="block text-sm font-semibold">Mật Khẩu Cũ</label>
+                        <label htmlFor="oldPassword" className="block text-sm font-semibold">
+                            Mật Khẩu Cũ <span className="text-red-500">*</span>
+                            </label>
                         <input
                             id="oldPassword"
-                            type="password"
+                            // type="password"
+                            type={showPassword ? 'text' : 'password'}
                             value={oldPassword}
                             onChange={(e) => setOldPassword(e.target.value)}
                             className="w-full p-3 border rounded-md mt-1"
@@ -211,10 +221,13 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                     </div>
 
                     <div>
-                        <label htmlFor="newPassword" className="block text-sm font-semibold">Mật Khẩu Mới</label>
+                        <label htmlFor="newPassword" className="block text-sm font-semibold">
+                            Mật Khẩu Mới <span className="text-red-500">*</span>
+                            </label>
                         <input
                             id="newPassword"
-                            type="password"
+                            // type="password"
+                            type={showPassword ? 'text' : 'password'}
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             className="w-full p-3 border rounded-md mt-1"
@@ -222,10 +235,13 @@ const ChangePasswordModal = ({ isOpen, onClose, onSave }) => {
                     </div>
 
                     <div>
-                        <label htmlFor="confirmPassword" className="block text-sm font-semibold">Xác Nhận Mật Khẩu Mới</label>
+                        <label htmlFor="confirmPassword" className="block text-sm font-semibold">
+                            Xác Nhận Mật Khẩu Mới <span className="text-red-500">*</span>
+                            </label>
                         <input
                             id="confirmPassword"
-                            type="password"
+                            // type="password"
+                            type={showPassword ? 'text' : 'password'}
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             className="w-full p-3 border rounded-md mt-1"

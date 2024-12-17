@@ -19,7 +19,7 @@ const CustomerSidebar = () => {
         // { href: "/customer/menus", label: "" },
         { href: "/customer/history", label: "Lịch Sử Đặt Bàn" },
         { href: "/customer/accounts", label: "Quản Lý Tài Khoản" },
-        { href: "/customer/notifications", label: "Thông Báo" }
+        // { href: "/customer/notifications", label: "Thông Báo" }
     ];
 
     const links = {

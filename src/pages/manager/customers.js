@@ -163,7 +163,7 @@ const ManagerCustomer = () => {
                     </table>
 
                     {/* phân trang */}
-                    <div className="flex justify-center mt-4">
+                    {/* <div className="flex justify-center mt-4">
                         <button
                             onClick={() => handlePageChange(currentPage - 1)}
                             disabled={currentPage === 1}
@@ -179,7 +179,22 @@ const ManagerCustomer = () => {
                         >
                             Sau
                         </button>
-                    </div>
+                    </div> */}
+
+                            <div className="mt-4">
+                                <p className="text-sm">Trang {currentPage} / {totalPages}</p>
+                                <div className="flex justify-center">
+                                    {Array.from({ length: totalPages }, (_, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handlePageChange(index + 1)}
+                                            className={`mx-1 px-3 py-1 rounded ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                                        >
+                                            {index + 1}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
 
 
                 </main>

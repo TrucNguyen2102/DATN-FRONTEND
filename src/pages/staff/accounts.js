@@ -459,6 +459,14 @@ const ManagerAccount = () => {
                 setUserInfo(response.data); // Cập nhật thông tin người dùng sau khi lưu
                 alert("Cập nhật thành công!");
                 handleCloseModal();
+
+                // Cập nhật thời gian updatedAt
+                await axios.put(`/api/users/${updatedData.id}/updateAt`, {}, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                });
             }
         } catch (error) {
             console.error("Có lỗi khi cập nhật thông tin:", error);
