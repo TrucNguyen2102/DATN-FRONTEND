@@ -250,6 +250,8 @@ const StaffInvoices = () => {
                 alert('Vui lòng nhập tổng tiền.');
                 return;
             }
+
+        
     
             // Lấy thời gian lập hóa đơn và định dạng theo kiểu 'yyyy-MM-dd HH:mm:ss'
         const now = new Date();
@@ -262,6 +264,15 @@ const StaffInvoices = () => {
         // await axios.put(`/api/bookings/update/${selectedBooking.bookingId}/status`, {
         //     status: "Chờ Thanh Toán" // Cập nhật trạng thái đơn đặt thành "Chờ Thanh Toán"
         // });
+
+        // // Kiểm tra trạng thái của bàn trước khi thay đổi trạng thái booking
+        // const tableStatusResponse = await axios.get(`/api/tables/${selectedBooking.tableId}/status`);
+        // const tableStatus = tableStatusResponse.data.status; // Giả sử trả về trạng thái của bàn
+
+        // if (tableStatus === 'Đang Chơi') {
+        //     alert('Bàn vẫn đang chơi, không thể thay đổi trạng thái đơn đặt.');
+        //     return;
+        // }
 
         // Cập nhật trạng thái đơn đặt bàn
         await axios.put(`/api/bookings/booking_table/update/${selectedBooking.bookingId}/status/paymentProcessing`, {
@@ -382,6 +393,10 @@ const StaffInvoices = () => {
             await axios.put(`/api/tables/${tableId}/status`, {
                 tableStatus: "Đang Tiến Hành Thanh Toán" // Trạng thái mới
             });
+
+        
+            
+
     
             // Cập nhật trạng thái đơn đặt bàn và bàn liên quan
             const response = await axios.put(`/api/bookings/booking_table/update/${bookingId}/status`);

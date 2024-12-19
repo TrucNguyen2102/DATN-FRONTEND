@@ -85,7 +85,8 @@ const AddManagerForm = ({ managerData, onClose }) => {
    
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-            <div className="bg-white rounded-lg p-6 w-[600px]">
+            {/* <div className="bg-white rounded-lg p-6 w-[600px]"> */}
+            <div className="bg-white rounded-lg p-6 w-96">
                 <form onSubmit={handleSubmit}>
                     {/* <h2 className='text-xl mb-4 font-bold text-center'>Thêm Tài Khoản</h2> */}
                     <h2 className="text-xl font-bold mb-4 text-center">{managerData ? 'Chỉnh Sửa' : 'Thêm Tài Khoản'}</h2>

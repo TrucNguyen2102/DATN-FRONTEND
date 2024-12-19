@@ -6,8 +6,8 @@ import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import { format, differenceInSeconds  } from 'date-fns';
 import { FaSyncAlt, FaCheckCircle, FaExchangeAlt, FaTimes  } from "react-icons/fa"
-import CancelBookingModal from "../components/staff/CancelBookingModal";
-import { table } from "@nextui-org/react";
+import removeDiacritics from 'remove-diacritics';
+
 
 const StaffBooking = () => {
     const [error, setError] = useState('');
@@ -15,14 +15,25 @@ const StaffBooking = () => {
     const [timeLeft, setTimeLeft] = useState({}); // State để lưu thời gian đếm ngược
     const [isEditing, setIsEditing] = useState(false); // Trạng thái hiển thị modal
     const [currentBooking, setCurrentBooking] = useState(null); // Thông tin đơn đặt hiện tại
-    const [searchTerm, setSearchTerm] = useState('');
-    const [status, setStatus] = useState(
+    const [searchTerm, setSearchTerm] = useState({});
+
+
+    const [status, setStatus] = useState([
         "Chờ Xác Nhận",
         "Đã Xác Nhận", 
         "Đã Hủy",
         "Đã Nhận Bàn",
-    ); // Trạng thái mặc định của tab đầu tiên
-    const [filteredBookings, setFilteredBookings] = useState([]);
+    ]);
+
+    
+    // Trạng thái mặc định của tab đầu tiên
+    const [filteredBookings, setFilteredBookings] = useState({
+        "Chờ Xác Nhận": [],
+        "Đã Xác Nhận": [],
+        "Đã Hủy": [],
+        "Đã Nhận Bàn": []
+    }); // Khởi tạo với mảng trống cho mỗi trạng thái ban đầu
+    //const [filteredBookings, setFilteredBookings] = useState([]);
     const [loading, setLoading] = useState('');
     const [isModalEditingOpen, setIsModalEdittingOpen] = useState(false); //modal cập nhật đơn
     const [isModalCancelOpen, setIsModalCancelOpen] = useState(false); //modal xác nhận hủy bàn
@@ -71,6 +82,9 @@ const StaffBooking = () => {
                 const fullNameResponse = await axios.get(`/api/users/fullNameUser?userId=${booking.userId}`);
                 const fullName = fullNameResponse.data;
 
+                const phoneResponse = await axios.get(`/api/users/phoneUser?userId=${booking.userId}`);
+                const phone = phoneResponse.data;
+
                 
 
                 // Kết hợp thông tin bàn từ tablesInfo vào booking
@@ -84,7 +98,7 @@ const StaffBooking = () => {
                     }
                 });
 
-                return { ...booking, fullName, tableNumbers, tableTypes};
+                return { ...booking, fullName, phone, tableNumbers, tableTypes};
             }));
 
             
@@ -136,9 +150,19 @@ const StaffBooking = () => {
     };
     
 
+    // const filterBookingsByStatus = (status) => {
+    //     return bookings.filter(booking => booking.status === status);
+    // };
+
     const filterBookingsByStatus = (status) => {
-        return bookings.filter(booking => booking.status === status);
+        const searchQuery = searchTerm[status] || '';
+        return bookings.filter((booking) => {
+            // So sánh tên khách hàng (hoặc thông tin khác) với từ khóa tìm kiếm
+            const fullNameMatch = removeDiacritics(booking.fullName.toLowerCase()).includes(searchQuery);
+            return booking.status === status && fullNameMatch;
+        });
     };
+    
 
     const handlePageChange = (status, page) => {
         setCurrentPage(prevState => ({ ...prevState, [status]: page }));
@@ -149,100 +173,91 @@ const StaffBooking = () => {
         return Math.ceil(filteredBookings.length / itemsPerPage);
     };
     
+    // const getPaginatedBookings = (status) => {
+    //     const filteredBookings = filterBookingsByStatus(status);
+    //     const startIndex = (currentPage[status] - 1) * itemsPerPage;
+    //     return filteredBookings.slice(startIndex, startIndex + itemsPerPage);
+    // };
+
+    // const getPaginatedBookings = (status) => {
+    //     const filteredBookings = filteredBookings[status] || filterBookingsByStatus(status); // Lấy danh sách đã lọc hoặc toàn bộ bookings nếu chưa lọc
+    //     const startIndex = (currentPage[status] - 1) * itemsPerPage;
+    //     return filteredBookings.slice(startIndex, startIndex + itemsPerPage);
+    // };
+
     const getPaginatedBookings = (status) => {
-        const filteredBookings = filterBookingsByStatus(status);
+        // Dùng filteredBookings nếu có, hoặc lấy bookings gốc nếu chưa lọc
+        const bookingsToPaginate = filteredBookings[status] && filteredBookings[status].length > 0
+            ? filteredBookings[status]
+            : filterBookingsByStatus(status);
+    
         const startIndex = (currentPage[status] - 1) * itemsPerPage;
-        return filteredBookings.slice(startIndex, startIndex + itemsPerPage);
+        return bookingsToPaginate.slice(startIndex, startIndex + itemsPerPage);
+    };
+    
+    
+
+    // const handleSearchChange = (tab, value) => {
+    //     setSearchTerm(prev => ({ ...prev, [tab]: value }));
+    //   };
+
+    // const handleSearchChange = (status, value) => {
+    //     setSearchTerm((prev) => ({
+    //       ...prev,
+    //       [status]: value,
+    //     }));
+    //   };
+
+    const handleSearchChange = (status, value) => {
+        const searchTerm = removeDiacritics(value.toLowerCase());
+    
+        setSearchTerm((prev) => ({
+            ...prev,
+            [status]: searchTerm,
+        }));
     };
 
-    const handleSearchChange = (tab, value) => {
-        setSearchTerm(prev => ({ ...prev, [tab]: value }));
-      };
+    //   const handleSearch = (status) => {
+    //     // Dữ liệu booking gốc
+    //     const originalBookings = filterBookingsByStatus(status); // Hàm lấy dữ liệu theo trạng thái
+      
+    //     // Lọc dữ liệu dựa trên từ khóa
+    //     const results = originalBookings.filter((booking) =>
+    //       booking.fullName.toLowerCase().includes(searchTerm[status].toLowerCase() || "")
+    //     );
 
+    //     // Cập nhật danh sách đã lọc
+    //     setFilteredBookings((prev) => ({
+    //         ...prev,
+    //         [status]: results,
+    //     }));
+    // }
 
-
-    // // Xử lý tìm kiếm booking
-    // const handleSearch = async (currentStatus) => {
-    //     try {
-    //         console.log("Tìm kiếm với tên/phone:", searchTerm, "và trạng thái:", currentStatus);
-    //         const response = await axios.get("/api/bookings/search", {
-    //             params: {
-    //                 name: searchTerm,
-    //                 phone: searchTerm,
-    //                 status: currentStatus, // Truyền trạng thái hiện tại
-    //             },
-    //         });
-    //         console.log("Kết quả tìm kiếm:", response.data); // Kiểm tra kết quả trả về
-    //         setBookings(response.data); // Cập nhật danh sách bookings
-    //     } catch (error) {
-    //         console.error("Lỗi khi tìm kiếm booking:", error);
-    //     }
-    // };
-
-    // const handleSearch = async (currentStatus) => {
-    //     try {
-    //         // Mã hóa các tham số name và phone trước khi gửi yêu cầu
-    //         const encodedName = encodeURIComponent(searchTerm);
-    //         const encodedPhone = encodeURIComponent(searchTerm);
-    //         const encodedStatus = encodeURIComponent(currentStatus);
+    const handleSearch = (status) => {
+        // Dữ liệu booking gốc
+        const originalBookings = filterBookingsByStatus(status); // Hàm lấy dữ liệu theo trạng thái
     
-    //         console.log("Tìm kiếm với tên/phone:", searchTerm, "và trạng thái:", currentStatus);
-    
-    //         const response = await axios.get("/api/bookings/search", {
-    //             params: {
-    //                 name: encodedName,  // Mã hóa tên
-    //                 phone: encodedPhone, // Mã hóa số điện thoại
-    //                 status: encodedStatus, // Mã hóa trạng thái
-    //             },
-    //         });
-    
-    //         console.log("Kết quả tìm kiếm:", response.data); // Kiểm tra kết quả trả về
-    //         setBookings(response.data); // Cập nhật danh sách bookings
-    //     } catch (error) {
-    //         console.error("Lỗi khi tìm kiếm booking:", error);
-    //     }
-    // };
-
-    
+        // Nếu có từ khóa tìm kiếm, lọc dữ liệu
+        if (searchTerm[status]) {
+            const results = originalBookings.filter((booking) =>
+                booking.fullName.toLowerCase().includes(searchTerm[status].toLowerCase())
+               
+            );
+            setFilteredBookings((prev) => ({
+                ...prev,
+                [status]: results,
+            }));
+        } else {
+            // Nếu không có từ khóa tìm kiếm, hiển thị tất cả bookings
+            setFilteredBookings((prev) => ({
+                ...prev,
+                [status]: originalBookings,
+            }));
+        }
+    };
     
 
-    // const handleSearch = async (currentStatus) => {
-    //     try {
-    //         // Kiểm tra nếu searchTerm có chứa tên và số điện thoại, ví dụ: searchTerm là một đối tượng
-    //         const fullName = searchTerm.fullName || ""; // Lấy tên nếu có
-    //         console.log("FullName:", fullName);
 
-    //         const phone = searchTerm.phone || ""; // Lấy số điện thoại nếu có
-    //         console.log("Phone:", phone);
-
-    //         const encodedFullName = encodeURIComponent(fullName); // Mã hóa tên
-    //         console.log("encodedFullName:", encodedFullName);
-
-    //         const encodedPhone = encodeURIComponent(phone); // Mã hóa số điện thoại
-    //         console.log("encodedPhone:", encodedPhone);
-
-    //         const encodedStatus = encodeURIComponent(currentStatus); // Mã hóa trạng thái
-    //         console.log("encodedStatus:", encodedStatus);
-
-    
-    //         console.log("Tìm kiếm với tên:", fullName, "và số điện thoại:", phone, "và trạng thái:", currentStatus);
-    
-    //         // Gửi yêu cầu tìm kiếm
-    //         const response = await axios.get("/api/bookings/search", {
-    //             params: {
-    //                 fullName: encodedFullName,  // Mã hóa tên
-    //                 phone: encodedPhone, // Mã hóa số điện thoại
-    //                 status: encodedStatus, // Mã hóa trạng thái
-    //             },
-    //         });
-    
-    //         // Kiểm tra kết quả tìm kiếm
-    //         console.log("Kết quả tìm kiếm:", response.data);
-    //         setBookings(response.data); // Cập nhật danh sách bookings
-    //     } catch (error) {
-    //         console.error("Lỗi khi tìm kiếm booking:", error);
-    //     }
-    // };
     
     
 
@@ -698,9 +713,21 @@ const StaffBooking = () => {
         
                 // Nếu bàn có trạng thái "Đang Xử Lý Thanh Toán", hiển thị thông báo lỗi
                 if (tableStatus === "Đang Xử Lý Thanh Toán") {
-                    alert(`Bàn ${tableId} đang xử lý thanh toán. Bạn không thể chọn bàn này.`);
+                    alert(`Bàn ${tableId} đang được xử lý thanh toán. Bạn không cần phải chọn bàn này để kết thúc nữa.`);
                     return; // Dừng lại nếu bàn đang xử lý thanh toán
-                }
+                } 
+
+                // Nếu bàn có trạng thái "Đang Tiến Hành Thanh Toán", hiển thị thông báo lỗi
+                if (tableStatus === "Đang Tiến Hành Thanh Toán") {
+                    alert(`Bàn ${tableId} đang tiến hành thanh toán. Bạn không cần phải chọn bàn này để kết thúc nữa.`);
+                    return; // Dừng lại nếu bàn đang xử lý thanh toán
+                } 
+
+                // Nếu bàn có trạng thái "Trống", hiển thị thông báo lỗi
+                if (tableStatus === "Trống") {
+                    alert(`Bàn ${tableId} đã hoàn thành thanh toán. Bạn không thể kết thúc nữa.`);
+                    return; // Dừng lại nếu bàn đang xử lý thanh toán
+                } 
         
                 // Nếu không có lỗi, cho phép chọn hoặc bỏ chọn bàn
                 setSelectedTableIds(prev => 
@@ -781,13 +808,7 @@ const StaffBooking = () => {
             
         );
     };
-    
 
-    //hàm chọn tất cả bàn
-    // const handleConfirmEndAll = async (booking) => {
-    //     await handleRecievedAll(booking);
-    //     setIsModalOpen(false);
-    // };
 
     //hàm chọn bàn muốn kết thúc
     const handleConfirmEndPartial = async (booking) => {
@@ -798,34 +819,7 @@ const StaffBooking = () => {
         setShowPartialModal(true);
     };
 
-    //nếu kết thúc tất cả
-    // const handleRecievedAll = async (booking) => {
-    //     if (!booking || !booking.id) {
-    //         console.error("Booking ID is invalid or undefined.");
-    //         return;
-    //     }
-    
-    //     const currentDateTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
-    
-    //     try {
-    //         // Cập nhật endTime cho hóa đơn và trạng thái booking
-    //         const [updateInvoiceResponse, updateBookingResponse] = await Promise.all([
-    //             axios.put(`/api/invoices/update/byBookingId/${booking.id}/endTime`, { endTime: currentDateTime }),
-    //             axios.put(`/api/bookings/update/${booking.id}/status`, { status: "Chưa Thanh Toán" })
-    //         ]);
-    
-    //         if (updateInvoiceResponse.status === 200 && updateBookingResponse.status === 200) {
-    //             console.log(`Đã kết thúc tất cả bàn cho booking ID: ${booking.id}`);
-    //         } else {
-    //             console.error("Lỗi khi kết thúc tất cả bàn.");
-    //         }
-    
-    //         fetchBookings();
-    //         setIsChangeModalOpen(false);
-    //     } catch (error) {
-    //         console.error("Lỗi khi thực hiện cập nhật:", error);
-    //     }
-    // };
+
     
 
     // Cập nhật thời gian kết thúc cho nhiều hóa đơn liên quan đến các bàn
@@ -889,11 +883,11 @@ const StaffBooking = () => {
                 })
             );
     
-            // Kiểm tra nếu tất cả các bàn đã đang xử lý thanh toán
+            // Kiểm tra nếu tất cả các bàn đã đang xử lý thanh toán và bàn Trống
             const allTablesProcessed = updatedTables.every(
-                (table) => table.tableStatus === "Đang Xử Lý Thanh Toán"
+                (table) => table.tableStatus === "Đang Xử Lý Thanh Toán" || table.tableStatus === "Trống"
             );
-            console.log("Tất cả các bàn trong booking đều 'Đang Xử Lý Thanh Toán'? ", allTablesProcessed);
+            console.log("Tất cả các bàn trong booking đều 'Đang Xử Lý Thanh Toán' hoặc 'Trống'? ", allTablesProcessed);
     
             // Cập nhật thời gian kết thúc hóa đơn
             const endTime = format(new Date(), "yyyy-MM-dd HH:mm:ss");
@@ -1065,7 +1059,7 @@ const StaffBooking = () => {
                             {/* Tab "Chờ Xác Nhận" */}
                             <TabPanel>
                                 {/* Thanh tìm kiếm */}
-                                <div className="flex justify-between mb-4">
+                                <div className="flex mb-4">
                                     <input
                                     type="text"
                                     placeholder="Search..."
@@ -1075,7 +1069,7 @@ const StaffBooking = () => {
                                     />
                                     <button
                                     onClick={() => handleSearch('Chờ Xác Nhận')}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 ml-4"
                                     >
                                     Tìm kiếm
                                     </button>
@@ -1086,39 +1080,86 @@ const StaffBooking = () => {
                                     <table className="min-w-full bg-white border border-gray-300">
                                         <thead>
                                             <tr>
-                                                <th className="border px-4 py-2 text-center">Mã Đơn</th>
-                                                <th className="border px-4 py-2 text-center">Thời Gian Đặt</th>
-                                                <th className="border px-4 py-2 text-center">Thời Gian Hết Hạn</th>
-                                                <th className="border px-4 py-2 text-center">Trạng Thái</th>
-                                                <th className="border px-4 py-2 text-center">Tên Người Dùng</th>
-                                                <th className="border px-4 py-2 text-center">Số Bàn</th>
-                                                <th className="border px-4 py-2 text-center">Loại Bàn</th>
-                                                <th className="border px-4 py-2 text-center">Hành Động</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Mã Đơn</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Thời Gian Đặt</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Thời Gian Hết Hạn</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Trạng Thái</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Tên Người Dùng</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Số Điện Thoại</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Số Bàn</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Loại Bàn</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Hành Động</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                        {/* {filterBookingsByStatus('Chờ Xác Nhận').map(booking => ( */}
-                                        {getPaginatedBookings('Chờ Xác Nhận').map(booking => (
-                                                <tr key={booking.id}>
-                                                    <td className="border px-4 py-2 text-center">{booking.id}</td>
-                                                    <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                    {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
-                                                    <td className="py-2 px-4 border-b border-r text-center">
-                                                        {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
-                                                    </td>
-                                                    <td className="border px-4 py-2 text-center">{booking.status}</td>
-                                                    <td className="border px-4 py-2 text-center">{booking.fullName}</td>
-                                                    {/* <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td> */}
-                                                    <td className="border px-4 py-2 text-center">{booking.tableNumbers.join(', ')}</td>
-                                                    <td className="border px-4 py-2 text-center">{booking.tableTypes.join(', ')}</td>
-                                                
-                                                    <td className="border px-4 py-2 text-center">
-                                                        <button onClick={() => handleEdit(booking)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">
-                                                            Cập Nhật
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
+
+                                        {searchTerm['Chờ Xác Nhận'] && searchTerm['Chờ Xác Nhận'].trim() !== '' ? (
+                                            getPaginatedBookings('Chờ Xác Nhận').length === 0 ? (
+                                                <tr>
+                                                <td colSpan="8" className="text-center py-4 text-red-500 font-bold">
+                                                    Không có kết quả tìm kiếm.
+                                                </td>
+                                            </tr>
+                                            ) : (
+                                                getPaginatedBookings('Chờ Xác Nhận').map(booking => (
+                                                    <tr key={booking.id}>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.id}</td>
+                                                        <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                        {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
+                                                        <td className="py-2 px-4 border-b border-r text-center border-gray-300">
+                                                            {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                        </td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.status}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.fullName}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.phone}</td>
+                                                        {/* <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td> */}
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.tableNumbers.join(', ')}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.tableTypes.join(', ')}</td>
+                                                    
+                                                        <td className="border px-4 py-2 text-center border-gray-300">
+                                                            <button onClick={() => handleEdit(booking)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">
+                                                                Cập Nhật
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )
+
+                                        ) : (
+                                            getPaginatedBookings('Chờ Xác Nhận').length === 0 ? (
+                                                <tr>
+                                                <td colSpan="8" className="text-center py-4 text-red-500 font-bold">
+                                                    Không có đơn để hiển thị.
+                                                </td>
+                                            </tr>
+                                            ) : (
+                                                getPaginatedBookings('Chờ Xác Nhận').map(booking => (
+                                                    <tr key={booking.id}>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.id}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                        {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
+                                                        <td className="py-2 px-4 border-b border-r text-center border-gray-300">
+                                                            {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                        </td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.status}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.fullName}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.phone}</td>
+                                                        {/* <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td> */}
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.tableNumbers.join(', ')}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.tableTypes.join(', ')}</td>
+                                                    
+                                                        <td className="border px-4 py-2 text-center border-gray-300">
+                                                            <button onClick={() => handleEdit(booking)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">
+                                                                Cập Nhật
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )
+                                        )}
+                                       
+                                        
+                                        
                                         </tbody>
                                     </table>
                                 </div>
@@ -1143,7 +1184,7 @@ const StaffBooking = () => {
                             {/* Tab "Đã Xác Nhận" */}
                             <TabPanel>
                                 {/* Thanh tìm kiếm */}
-                                <div className="flex justify-between mb-4">
+                                <div className="flex mb-4">
                                     <input
                                     type="text"
                                     placeholder="Search..."
@@ -1153,7 +1194,7 @@ const StaffBooking = () => {
                                     />
                                     <button
                                     onClick={() => handleSearch('Đã Xác Nhận')}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 ml-4"
                                     >
                                     Tìm kiếm
                                     </button>
@@ -1162,58 +1203,108 @@ const StaffBooking = () => {
                                     <table className="min-w-full bg-white border border-gray-300">
                                         <thead>
                                             <tr>
-                                                <th className="border px-4 py-2 text-center w-1/10">Mã Đơn</th>
-                                                <th className="border px-4 py-2 text-center w-1/10">Thời Gian Đặt</th>
-                                                <th className="border px-4 py-2 text-center w-1/10">Thời Gian Hết Hạn</th>
-                                                <th className="border px-4 py-2 text-center w-1/12">Đếm Ngược</th>
-                                                <th className="border px-4 py-2 text-center w-1/10">Trạng Thái</th>
-                                                <th className="border px-4 py-2 text-center w-1/10">Tên Người Dùng</th>
-                                                <th className="border px-4 py-2 text-center w-10">Số Bàn</th>
-                                                <th className="border px-4 py-2 text-center w-10">Loại Bàn</th>
+                                                <th className="border px-4 py-2 text-center w-1/10 border-gray-300">Mã Đơn</th>
+                                                <th className="border px-4 py-2 text-center w-1/10 border-gray-300">Thời Gian Đặt</th>
+                                                <th className="border px-4 py-2 text-center w-1/10 border-gray-300">Thời Gian Hết Hạn</th>
+                                                <th className="border px-4 py-2 text-center w-1/12 border-gray-300">Đếm Ngược</th>
+                                                <th className="border px-4 py-2 text-center w-1/10 border-gray-300">Trạng Thái</th>
+                                                <th className="border px-4 py-2 text-center w-1/10 border-gray-300">Tên Người Dùng</th>
+                                                <th className="border px-4 py-2 text-center w-1/10 border-gray-300">Số Điện Thoại</th>
+                                                <th className="border px-4 py-2 text-center w-1/10 border-gray-300">Số Bàn</th>
+                                                <th className="border px-4 py-2 text-center w-1/10 border-gray-300">Loại Bàn</th>
                                                 
-                                                <th className="border px-4 py-2 text-center w-1/5">Hành Động</th>
+                                                <th className="border px-4 py-2 text-center w-1/5 border-gray-300">Hành Động</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                        {/* {filterBookingsByStatus('Đã Xác Nhận').map(booking => ( */}
-                                        {getPaginatedBookings('Đã Xác Nhận').map(booking => (
-                                                <tr key={booking.id}>
-                                                    <td className="border px-4 py-2 text-center">{booking.id}</td>
-                                                    <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                    {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
-                                                    <td className="py-2 px-4 border-b border-r text-center">
-                                                        {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
-                                                    </td>
-                                                    <td className="border px-4 py-2 text-center">
-                                                        {timeLeft[booking.id] > 0 ? formatTimeLeft(timeLeft[booking.id]) : "Trong ít phút nữa"}
-                                                    </td>
-                                                    <td className="border px-4 py-2 text-center">{booking.status}</td>
-                                                    <td className="border px-4 py-2 text-center">{booking.fullName}</td>
-                                                    <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td>
-                                                    {/* <td className="border px-4 py-2 text-center">{booking.tableNumbers.join(', ')}</td> */}
-                                                    <td className="border px-4 py-2 text-center">{booking.tableTypes.join(', ')}</td>
-                                                    <td className="border px-4 py-2 text-center">
-                                                        <div className="flex text-center justify-center">
-                                                            <button onClick={() => handleConfirm(booking)} className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700 flex items-center gap-1">
-                                                            <FaCheckCircle className="text-white" /> Nhận Bàn
-                                                            </button>
-                                                        </div>
-                                                       
 
-                                                        {/* <button onClick={() => handleChange(booking)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700 ml-2 flex items-center">
-                                                            <FaExchangeAlt className="text-white" /> Chuyển Bàn
-                                                        </button>
-
-                                                        
-                                                        {booking.tableIds.length > 1 && (
-                                                            <button onClick={() => handleCancelTable(booking)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700 ml-2 mt-2 flex items-center">
-                                                                <FaTimes className="text-white" /> Hủy Bàn
-                                                            </button>
-                                                        )} */}
-
+                                        {searchTerm['Đã Xác Nhận'] && searchTerm['Đã Xác Nhận'].trim() !== '' ? (
+                                            getPaginatedBookings('Đã Xác Nhận').length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="8" className="text-center py-4 text-red-500 font-bold">
+                                                        Không có kết quả tìm kiếm.
                                                     </td>
                                                 </tr>
-                                            ))}
+                                            ) : (
+                                                getPaginatedBookings('Đã Xác Nhận').map(booking => (
+                                                    <tr key={booking.id}>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.id}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                        {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
+                                                        <td className="py-2 px-4 border-b border-r text-center border-gray-300">
+                                                            {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                        </td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">
+                                                            {timeLeft[booking.id] > 0 ? formatTimeLeft(timeLeft[booking.id]) : "Trong ít phút nữa"}
+                                                        </td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.status}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.fullName}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.phone}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.tableIds.join(', ')}</td>
+                                                        {/* <td className="border px-4 py-2 text-center">{booking.tableNumbers.join(', ')}</td> */}
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.tableTypes.join(', ')}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">
+                                                            <div className="flex text-center justify-center">
+                                                                <button onClick={() => handleConfirm(booking)} className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700 flex items-center gap-1">
+                                                                <FaCheckCircle className="text-white" /> Nhận Bàn
+                                                                </button>
+                                                            </div>
+                                                           
+    
+                                                            {/* <button onClick={() => handleChange(booking)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700 ml-2 flex items-center">
+                                                                <FaExchangeAlt className="text-white" /> Chuyển Bàn
+                                                            </button>
+    
+                                                            
+                                                            {booking.tableIds.length > 1 && (
+                                                                <button onClick={() => handleCancelTable(booking)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-700 ml-2 mt-2 flex items-center">
+                                                                    <FaTimes className="text-white" /> Hủy Bàn
+                                                                </button>
+                                                            )} */}
+    
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )
+
+                                        ) : (
+                                            // Khi không tìm kiếm, nếu không có booking
+                                            getPaginatedBookings('Đã Xác Nhận').length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="8" className="text-center py-4 text-red-500 font-bold">
+                                                        Không có đơn để hiển thị.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                getPaginatedBookings('Đã Xác Nhận').map(booking => (
+                                                    <tr key={booking.id}>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.id}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                        <td className="py-2 px-4 border-b border-r text-center">
+                                                            {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                        </td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">
+                                                            {timeLeft[booking.id] > 0 ? formatTimeLeft(timeLeft[booking.id]) : "Trong ít phút nữa"}
+                                                        </td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.status}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.fullName}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.phone}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.tableIds.join(', ')}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.tableTypes.join(', ')}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">
+                                                            <div className="flex text-center justify-center">
+                                                                <button onClick={() => handleConfirm(booking)} className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700 flex items-center gap-1">
+                                                                    <FaCheckCircle className="text-white" /> Nhận Bàn
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )
+                                        )}
+                                        
+                                        
+                                        
                                         </tbody>
                                     </table>
                                 </div>
@@ -1238,7 +1329,7 @@ const StaffBooking = () => {
                             {/* Tab "Đã Hủy" */}
                             <TabPanel>
                                 {/* Thanh tìm kiếm */}
-                                <div className="flex justify-between mb-4">
+                                <div className="flex mb-4">
                                     <input
                                     type="text"
                                     placeholder="Search..."
@@ -1248,7 +1339,7 @@ const StaffBooking = () => {
                                     />
                                     <button
                                     onClick={() => handleSearch('Đã Hủy')}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 ml-4"
                                     >
                                     Tìm kiếm
                                     </button>
@@ -1257,24 +1348,25 @@ const StaffBooking = () => {
                                     <table className="min-w-full bg-white border border-gray-300">
                                         <thead>
                                             <tr>
-                                                <th className="border px-4 py-2 text-center">ID</th>
-                                                <th className="border px-4 py-2 text-center">Thời Gian Đặt</th>
-                                                <th className="border px-4 py-2 text-center">Thời Gian Hết Hạn</th>
-                                                <th className="border px-4 py-2 text-center">Đếm Ngược</th>
-                                                <th className="border px-4 py-2 text-center">Trạng Thái</th>
-                                                <th className="border px-4 py-2 text-center">Tên Người Dùng</th>
-                                                <th className="border px-4 py-2 text-center">Số Bàn</th>
-                                                <th className="border px-4 py-2 text-center">Loại Bàn</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">ID</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Thời Gian Đặt</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Thời Gian Hết Hạn</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Đếm Ngược</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Trạng Thái</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Tên Người Dùng</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Số Điện Thoại</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Số Bàn</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Loại Bàn</th>
                                             
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                        {/* {filterBookingsByStatus('Đã Hủy').map(booking => ( */}
+                                        {/* <tbody>
+                                       
                                         {getPaginatedBookings('Đã Hủy').map(booking => (
                                                 <tr key={booking.id}>
                                                     <td className="border px-4 py-2 text-center">{booking.id}</td>
                                                     <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                    {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
+                                                
                                                     <td className="py-2 px-4 border-b border-r text-center">
                                                         {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
                                                     </td>
@@ -1283,12 +1375,72 @@ const StaffBooking = () => {
                                                     </td>
                                                     <td className="border px-4 py-2 text-center">{booking.status}</td>
                                                     <td className="border px-4 py-2 text-center">{booking.fullName}</td>
-                                                    {/* <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td> */}
+                                                   
                                                     <td className="border px-4 py-2 text-center">{booking.tableNumbers.join(', ')}</td>
                                                     <td className="border px-4 py-2 text-center">{booking.tableTypes.join(', ')}</td>
                                                     
                                                 </tr>
                                             ))}
+                                        </tbody> */}
+
+                                        <tbody>
+                                            {searchTerm['Đã Hủy'] && searchTerm['Đã Hủy'].trim() !== '' ? (
+                                                getPaginatedBookings('Đã Hủy').length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="8" className="text-center py-4 text-red-500 font-bold">
+                                                            Không có kết quả tìm kiếm.
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    // Nếu có kết quả, hiển thị các dòng booking
+                                                    getPaginatedBookings('Đã Hủy').map((booking) => (
+                                                        <tr key={booking.id}>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">{booking.id}</td>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                            <td className="py-2 px-4 border-b border-r text-center border-gray-300">
+                                                                {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                            </td>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">
+                                                                {timeLeft[booking.id] > 0 ? formatTimeLeft(timeLeft[booking.id]) : "Hết hạn"}
+                                                            </td>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">{booking.status}</td>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">{booking.fullName}</td>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">{booking.phone}</td>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">{booking.tableNumbers.join(', ')}</td>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">{booking.tableTypes.join(', ')}</td>
+                                                        </tr>
+                                                    ))
+                                                )
+                                            ) : (
+                                                getPaginatedBookings('Đã Hủy').length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="8" className="text-center py-4 text-red-500 font-bold">
+                                                            Không có đơn để hiển thị.
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    // Nếu có kết quả, hiển thị các dòng booking
+                                                    getPaginatedBookings('Đã Hủy').map((booking) => (
+                                                        <tr key={booking.id}>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">{booking.id}</td>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                            <td className="py-2 px-4 border-b border-r text-center border-gray-300">
+                                                                {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                            </td>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">
+                                                                {timeLeft[booking.id] > 0 ? formatTimeLeft(timeLeft[booking.id]) : "Hết hạn"}
+                                                            </td>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">{booking.status}</td>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">{booking.fullName}</td>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">{booking.phone}</td>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">{booking.tableNumbers.join(', ')}</td>
+                                                            <td className="border px-4 py-2 text-center border-gray-300">{booking.tableTypes.join(', ')}</td>
+                                                        </tr>
+                                                    ))
+                                                )
+                                            )}
+                                            
+                                            
                                         </tbody>
                                     </table>
                                 </div>
@@ -1313,7 +1465,7 @@ const StaffBooking = () => {
                             {/* Tab "Đã Nhận Bàn" */}
                             <TabPanel>
                                 {/* Thanh tìm kiếm */}
-                                <div className="flex justify-between mb-4">
+                                <div className="flex mb-4">
                                     <input
                                     type="text"
                                     placeholder="Search..."
@@ -1323,7 +1475,7 @@ const StaffBooking = () => {
                                     />
                                     <button
                                     onClick={() => handleSearch('Đã Nhận Bàn')}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+                                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 ml-4"
                                     >
                                     Tìm kiếm
                                     </button>
@@ -1333,52 +1485,114 @@ const StaffBooking = () => {
                                     <table className="min-w-full bg-white border border-gray-300">
                                         <thead>
                                             <tr>
-                                                <th className="border px-4 py-2 text-center">ID</th>
-                                                <th className="border px-4 py-2 text-center">Thời Gian Đặt</th>
-                                                <th className="border px-4 py-2 text-center">Thời Gian Hết Hạn</th>
-                                                <th className="border px-4 py-2 text-center">Trạng Thái</th>
-                                                <th className="border px-4 py-2 text-center">Tên Người Dùng</th>
-                                                <th className="border px-4 py-2 text-center">Số Bàn</th>
-                                                <th className="border px-4 py-2 text-center">Loại Bàn</th>
-                                                <th className="border px-4 py-2 text-center">Hành Động</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">ID</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Thời Gian Đặt</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Thời Gian Hết Hạn</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Trạng Thái</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Tên Người Dùng</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Số Điện Thoại</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Số Bàn</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Loại Bàn</th>
+                                                <th className="border px-4 py-2 text-center border-gray-300">Hành Động</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                        {/* {filterBookingsByStatus('Đã Nhận Bàn').map(booking => ( */}
-                                        {getPaginatedBookings('Đã Nhận Bàn').map(booking => (
-                                                <tr key={booking.id}>
-                                                    <td className="border px-4 py-2 text-center">{booking.id}</td>
-                                                    <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
-                                                    {/* <td className="border px-4 py-2 text-center">{format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss')}</td> */}
-                                                    <td className="py-2 px-4 border-b border-r text-center">
-                                                        {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
-                                                    </td>
-                                                    <td className="border px-4 py-2 text-center">{booking.status}</td>
-                                                    <td className="border px-4 py-2 text-center">{booking.fullName}</td>
-                                                    {/* <td className="border px-4 py-2 text-center">{booking.tableIds.join(', ')}</td> */}
-                                                    <td className="border px-4 py-2 text-center">{booking.tableNumbers.join(', ')}</td>
-                                                    <td className="border px-4 py-2 text-center">{booking.tableTypes.join(', ')}</td>
-                                                    <td className="flex border px-4 py-2 text-center justify-center">
-                                                        {/* <button onClick={() => handleRecieved(booking)} className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700">
-                                                            Kết Thúc
-                                                        </button> */}
-                                                        <button
-                                                            onClick={() => handleEndClick(booking)}  // Gọi hàm handleEndClick
-                                                            className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700 flex items-center gap-1"
-                                                        >
-                                                            <FaCheckCircle className="text-white" /> Kết Thúc
-                                                        </button>
 
-                                                        {/* <button
-                                                            onClick={() => handleSwitchTableInPlayClick(booking)}  // Gọi hàm handleSwitchTableInPlayClick khi chuyển bàn
-                                                            className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700 ml-2 flex items-center gap-1"
-                                                        >
-                                                             <FaExchangeAlt className="text-white" /> Chuyển Bàn
-                                                        </button> */}
+                                        {searchTerm['Đã Nhận Bàn'] && searchTerm['Đã Nhận Bàn'].trim() !== '' ? (
+                                            getPaginatedBookings('Đã Nhận Bàn').length === 0 ? (
+                                                <tr>
+                                                <td colSpan="8" className="text-center py-4 text-red-500 font-bold">
+                                                    Không có kết quả tìm kiếm.
+                                                </td>
+                                            </tr>
+                                            ) : (
+                                                // Nếu có kết quả, hiển thị các dòng booking
+                                                getPaginatedBookings('Đã Nhận Bàn').map(booking => (
+                                                    <tr key={booking.id}>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.id}</td>
+                                                        <td className="border px-4 py-2 text-center">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                        
+                                                        <td className="py-2 px-4 border-b border-r text-center border-gray-300">
+                                                            {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                        </td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.status}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.fullName}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.phone}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.tableNumbers.join(', ')}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.tableTypes.join(', ')}</td>
+                                                        <td className="flex border px-4 py-2 text-center justify-center">
+                                                            {/* <button onClick={() => handleRecieved(booking)} className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700">
+                                                                Kết Thúc
+                                                            </button> */}
+                                                            <button
+                                                                onClick={() => handleEndClick(booking)}  // Gọi hàm handleEndClick
+                                                                className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700 flex items-center gap-1"
+                                                            >
+                                                                <FaCheckCircle className="text-white" /> Kết Thúc
+                                                            </button>
+    
+                                                            {/* <button
+                                                                onClick={() => handleSwitchTableInPlayClick(booking)}  // Gọi hàm handleSwitchTableInPlayClick khi chuyển bàn
+                                                                className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700 ml-2 flex items-center gap-1"
+                                                            >
+                                                                 <FaExchangeAlt className="text-white" /> Chuyển Bàn
+                                                            </button> */}
+    
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )
 
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                        ) : (
+                                            getPaginatedBookings('Đã Nhận Bàn').length === 0 ? (
+                                                <tr>
+                                                <td colSpan="8" className="text-center py-4 text-red-500 font-bold">
+                                                    Không có đơn để hiển thị.
+                                                </td>
+                                            </tr>
+                                            ) : (
+                                                // Nếu có kết quả, hiển thị các dòng booking
+                                                getPaginatedBookings('Đã Nhận Bàn').map(booking => (
+                                                    <tr key={booking.id}>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.id}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{format(new Date(booking.bookingTime), 'dd/MM/yyyy HH:mm:ss')}</td>
+                                                        
+                                                        <td className="py-2 px-4 border-b border-r text-center border-gray-300">
+                                                            {booking.expiryTime ? format(new Date(booking.expiryTime), 'dd/MM/yyyy HH:mm:ss') : "Chưa Có"}
+                                                        </td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.status}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.fullName}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.phone}</td>
+                                                       
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.tableNumbers.join(', ')}</td>
+                                                        <td className="border px-4 py-2 text-center border-gray-300">{booking.tableTypes.join(', ')}</td>
+                                                        <td className="flex border px-4 py-2 text-center justify-center">
+                                                            {/* <button onClick={() => handleRecieved(booking)} className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700">
+                                                                Kết Thúc
+                                                            </button> */}
+                                                            <button
+                                                                onClick={() => handleEndClick(booking)}  // Gọi hàm handleEndClick
+                                                                className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-700 flex items-center gap-1"
+                                                            >
+                                                                <FaCheckCircle className="text-white" /> Kết Thúc
+                                                            </button>
+    
+                                                            {/* <button
+                                                                onClick={() => handleSwitchTableInPlayClick(booking)}  // Gọi hàm handleSwitchTableInPlayClick khi chuyển bàn
+                                                                className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700 ml-2 flex items-center gap-1"
+                                                            >
+                                                                 <FaExchangeAlt className="text-white" /> Chuyển Bàn
+                                                            </button> */}
+    
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )
+                                        )}
+
+                                        
+                                        
+                                        
                                         </tbody>
                                     </table>
                                 </div>

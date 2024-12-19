@@ -96,6 +96,13 @@ const CustomerBookingTable = () => {
   
     const selectedBookingTime = new Date(bookingTime);
     const currentTime = new Date();
+
+    // Thời gian đặt không hợp lệ (quá giờ hỗ trợ)
+    const bookingHour = selectedBookingTime.getHours();
+    if (bookingHour < 8 || bookingHour >= 24) {
+      alert('Chúng tôi chỉ hỗ trợ đặt bàn từ 8:00 sáng đến 12:00 đêm. Vui lòng chọn lại thời gian hoặc quay lại vào ngày mai!');
+      return;
+    }
   
     if (selectedBookingTime <= currentTime) {
       alert('Thời gian đặt phải lớn hơn thời gian hiện tại. Vui lòng chọn lại.');

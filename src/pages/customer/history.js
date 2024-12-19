@@ -14,7 +14,7 @@ const CustomerHistoryTable = () => {
     const [showInvoiceDetail, setShowInvoiceDetail] = useState(false);
     const [error, setError] = useState('');
     const [payments, setPayments] = useState([]);
-    const pageSize = 5;
+    const pageSize = 8;
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 

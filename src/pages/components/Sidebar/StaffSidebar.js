@@ -15,12 +15,12 @@ const StaffSidebar = () => {
     }
 
     const staffLinks = [
-        { href: "/staff/directs", label: "Hỗ Trợ Đặt Bàn" },
-        { href: "/staff/tables", label: "Quản Lý Tình Trạng Bàn" },
-        { href: "/staff/orders", label: "Quản Lý Đơn Món" },
-        { href: "/staff/bookings", label: "Quản Lý Đơn Đặt" },
-        { href: "/staff/invoices", label: "Quản Lý Hóa Đơn" },
-        { href: "/staff/accounts", label: "Quản Lý Tài Khoản" },
+        { href: `/staff/directs`, label: "Hỗ Trợ Đặt Bàn" },
+        { href: `/staff/tables`, label: "Quản Lý Tình Trạng Bàn" },
+        { href: `/staff/orders`, label: "Quản Lý Đơn Món" },
+        { href: `/staff/bookings`, label: "Quản Lý Đơn Đặt" },
+        { href: `/staff/invoices`, label: "Quản Lý Hóa Đơn" },
+        { href: `/staff/accounts`, label: "Quản Lý Tài Khoản" },
 
     ];
 

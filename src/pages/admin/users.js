@@ -246,12 +246,12 @@ const AdminUsers = () => {
                                         <td className="flex py-2 px-4 border text-center">
                                             {(user.roles.includes("MANAGER") || user.roles.includes("ADMIN")) && (
                                                 <>
-                                                <button
+                                                {/* <button
                                                     onClick={() => handleUpdate(user)}
                                                     className="bg-blue-400 text-white py-1 px-2 rounded ml-2 hover:bg-blue-500 transition duration-200"
                                                 >
                                                     <FaPlus className="text-white" /> Thêm
-                                                </button>
+                                                </button> */}
 
                                                 {/* Nút Cập nhật */}
                                                 <button
@@ -305,24 +305,19 @@ const AdminUsers = () => {
 
 
                     {/* Điều hướng phân trang */}
-                    <div className="flex justify-center mt-4">
-                                <button
-                                    onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage === 1}
-                                    className="px-4 py-2 mx-1 bg-gray-200 hover:bg-gray-300 rounded"
-                                >
-                                    Trước
-                                </button>
-                                <span className="px-4 py-2">
-                                    Trang {currentPage} / {totalPages}
-                                </span>
-                                <button
-                                    onClick={() => handlePageChange(currentPage + 1)}
-                                    disabled={currentPage === totalPages}
-                                    className="px-4 py-2 mx-1 bg-gray-200 hover:bg-gray-300 rounded"
-                                >
-                                    Tiếp
-                                </button>
+                    <div className="mt-4">
+                                <p className="text-sm">Trang {currentPage} / {totalPages}</p>
+                                <div className="flex justify-center">
+                                    {Array.from({ length: totalPages }, (_, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handlePageChange(index + 1)}
+                                            className={`mx-1 px-3 py-1 rounded ${currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                                        >
+                                            {index + 1}
+                                        </button>
+                                    ))}
+                                </div>
                     </div>
                 </main>
             </div>
