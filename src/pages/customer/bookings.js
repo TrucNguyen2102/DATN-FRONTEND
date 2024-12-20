@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
-import AuthContext from '../contexts/AuthContext';
-import CustomerHeader from '../components/Header/CustomerHeader';
-import CustomerSidebar from '../components/Sidebar/CustomerSidebar';
+import AuthContext from '../../contexts/AuthContext';
+import CustomerHeader from '../../components/Header/CustomerHeader';
+import CustomerSidebar from '../../components/Sidebar/CustomerSidebar';
 import { FaSyncAlt} from "react-icons/fa"
-import Chatbox from '../components/Chatbox';
+import Chatbox from '../../components/Chatbox';
 
 const CustomerBookingTable = () => {
   const { user } = useContext(AuthContext);

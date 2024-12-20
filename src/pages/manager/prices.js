@@ -1,8 +1,8 @@
 import { useState, useEffect, useContext } from 'react';
-import ManagerHeader from '../components/Header/ManagerHeader';
+import ManagerHeader from '../../components/Header/ManagerHeader';
 import axios from 'axios';
-import AuthContext from '../contexts/AuthContext';
-import ManagerSidebar from '../components/Sidebar/ManagerSidebar';
+import AuthContext from '../../contexts/AuthContext';
+import ManagerSidebar from '../../components/Sidebar/ManagerSidebar';
 import { FaSyncAlt, FaPlus, FaEdit, FaTrash  } from "react-icons/fa"
 
 const PricesPage = () => {

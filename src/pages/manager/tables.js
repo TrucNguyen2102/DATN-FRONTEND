@@ -1,7 +1,7 @@
-import ManagerHeader from "../components/Header/ManagerHeader";
+import ManagerHeader from "../../components/Header/ManagerHeader";
 import React, { useEffect, useState } from 'react';
 import axios from "axios";
-import ManagerSidebar from "../components/Sidebar/ManagerSidebar";
+import ManagerSidebar from "../../components/Sidebar/ManagerSidebar";
 import { FaSyncAlt, FaPlus, FaEdit, FaTrash  } from "react-icons/fa"
 
 const TablePlay = () => {

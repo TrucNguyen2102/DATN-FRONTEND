@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import CustomerHeader from "../components/Header/CustomerHeader";
-import CustomerSidebar from "../components/Sidebar/CustomerSidebar";
+import CustomerHeader from "../../components/Header/CustomerHeader";
+import CustomerSidebar from "../../components/Sidebar/CustomerSidebar";
 
 const NotificationList = () => {
     const [notifications, setNotifications] = useState([]);

@@ -1,9 +1,9 @@
-import { useContext } from 'react';
+import React , { useContext } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
-import AuthContext from '@/pages/contexts/AuthContext';
+import AuthContext from '../../contexts/AuthContext';
 
-const StaffHeader = () => {
+const ManagerHeader = () => {
   const { user } = useContext(AuthContext); // Lấy thông tin người dùng từ context
   const router = useRouter();
 
@@ -15,7 +15,6 @@ const StaffHeader = () => {
       return; // Nếu người dùng nhấn "Hủy", thoát khỏi hàm mà không thực hiện gì
     }
 
-    
     if (!user || !user.id) {
         console.error("User ID is undefined.");
         return;
@@ -50,4 +49,4 @@ const StaffHeader = () => {
   );
 };
 
-export default StaffHeader;
+export default ManagerHeader;

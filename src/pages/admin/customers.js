@@ -1,9 +1,9 @@
 import { useState, useContext, useEffect} from 'react';
 import { useRouter } from 'next/router';
-import AdminHeader from '../components/Header/AdminHeader';
+import AdminHeader from '../../components/Header/AdminHeader';
 import AuthContext from '../contexts/AuthContext';
 import axios from 'axios';
-import AdminSidebar from '../components/Sidebar/AdminSidebar';
+import AdminSidebar from '../../components/Sidebar/AdminSidebar';
 
 const CustomersPage = () => {
     const [users, setUsers] = useState([]);

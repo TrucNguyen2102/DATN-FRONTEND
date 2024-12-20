@@ -1,10 +1,9 @@
-import { useContext } from 'react';
+import React , { useContext } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
-import AuthContext from '@/pages/contexts/AuthContext';
-import Link from 'next/link';
+import AuthContext from '../../contexts/AuthContext';
 
-const CustomerHeader = () => {
+const StaffHeader = () => {
   const { user } = useContext(AuthContext); // Lấy thông tin người dùng từ context
   const router = useRouter();
 
@@ -16,6 +15,7 @@ const CustomerHeader = () => {
       return; // Nếu người dùng nhấn "Hủy", thoát khỏi hàm mà không thực hiện gì
     }
 
+    
     if (!user || !user.id) {
         console.error("User ID is undefined.");
         return;
@@ -35,7 +35,7 @@ const CustomerHeader = () => {
 
   return (
     <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
-      <h1 className="text-xl font-bold"><Link href='/customer/home'>NTT BILLIARDS</Link></h1>
+      <h1 className="text-xl font-bold">Trang Quản Lý</h1>
       <div className="flex items-center">
         {/* {user && <h3 className="text-lg mr-4">Xin chào, {user.fullName}</h3>} */}
         {user && <h3 className="text-lg mr-4">Xin chào, {user.fullName}</h3>}
@@ -50,4 +50,4 @@ const CustomerHeader = () => {
   );
 };
 
-export default CustomerHeader;
+export default StaffHeader;

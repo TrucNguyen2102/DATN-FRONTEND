@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useContext } from 'react';
-import AuthContext from '@/pages/contexts/AuthContext';
+import AuthContext from '../../contexts/AuthContext';
 
 const AdminSidebar = () => {
 

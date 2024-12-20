@@ -1,7 +1,7 @@
-import StaffHeader from "../components/Header/StaffHeader";
+import StaffHeader from "../../components/Header/StaffHeader";
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import StaffSidebar from "../components/Sidebar/StaffSidebar";
+import StaffSidebar from "../../components/Sidebar/StaffSidebar";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import { format, differenceInSeconds  } from 'date-fns';

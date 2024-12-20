@@ -1,11 +1,11 @@
 import { useState, useContext, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import ManagerHeader from '../components/Header/ManagerHeader';
-import AuthContext from '../contexts/AuthContext';
+import ManagerHeader from '../../components/Header/ManagerHeader';
+import AuthContext from '../../contexts/AuthContext';
 import axios from 'axios';
-import AddStaffForm from '../components/manager/AddStaffForm';
+import AddStaffForm from '../../components/manager/AddStaffForm';
 import { format } from 'date-fns'; // Import format từ date-fns
-import ManagerSidebar from '../components/Sidebar/ManagerSidebar';
+import ManagerSidebar from '../../components/Sidebar/ManagerSidebar';
 import { FaSyncAlt, FaPlus, FaEdit, FaLock, FaUnlock  } from "react-icons/fa"
 
 

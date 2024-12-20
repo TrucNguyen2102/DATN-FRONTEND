@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect } from "react";
-import ManagerHeader from "../components/Header/ManagerHeader";
-import ManagerSidebar from "../components/Sidebar/ManagerSidebar";
-import AuthContext from "../contexts/AuthContext";
+import ManagerHeader from "../../components/Header/ManagerHeader";
+import ManagerSidebar from "../../components/Sidebar/ManagerSidebar";
+import AuthContext from "../../contexts/AuthContext";
 import axios from "axios";
 import { FaSyncAlt, FaPlus, FaEdit, FaTrash  } from "react-icons/fa"
 

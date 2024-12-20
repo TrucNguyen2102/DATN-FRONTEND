@@ -1,9 +1,9 @@
 import { useEffect, useState, useContext } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
-import AuthContext from '../contexts/AuthContext';
-import AdminHeader from '../components/Header/AdminHeader';
-import AdminSidebar from '../components/Sidebar/AdminSidebar';
+import AuthContext from '../../contexts/AuthContext';
+import AdminHeader from '../../components/Header/AdminHeader';
+import AdminSidebar from '../../components/Sidebar/AdminSidebar';
 
 const AdminPage = () => {
   const [users, setUsers] = useState([]);

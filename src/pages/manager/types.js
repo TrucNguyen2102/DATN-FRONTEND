@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import ManagerHeader from '../components/Header/ManagerHeader';
-import ManagerSidebar from '../components/Sidebar/ManagerSidebar';
+import ManagerHeader from '../../components/Header/ManagerHeader';
+import ManagerSidebar from '../../components/Sidebar/ManagerSidebar';
 import { FaSyncAlt, FaPlus, FaEdit, FaTrash  } from "react-icons/fa"
 
 const TypeTable = () => {

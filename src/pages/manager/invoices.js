@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext } from "react";
 import axios from "axios";
-import ManagerHeader from "../components/Header/ManagerHeader";
-import ManagerSidebar from "../components/Sidebar/ManagerSidebar";
+import ManagerHeader from "../../components/Header/ManagerHeader";
+import ManagerSidebar from "../../components/Sidebar/ManagerSidebar";
 
 const ManagerInvoice = () => {
 

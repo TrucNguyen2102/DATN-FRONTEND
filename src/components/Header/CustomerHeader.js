@@ -1,9 +1,10 @@
-import { useContext } from 'react';
+import React , { useContext } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
-import AuthContext from '@/pages/contexts/AuthContext';
+import AuthContext from '../../contexts/AuthContext';
+import Link from 'next/link';
 
-const AdminHeader = () => {
+const CustomerHeader = () => {
   const { user } = useContext(AuthContext); // Lấy thông tin người dùng từ context
   const router = useRouter();
 
@@ -34,7 +35,7 @@ const AdminHeader = () => {
 
   return (
     <header className="bg-blue-600 text-white p-4 flex justify-between items-center">
-      <h1 className="text-xl font-bold">Trang Quản Trị</h1>
+      <h1 className="text-xl font-bold"><Link href='/customer/home'>NTT BILLIARDS</Link></h1>
       <div className="flex items-center">
         {/* {user && <h3 className="text-lg mr-4">Xin chào, {user.fullName}</h3>} */}
         {user && <h3 className="text-lg mr-4">Xin chào, {user.fullName}</h3>}
@@ -49,4 +50,4 @@ const AdminHeader = () => {
   );
 };
 
-export default AdminHeader;
+export default CustomerHeader;

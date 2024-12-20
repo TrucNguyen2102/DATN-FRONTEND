@@ -4,8 +4,8 @@ import { Bar } from 'react-chartjs-2';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import 'chart.js/auto';
-import ManagerHeader from '../components/Header/ManagerHeader';
-import ManagerSidebar from '../components/Sidebar/ManagerSidebar';
+import ManagerHeader from '../../components/Header/ManagerHeader';
+import ManagerSidebar from '../../components/Sidebar/ManagerSidebar';
 import { FaSyncAlt  } from "react-icons/fa"
 
 const StatisticsPage = () => {

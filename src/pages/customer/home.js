@@ -1,9 +1,9 @@
-import CustomerHeader from "../components/Header/CustomerHeader";
-import Sidebar from "../components/Sidebar";
-import Chatbox from "../components/Chatbox";
+import CustomerHeader from "../../components/Header/CustomerHeader";
+// import Sidebar from "../components/Sidebar";
+import Chatbox from "../../components/Chatbox";
 
 import Link from 'next/link';
-import Footer from "../components/Footer";
+import Footer from "../../components/Footer";
 
 const CustomerHome = () => {
     // return (

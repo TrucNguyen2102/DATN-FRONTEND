@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useContext, use } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
-import AdminHeader from '../components/Header/AdminHeader';
-import AuthContext from '../contexts/AuthContext';
-import AddManagerForm from '../components/admin/AddManagerForm';
+import AdminHeader from '../../components/Header/AdminHeader';
+import AuthContext from '../../contexts/AuthContext';
+import AddManagerForm from '../../components/admin/AddManagerForm';
 import { format } from 'date-fns'; // Import format từ date-fns
-import AdminSidebar from '../components/Sidebar/AdminSidebar';
+import AdminSidebar from '../../components/Sidebar/AdminSidebar';
 import { FaSyncAlt, FaPlus, FaLock, FaUnlock, FaEdit } from "react-icons/fa"
-import RoleForm from '../components/admin/UpdateRoleForm';
+import RoleForm from '../../components/admin/UpdateRoleForm';
 
 const AdminUsers = () => {
     

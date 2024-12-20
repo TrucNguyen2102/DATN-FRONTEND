@@ -1,5 +1,5 @@
-import StaffHeader from "../components/Header/StaffHeader";
-import StaffSidebar from "../components/Sidebar/StaffSidebar";
+import StaffHeader from "../../components/Header/StaffHeader";
+import StaffSidebar from "../../components/Sidebar/StaffSidebar";
 import React, { useEffect, useState } from 'react';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';

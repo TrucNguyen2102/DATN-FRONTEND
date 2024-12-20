@@ -1,10 +1,9 @@
 import { useState, useContext, useEffect } from "react";
-import ManagerHeader from "../components/Header/ManagerHeader";
-import ManagerSidebar from "../components/Sidebar/ManagerSidebar";
-import AuthContext from "../contexts/AuthContext";
+
+import AuthContext from "../../contexts/AuthContext";
 import axios from "axios";
-import StaffHeader from "../components/Header/StaffHeader";
-import StaffSidebar from "../components/Sidebar/StaffSidebar";
+import StaffHeader from "../../components/Header/StaffHeader";
+import StaffSidebar from "../../components/Sidebar/StaffSidebar";
 import { FaSyncAlt, FaEdit  } from "react-icons/fa"
 
 const Modal = ({ isOpen, onClose, onSave, initialData }) => {

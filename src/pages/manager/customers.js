@@ -1,9 +1,9 @@
 import { useState, useEffect, useContext } from 'react';
-import ManagerHeader from '../components/Header/ManagerHeader';
-import AuthContext from '../contexts/AuthContext';
+import ManagerHeader from '../../components/Header/ManagerHeader';
+import AuthContext from '../../contexts/AuthContext';
 import axios from 'axios';
 import { format } from 'date-fns'; // Import format từ date-fns
-import ManagerSidebar from '../components/Sidebar/ManagerSidebar';
+import ManagerSidebar from '../../components/Sidebar/ManagerSidebar';
 import { FaSyncAlt  } from "react-icons/fa"
 
 const ManagerCustomer = () => {

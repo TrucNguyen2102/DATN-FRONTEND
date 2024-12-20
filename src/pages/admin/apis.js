@@ -115,8 +115,8 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import AdminHeader from '../components/Header/AdminHeader';
-import AdminSidebar from '../components/Sidebar/AdminSidebar';
+import AdminHeader from '../../components/Header/AdminHeader';
+import AdminSidebar from '../../components/Sidebar/AdminSidebar';
 
 const ApiMethods = () => {
   const [apiMethods, setApiMethods] = useState([]);

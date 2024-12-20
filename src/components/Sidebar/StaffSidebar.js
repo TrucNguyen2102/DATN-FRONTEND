@@ -1,10 +1,10 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useContext } from 'react';
-import AuthContext from '@/pages/contexts/AuthContext';
+import { useContext} from 'react';
+import AuthContext from '../../contexts/AuthContext';
 
-const CustomerSidebar = () => {
+const StaffSidebar = () => {
 
     const { user } = useContext(AuthContext);
     const router = useRouter();
@@ -15,23 +15,25 @@ const CustomerSidebar = () => {
         return null; // Hoặc hiển thị một loading indicator nếu cần
     }
 
-    const customerLinks = [
-        { href: "/customer/bookings", label: "Đặt Bàn" },
-        // { href: "/customer/menus", label: "" },
-        { href: "/customer/history", label: "Lịch Sử Đặt Bàn" },
-        { href: "/customer/accounts", label: "Quản Lý Tài Khoản" },
-        // { href: "/customer/notifications", label: "Thông Báo" }
+    const staffLinks = [
+        { href: `/staff/directs`, label: "Hỗ Trợ Đặt Bàn" },
+        { href: `/staff/tables`, label: "Quản Lý Tình Trạng Bàn" },
+        { href: `/staff/orders`, label: "Quản Lý Đơn Món" },
+        { href: `/staff/bookings`, label: "Quản Lý Đơn Đặt" },
+        { href: `/staff/invoices`, label: "Quản Lý Hóa Đơn" },
+        { href: `/staff/accounts`, label: "Quản Lý Tài Khoản" },
+
     ];
 
     const links = {
-        CUSTOMER: customerLinks
+        STAFF: staffLinks
     };
 
 
 
     return (
         <div className="bg-white w-60 h-full shadow-md">
-            {/* <h2 className="text-lg font-bold p-4">Quản Lý</h2> */}
+            <h2 className="text-lg font-bold p-4">Quản Lý</h2>
                 <ul className="space-y-2">
                     <li>
                         <Link 
@@ -40,6 +42,7 @@ const CustomerSidebar = () => {
                         >
                             Trang Chủ
                         </Link>
+                        
                     </li>
                     {links[user.role]?.map((link) => (
                         <li key={link.href}>
@@ -52,7 +55,9 @@ const CustomerSidebar = () => {
                         </li>
                     ))}
                 </ul>
+
+                
         </div>
     )
 }
-export default CustomerSidebar;
+export default StaffSidebar;

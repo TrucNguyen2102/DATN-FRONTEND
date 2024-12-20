@@ -1,7 +1,7 @@
-import StaffHeader from "../components/Header/StaffHeader";
-import StaffSidebar from "../components/Sidebar/StaffSidebar";
+import StaffHeader from "../../components/Header/StaffHeader";
+import StaffSidebar from "../../components/Sidebar/StaffSidebar";
 import React, { useEffect, useState, useContext } from 'react';
-import AuthContext from "../contexts/AuthContext";
+import AuthContext from "../../contexts/AuthContext";
 
 const StaffsHome = () => {
 

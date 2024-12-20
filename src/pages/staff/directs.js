@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import StaffHeader from '../components/Header/StaffHeader';
-import StaffSidebar from '../components/Sidebar/StaffSidebar';
+import StaffHeader from '../../components/Header/StaffHeader';
+import StaffSidebar from '../../components/Sidebar/StaffSidebar';
 import { FaSyncAlt  } from "react-icons/fa"
 
 const DirectBookingForm = () => {

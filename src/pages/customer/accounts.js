@@ -1,10 +1,10 @@
 import { useState, useContext, useEffect } from "react";
-import CustomerHeader from "../components/Header/CustomerHeader";
-import CustomerSidebar from "../components/Sidebar/CustomerSidebar";
-import AuthContext from "../contexts/AuthContext";
+import CustomerHeader from "../../components/Header/CustomerHeader";
+import CustomerSidebar from "../../components/Sidebar/CustomerSidebar";
+import AuthContext from "../../contexts/AuthContext";
 import axios from "axios";
 import { FaSyncAlt, FaEdit} from "react-icons/fa";
-import Chatbox from "../components/Chatbox";
+import Chatbox from "../../components/Chatbox";
 
 const Modal = ({ isOpen, onClose, onSave, initialData }) => {
     const [id, setId] = useState("");

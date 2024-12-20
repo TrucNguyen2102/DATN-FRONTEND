@@ -1,9 +1,9 @@
 import { useEffect, useState, useContext } from "react";
 import axios from "axios";
-import AuthContext from '../contexts/AuthContext';
-import CustomerHeader from "../components/Header/CustomerHeader";
-import CustomerSidebar from "../components/Sidebar/CustomerSidebar";
-import Chatbox from "../components/Chatbox";
+import AuthContext from '../../contexts/AuthContext';
+import CustomerHeader from "../../components/Header/CustomerHeader";
+import CustomerSidebar from "../../components/Sidebar/CustomerSidebar";
+import Chatbox from "../../components/Chatbox";
 import { FaSyncAlt, FaEye } from "react-icons/fa";
 
 const CustomerHistoryTable = () => {

@@ -1,7 +1,7 @@
-import ManagerHeader from "../components/Header/ManagerHeader";
+import ManagerHeader from "../../components/Header/ManagerHeader";
 import React, { useEffect, useState } from 'react';
 import axios from "axios";
-import StaffSidebar from "../components/Sidebar/StaffSidebar";
+import StaffSidebar from "../../components/Sidebar/StaffSidebar";
 import { FaRegClock } from 'react-icons/fa';
 import { FaEdit, FaSyncAlt  } from "react-icons/fa"
 
