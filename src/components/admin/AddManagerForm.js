@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import axios from 'axios';
 
-const AddManagerForm = ({ managerData, onClose }) => {
-    const [fullName, setFullName] = useState('');
-    const [birthDay, setBirthDay] = useState('');
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
+const AddManagerForm = ({ managerData, onClose, onSuccess }) => {
+    const [fullName, setFullName] = useState(managerData?.fullName || '');
+    const [birthDay, setBirthDay] = useState(managerData?.birthDay || '');
+    const [email, setEmail] = useState(managerData?.email || '');
+    const [phone, setPhone] = useState(managerData?.phone || '');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [role, setRole] = useState('MANAGER');
@@ -51,25 +51,58 @@ const AddManagerForm = ({ managerData, onClose }) => {
         }
     
         try {
-            const data = { 
-                fullName, 
-                birthDay, 
-                email, 
-                phone, 
-                password, 
-                role, 
-                status: 'Đang hoạt động'
-            };
-    
-            // Gửi request thêm mới tài khoản
-            await axios.post('/api/users/admins/managers/add', data, {
+
+            const url = managerData ? `/api/users/admins/managers/update/${managerData.id}` : '/api/users/admins/managers/add';
+            const method = managerData ? 'PUT' : 'POST';
+
+            await axios({
+                method: method,
+                url: url,
+                data: {
+                    fullName,
+                    birthDay,
+                    email,
+                    phone,
+                    password,
+                    role,
+                    status: 'Đang hoạt động'
+                },
+
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             });
+            // const data = { 
+            //     fullName, 
+            //     birthDay, 
+            //     email, 
+            //     phone, 
+            //     password, 
+            //     role, 
+            //     status: 'Đang hoạt động'
+            // };
+    
+            // // Gửi request thêm mới tài khoản
+            // await axios.post('/api/users/admins/managers/add', data, {
+            //     headers: {
+            //         'Authorization': `Bearer ${localStorage.getItem('token')}`
+            //     }
+            // });
     
             // Thông báo thành công và đóng form
-            alert('Quản lý đã được thêm thành công.');
+            alert(managerData ? 'Quản lý đã được cập nhật thành công.' : 'Quản lý đã được thêm thành công.');
+
+            // Gọi API updateUpdatedAt sau khi thành công
+            if (managerData) {
+                await axios.put(`/api/users/${managerData.id}/updateAt`, {}, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                console.log('Cập nhật thời gian thành công');
+            }
+
+            onSuccess();
             onClose(); // Đóng form sau khi thêm thành công
     
         } catch (err) {

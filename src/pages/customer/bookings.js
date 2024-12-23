@@ -42,22 +42,44 @@ const CustomerBookingTable = () => {
     fetchTables();
   }, []);
 
+  const MAX_TABLES = 3; // Số lượng bàn tối đa có thể đặt
 
   const handleSelectTable = (table) => {
     if (table.tableStatus === "Trống") {
-      setSelectedTables(prevSelected => {
-        const exists = prevSelected.find(selected => selected.id === table.id); // Kiểm tra nếu bàn đã được chọn
-        const newSelected = exists 
-          ? prevSelected.filter(selected => selected.id !== table.id) 
-          : [...prevSelected, table];
-  
-        console.log('Selected Tables:', newSelected);
-        return newSelected;
+      setSelectedTables((prevSelected) => {
+        const exists = prevSelected.find((selected) => selected.id === table.id);
+        if (exists) {
+          // Bỏ chọn bàn nếu đã được chọn trước đó
+          return prevSelected.filter((selected) => selected.id !== table.id);
+        } else {
+          if (prevSelected.length >= MAX_TABLES) {
+            alert(`Bạn chỉ có thể đặt tối đa ${MAX_TABLES} bàn.`);
+            return prevSelected; // Giữ nguyên danh sách bàn đã chọn
+          }
+          return [...prevSelected, table];
+        }
       });
     } else {
-      console.log('Table is not available:', table);
+      console.log("Table is not available:", table);
     }
   };
+
+
+  // const handleSelectTable = (table) => {
+  //   if (table.tableStatus === "Trống") {
+  //     setSelectedTables(prevSelected => {
+  //       const exists = prevSelected.find(selected => selected.id === table.id); // Kiểm tra nếu bàn đã được chọn
+  //       const newSelected = exists 
+  //         ? prevSelected.filter(selected => selected.id !== table.id) 
+  //         : [...prevSelected, table];
+  
+  //       console.log('Selected Tables:', newSelected);
+  //       return newSelected;
+  //     });
+  //   } else {
+  //     console.log('Table is not available:', table);
+  //   }
+  // };
   
   const formatCurrency = (value) => {
     if (value == null || isNaN(value)) {

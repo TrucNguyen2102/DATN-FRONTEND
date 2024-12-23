@@ -6,12 +6,15 @@ import 'react-tabs/style/react-tabs.css';
 import axios from 'axios';
 import { format } from 'date-fns';
 import * as XLSX from 'xlsx';
-import { jsPDF } from "jspdf";
-import { FaSyncAlt, FaPlus  } from "react-icons/fa"
+import { FaSyncAlt, FaPlus  } from "react-icons/fa";
+
+
+
 
 const StaffInvoices = () => {
     const [error, setError] = useState('');
     const [invoices, setInvoices] = useState([]);
+    const [showInvoice, setShowInvoice] = useState(false);
     const [payments, setPayments] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
     const [orderItems, setOrderItems] = useState([]);
@@ -26,6 +29,12 @@ const StaffInvoices = () => {
         totalTablePrice: 0,
     });
 
+    //const [price, setPrice] = useState(0);
+
+    const [totalPriceForTime, setTotalPriceForTime] = useState(0);
+    const [totalTime, setTotalTime] = useState({ hours: 0, minutes: 0 });
+    
+
     const [tableIds, setTableIds] = useState([]);
     const [tableType, setTableType] = useState('');
     const [tablePrice, setTablePrice] = useState(0);
@@ -35,6 +44,7 @@ const StaffInvoices = () => {
     const [showConfirmPrint, setShowConfirmPrint] = useState(false);
     const [showSelectPayment, setShowSelectPayment] = useState(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(null);
+    const [totalPrice, setTotalPrice] = useState(null);
 
     const [currentPage, setCurrentPage] = useState({ 'Chưa Thanh Toán': 1, 'Chờ Thanh Toán': 1, 'Đang Thanh Toán': 1, 'Đã Thanh Toán': 1 });
     const itemsPerPage = 8;
@@ -44,36 +54,13 @@ const StaffInvoices = () => {
         return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     };
 
-    // const formatCurrency = (value) => {
-    //     if (value == null || isNaN(value)) {
-    //         console.error("formatCurrency nhận giá trị không hợp lệ:", value);
-    //         return "0"; // Trả về giá trị mặc định nếu không hợp lệ
-    //     }
-    //     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    // };
 
-    // const formatCurrency = (value) => {
-    //     if (value === undefined || value === null) return '0 VNĐ'; // Tránh lỗi khi value là undefined hoặc null
-    //     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-    // };
-    
-    
-    // const formatCurrency = (value) => {
-    //     if (typeof value !== 'number') return '0 VND';  // Kiểm tra giá trị nếu không phải là số
-    //     return value.toLocaleString('vi-VN');   // Định dạng số và thêm VND vào cuối
-    // };
-    
     
     const formatDate = (date) => {
         return date ? format(new Date(date), 'dd/MM/yyyy HH:mm:ss') : 'Không xác định';
     };
 
-    // const formatDate = (dateString) => {
-    //     const date = new Date(dateString);
-    //     return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
-    // };
     
-
     //hàm lấy hóa đơn
     const fetchInvoices = async () => {
         try {
@@ -131,6 +118,24 @@ const StaffInvoices = () => {
         fetchMenuItems();
     }, []);
 
+
+    // Khi hóa đơn được chọn, gọi API để lấy danh sách các món ăn
+    useEffect(() => {
+        const fetchOrderItems = async () => {
+            if (selectedInvoice?.id) {
+                try {
+                    const response = await axios.get(`/api/orders/byInvoiceId/${selectedInvoice.id}`);
+                    // Gắn orderItems vào selectedInvoice
+                    setOrderItems({ ...selectedInvoice, orderItems: response.data });
+                } catch (error) {
+                    console.error('Lỗi khi lấy danh sách món ăn:', error);
+                }
+            }
+        };
+
+        fetchOrderItems();
+    }, [selectedInvoice]);
+
     // Hàm để tìm tên món ăn từ menuItems dựa trên menuId
     const getMenuNameById = (menuId) => {
         const menuItem = menuItems.find(item => item.id === menuId);
@@ -141,6 +146,20 @@ const StaffInvoices = () => {
     const getMenuPriceById = (menuId) => {
         const menuItem = menuItems.find(item => item.id === menuId);
         return menuItem ? menuItem.price : "Giá không được xác định";
+    };
+
+    // Hàm để gọi API và lấy giá của bàn
+    const getTablePrice = async (tableId) => {
+        try {
+            const response = await axios.get(`/api/tables/with-type-price/${tableId}`);
+            if (response.data) {
+                return response.data.price;  // Giả sử giá nằm trong thuộc tính price của TablePlayWithPriceDTO
+            }
+            return 0;
+        } catch (error) {
+            console.error("Error fetching table price:", error);
+            return 0;
+        }
     };
 
 
@@ -307,13 +326,17 @@ const StaffInvoices = () => {
     };
 
     // Handle button click to show print confirmation form
-    const handlePrintClick = (invoice) => {
+    const handlePrintClick = async (invoice) => {
+        console.log("Selected Invoice in handlePrintClick: ", invoice);
         if (!invoice) {
             alert('Vui lòng chọn một hóa đơn.');
             return;
         }
+
+       
         setSelectedInvoice(invoice);
         setShowConfirmPrint(true);
+        
     };
 
     //nút chọn phương thức
@@ -401,20 +424,37 @@ const StaffInvoices = () => {
             // Cập nhật trạng thái đơn đặt bàn và bàn liên quan
             const response = await axios.put(`/api/bookings/booking_table/update/${bookingId}/status`);
             console.log("Booking update response:", response);
+
+            // Lấy giá tiền cho loại bàn
+            const price = await getTablePrice(selectedInvoice.tableId);
+            console.log("Price:", price);
+
+            // Tính toán tổng giờ chơi
+            const { hours, minutes } = calculateTotalHours(selectedInvoice.startTime, selectedInvoice.endTime);
+            const totalMinutes = (hours * 60) + minutes; // Chuyển đổi thành phút
+            const totalPriceForTime = (totalMinutes / 60) * price; // Tính tổng tiền cho giờ chơi
+
+            // Cập nhật state để hiển thị tổng giờ và phút
+            setTotalTime({ hours, minutes });
+            setTotalPriceForTime(totalPriceForTime);
+
+            
     
             
             // Thông báo thành công và thực hiện xuất hóa đơn
             alert('Hóa đơn đã được cập nhật thành công và trạng thái của bàn và booking đã được cập nhật!');
             
             // // Xuất ra Excel (nếu có)
-             handleExportToExcel([updatedInvoice]);
+             //handleExportToExcel([updatedInvoice]);
 
-        //     // Hiển thị hóa đơn để in
-        // setShowConfirmPrint(false); // Đóng hộp thoại xác nhận
-        // window.print(); // Gọi phương thức in
+            // Hiển thị hóa đơn
+            setShowInvoice(true);
 
-        // Sau khi xác nhận và cập nhật thành công, xuất ra PDF
-        //handleSaveAsPDF(updatedInvoice);
+            // Chờ một chút để giao diện cập nhật, sau đó in
+            setTimeout(() => {
+                window.print();
+                setShowInvoice(false); // Đóng giao diện hóa đơn sau khi in
+            }, 500);
     
             // Tải lại danh sách hóa đơn
             fetchInvoices();
@@ -422,6 +462,8 @@ const StaffInvoices = () => {
             // Đóng hộp thoại xác nhận
             setShowForm(false);
             setSelectedBooking(null);
+            // Đóng hộp thoại xác nhận
+            //setShowConfirmPrint(false);
         } catch (error) {
             console.error('Error updating invoice:', error);
             alert('Có lỗi xảy ra khi cập nhật hóa đơn. Vui lòng thử lại.');
@@ -491,40 +533,6 @@ const StaffInvoices = () => {
 
     }
 
-    // Hàm để xuất hóa đơn ra PDF
-    // const handleSaveAsPDF = (invoice) => {
-
-    //      // In dữ liệu invoice ra console để kiểm tra
-    // console.log("Invoice Dataa:", invoice);
-
-    //     const doc = new jsPDF();
-    
-    //     // Thiết lập font và kích thước
-    //     doc.setFontSize(16);
-    //     doc.text('Hóa Đơn', 105, 20, { align: "center" });
-    
-    //     doc.setFontSize(12);
-    
-    //     // Kiểm tra dữ liệu và thay thế nếu cần thiết
-    //     const id = invoice?.id || 'N/A';
-    //     const billDate = invoice?.billDate ? formatDate(invoice.billDate) : 'Chưa có ngày';
-    //     const totalMoney = invoice?.totalMoney ? formatCurrency(invoice.totalMoney) : '0 VND';
-    //     const status = invoice?.status || 'Chưa có trạng thái';
-
-    //     console.log(`Mã Hóa Đơn: ${id}`);
-    //     console.log(`Ngày Hóa Đơn: ${billDate}`);
-    //     console.log(`Tổng Tiền: ${totalMoney}`);
-    //     console.log(`Trạng Thái: ${status}`);
-    
-    //     doc.text(`ID: ${id}`, 20, 40);
-    //     doc.text(`BillDate: ${billDate}`, 20, 50);
-    //     doc.text(`TotalMoney: ${totalMoney}`, 20, 60);
-    //     doc.text(`Status: ${status}`, 20, 70);
-    
-    //     // Lưu PDF
-    //     doc.save('invoice.pdf');
-    // };
-    
 
 
     const handleExportToExcel = () => {
@@ -553,36 +561,6 @@ const StaffInvoices = () => {
         XLSX.writeFile(workbook, 'invoices.xlsx');
     };
 
-    // const InvoicePrint = ({ invoice }) => {
-    //     console.log("Invoice Data:", invoice); // Kiểm tra dữ liệu invoice để chắc chắn nó có sẵn
-    
-    //     // Kiểm tra dữ liệu để tránh undefined
-    //     const id = invoice?.id || 'N/A';
-    //     const billDate = invoice?.billDate ? formatDate(invoice.billDate) : 'Chưa có ngày';
-    //     const totalMoney = invoice?.totalMoney ? formatCurrency(invoice.totalMoney) : '0 VNĐ';
-    //     const status = invoice?.status || 'Chưa có trạng thái';
-    
-    //     return (
-    //         <div id="invoice-to-print" className="p-6 w-full max-w-md mx-auto bg-white border rounded shadow-lg">
-    //             <h2 className="text-lg font-semibold mb-4 text-center">Hóa Đơn</h2>
-    //             <div className="mb-4">
-    //                 <p><strong>ID:</strong> {id}</p>
-    //                 <p><strong>BillDate:</strong> {billDate}</p>
-    //                 <p><strong>TotalMoney:</strong> {totalMoney}</p>
-    //                 <p><strong>Status:</strong> {status}</p>
-    //             </div>
-    //         </div>
-    //     );
-    // };
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
     // Hàm đóng form
     const handleCloseForm = () => {
@@ -622,6 +600,18 @@ const StaffInvoices = () => {
         window.location.reload();
     };
 
+    // Hàm tính tổng giờ chơi
+    const calculateTotalHours = (startTime, endTime) => {
+        const start = new Date(startTime);
+        const end = new Date(endTime);
+        const timeDiff = end - start;
+    
+        const hours = Math.floor(timeDiff / 3600000); // Tính số giờ
+        const minutes = Math.floor((timeDiff % 3600000) / 60000); // Tính số phút
+    
+        return { hours, minutes }; // Trả về đối tượng với giờ và phút
+    };
+
     return (
         <div className="bg-gray-100 min-h-screen flex flex-col">
             <StaffHeader />
@@ -648,35 +638,35 @@ const StaffInvoices = () => {
                                 <table className="min-w-full bg-white border border-gray-300">
                                     <thead>
                                         <tr>
-                                            <th className="border px-4 py-2 text-center">ID</th>
-                                            <th className="border px-4 py-2 text-center">Thời Gian Bắt Đầu</th>
-                                            <th className="border px-4 py-2 text-center">Thời Gian Kết Thúc</th>
-                                            <th className="border px-4 py-2 text-center">Ngày Lập Hóa Đơn</th>
-                                            <th className="border px-4 py-2 text-center">Tổng Tiền</th>
-                                            <th className="border px-4 py-2 text-center">Phương Thức Thanh Toán</th>
-                                            <th className="border px-4 py-2 text-center">Trạng Thái</th>
-                                            <th className="border px-4 py-2 text-center">Mã Đơn Đặt</th>
-                                            <th className="border px-4 py-2 text-center">Bàn</th>
-                                            <th className="border px-4 py-2 text-center">Hành Động</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">ID</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Thời Gian Bắt Đầu</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Thời Gian Kết Thúc</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Ngày Lập Hóa Đơn</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Tổng Tiền</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Phương Thức Thanh Toán</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Trạng Thái</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Mã Đơn Đặt</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Bàn</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Hành Động</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {/* {filterInvoicesByStatus('Chưa Thanh Toán').map(invoice => ( */}
                                         {getPaginatedInvoices('Chưa Thanh Toán').map(invoice => (
                                             <tr key={invoice.id}>
-                                                <td className="border px-4 py-2 text-center">{invoice.id}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.id}</td>
                                                 {/* <td className="border px-4 py-2 text-center">{format(new Date(invoice.startTime), 'dd/MM/yyyy HH:mm:ss')}</td>
                                                 <td className="border px-4 py-2 text-center">{format(new Date(invoice.endTime), 'dd/MM/yyyy HH:mm:ss')}</td>
                                                 <td className="border px-4 py-2 text-center">{format(new Date(invoice.billDate), 'dd/MM/yyyy HH:mm:ss')}</td> */}
-                                                 <td className="border px-4 py-2 text-center">{formatDate(invoice.startTime)}</td>
-                                                <td className="border px-4 py-2 text-center">{invoice.endTime ? formatDate(invoice.endTime) : 'Chưa Có'}</td>
-                                                <td className="border px-4 py-2 text-center">{invoice.billDate ? formatDate(invoice.billDate): 'Chưa Có'}</td>
-                                                <td className="border px-4 py-2 text-center">{formatCurrency(invoice.totalMoney)} VND</td>
-                                                <td className="border px-4 py-2 text-center">{getMethodName(invoice.methodId) || "Chưa Có"}</td>
-                                                <td className="border px-4 py-2 text-center">{invoice.status}</td>
-                                                <td className="border px-4 py-2 text-center">{invoice.bookingId}</td>
-                                                <td className="border px-4 py-2 text-center">{invoice.tableId || 'Không có dữ liệu'}</td>
-                                                <td className="border px-4 py-2 text-center">
+                                                 <td className="border px-4 py-2 text-center border-gray-300">{formatDate(invoice.startTime)}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.endTime ? formatDate(invoice.endTime) : 'Chưa Có'}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.billDate ? formatDate(invoice.billDate): 'Chưa Có'}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{formatCurrency(invoice.totalMoney)} VND</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{getMethodName(invoice.methodId) || "Chưa Có"}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.status}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.bookingId}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.tableId || 'Không có dữ liệu'}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">
                                                     <button onClick={() => handleSelectBooking(invoice)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">
                                                     {/* <FaPlus  className="text-white" /> Tạo Hóa Đơn */}
                                                     Tạo Hóa Đơn
@@ -712,32 +702,32 @@ const StaffInvoices = () => {
                                 <table className="min-w-full bg-white border border-gray-300">
                                     <thead>
                                         <tr>
-                                            <th className="border px-4 py-2 text-center">ID</th>
-                                            <th className="border px-4 py-2 text-center">Thời Gian Bắt Đầu</th>
-                                            <th className="border px-4 py-2 text-center">Thời Gian Kết Thúc</th>
-                                            <th className="border px-4 py-2 text-center">Ngày Lập Hóa Đơn</th>
-                                            <th className="border px-4 py-2 text-center">Tổng Tiền</th>
-                                            <th className="border px-4 py-2 text-center">Phương Thức Thanh Toán</th>
-                                            <th className="border px-4 py-2 text-center">Trạng Thái</th>
-                                            <th className="border px-4 py-2 text-center">Mã Đơn Đặt</th>
-                                            <th className="border px-4 py-2 text-center">Bàn</th>
-                                            <th className="border px-4 py-2 text-center">Hành Động</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">ID</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Thời Gian Bắt Đầu</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Thời Gian Kết Thúc</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Ngày Lập Hóa Đơn</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Tổng Tiền</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Phương Thức Thanh Toán</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Trạng Thái</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Mã Đơn Đặt</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Bàn</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Hành Động</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {/* {filterInvoicesByStatus('Chờ Thanh Toán').map(invoice => ( */}
                                         {getPaginatedInvoices('Chờ Thanh Toán').map(invoice => (
                                             <tr key={invoice.id}>
-                                                <td className="border px-4 py-2 text-center">{invoice.id}</td>
-                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.startTime)}</td>
-                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.endTime)}</td>
-                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.billDate)}</td>
-                                                <td className="border px-4 py-2 text-center">{formatCurrency(invoice.totalMoney)} VND</td>
-                                                <td className="border px-4 py-2 text-center">{getMethodName(invoice.methodId) || "Chưa Có"}</td>
-                                                <td className="border px-4 py-2 text-center">{invoice.status}</td>
-                                                <td className="border px-4 py-2 text-center">{invoice.bookingId}</td>
-                                                <td className="border px-4 py-2 text-center">{invoice.tableId || 'Không có dữ liệu'}</td>
-                                                <td className="border px-4 py-2 text-center">
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.id}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{formatDate(invoice.startTime)}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{formatDate(invoice.endTime)}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{formatDate(invoice.billDate)}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{formatCurrency(invoice.totalMoney)} VND</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{getMethodName(invoice.methodId) || "Chưa Có"}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.status}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.bookingId}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.tableId || 'Không có dữ liệu'}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">
                                                     <button onClick={() => handlePrintClick(invoice)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">
                                                         In Hóa Đơn
                                                     </button>
@@ -770,32 +760,32 @@ const StaffInvoices = () => {
                                 <table className="min-w-full bg-white border border-gray-300">
                                     <thead>
                                         <tr>
-                                            <th className="border px-4 py-2 text-center">ID</th>
-                                            <th className="border px-4 py-2 text-center">Thời Gian Bắt Đầu</th>
-                                            <th className="border px-4 py-2 text-center">Thời Gian Kết Thúc</th>
-                                            <th className="border px-4 py-2 text-center">Ngày Lập Hóa Đơn</th>
-                                            <th className="border px-4 py-2 text-center">Tổng Tiền</th>
-                                            <th className="border px-4 py-2 text-center">Phương Thức Thanh Toán</th>
-                                            <th className="border px-4 py-2 text-center">Trạng Thái</th>
-                                            <th className="border px-4 py-2 text-center">Mã Đơn Đặt</th>
-                                            <th className="border px-4 py-2 text-center">Bàn</th>
-                                            <th className="border px-4 py-2 text-center">Hành Động</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">ID</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Thời Gian Bắt Đầu</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Thời Gian Kết Thúc</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Ngày Lập Hóa Đơn</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Tổng Tiền</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Phương Thức Thanh Toán</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Trạng Thái</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Mã Đơn Đặt</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Bàn</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Hành Động</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {/* {filterInvoicesByStatus('Chờ Thanh Toán').map(invoice => ( */}
                                         {getPaginatedInvoices('Đang Thanh Toán').map(invoice => (
                                             <tr key={invoice.id}>
-                                                <td className="border px-4 py-2 text-center">{invoice.id}</td>
-                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.startTime)}</td>
-                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.endTime)}</td>
-                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.billDate)}</td>
-                                                <td className="border px-4 py-2 text-center">{formatCurrency(invoice.totalMoney)} VND</td>
-                                                <td className="border px-4 py-2 text-center">{getMethodName(invoice.methodId) || "Chưa Có"}</td>
-                                                <td className="border px-4 py-2 text-center">{invoice.status}</td>
-                                                <td className="border px-4 py-2 text-center">{invoice.bookingId}</td>
-                                                <td className="border px-4 py-2 text-center">{invoice.tableId || 'Không có dữ liệu'}</td>
-                                                <td className="border px-4 py-2 text-center">
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.id}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{formatDate(invoice.startTime)}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{formatDate(invoice.endTime)}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{formatDate(invoice.billDate)}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{formatCurrency(invoice.totalMoney)} VND</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{getMethodName(invoice.methodId) || "Chưa Có"}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.status}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.bookingId}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.tableId || 'Không có dữ liệu'}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">
                                                     <button onClick={() => handlePaymentChoice(invoice)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-700">
                                                         Chọn Phương Thức
                                                     </button>
@@ -828,15 +818,15 @@ const StaffInvoices = () => {
                                 <table className="min-w-full bg-white border border-gray-300">
                                     <thead>
                                         <tr>
-                                            <th className="border px-4 py-2 text-center">ID</th>
-                                            <th className="border px-4 py-2 text-center">Thời Gian Bắt Đầu</th>
-                                            <th className="border px-4 py-2 text-center">Thời Gian Kết Thúc</th>
-                                            <th className="border px-4 py-2 text-center">Ngày Lập Hóa Đơn</th>
-                                            <th className="border px-4 py-2 text-center">Tổng Tiền</th>
-                                            <th className="border px-4 py-2 text-center">Phương Thức Thanh Toán</th>
-                                            <th className="border px-4 py-2 text-center">Trạng Thái</th>
-                                            <th className="border px-4 py-2 text-center">Mã Đơn Đặt</th>
-                                            <th className="border px-4 py-2 text-center">Bàn</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">ID</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Thời Gian Bắt Đầu</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Thời Gian Kết Thúc</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Ngày Lập Hóa Đơn</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Tổng Tiền</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Phương Thức Thanh Toán</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Trạng Thái</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Mã Đơn Đặt</th>
+                                            <th className="border px-4 py-2 text-center border-gray-300">Bàn</th>
                                            
                                         </tr>
                                     </thead>
@@ -844,15 +834,15 @@ const StaffInvoices = () => {
                                         {/* {filterInvoicesByStatus('Đã Thanh Toán').map(invoice => ( */}
                                         {getPaginatedInvoices('Đã Thanh Toán').map(invoice => (
                                             <tr key={invoice.id}>
-                                                <td className="border px-4 py-2 text-center">{invoice.id}</td>
-                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.startTime)}</td>
-                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.endTime)}</td>
-                                                <td className="border px-4 py-2 text-center">{formatDate(invoice.billDate)}</td>
-                                                <td className="border px-4 py-2 text-center">{formatCurrency(invoice.totalMoney)} VND</td>
-                                                <td className="border px-4 py-2 text-center">{getMethodName(invoice.methodId)|| "Chưa Có"}</td>
-                                                <td className="border px-4 py-2 text-center">{invoice.status}</td>
-                                                <td className="border px-4 py-2 text-center">{invoice.bookingId}</td>
-                                                <td className="border px-4 py-2 text-center">{invoice.tableId || 'Không có dữ liệu'}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.id}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{formatDate(invoice.startTime)}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{formatDate(invoice.endTime)}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{formatDate(invoice.billDate)}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{formatCurrency(invoice.totalMoney)} VND</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{getMethodName(invoice.methodId)|| "Chưa Có"}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.status}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.bookingId}</td>
+                                                <td className="border px-4 py-2 text-center border-gray-300">{invoice.tableId || 'Không có dữ liệu'}</td>
                                                 
                                             </tr>
                                         ))}
@@ -1068,6 +1058,102 @@ const StaffInvoices = () => {
                         </div>
                     )}
 
+                    
+
+{showInvoice && selectedInvoice && (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="invoice-container p-6 max-w-lg mx-auto bg-white rounded-lg shadow-lg border border-gray-200">
+            <h2 className="text-xl font-semibold text-center mb-6">Hóa Đơn</h2>
+
+            <div className="space-y-4">
+                <div className="flex justify-between">
+                    <span className="font-semibold">Mã Hóa Đơn:</span> 
+                    <span>{selectedInvoice.id}</span>
+                </div>
+
+                <div className="flex justify-between">
+                    <span className="font-semibold">Thời Gian Lập Hóa Đơn:</span> 
+                    <span>{formatDate(selectedInvoice.billDate)}</span>
+                </div>
+
+                <div className="flex justify-between">
+                    <span className="font-semibold">Thời Gian Bắt Đầu:</span> 
+                    <span>{formatDate(selectedInvoice.startTime)}</span>
+                </div>
+
+                <div className="flex justify-between">
+                    <span className="font-semibold">Thời Gian Kết Thúc:</span> 
+                    <span>{formatDate(selectedInvoice.endTime)}</span>
+                </div>
+
+                <div className="flex justify-between">
+                    <span className="font-semibold">Tổng Giờ Chơi:</span> 
+                    <span>
+                        {`${calculateTotalHours(selectedInvoice.startTime, selectedInvoice.endTime).hours} giờ`}
+                        {calculateTotalHours(selectedInvoice.startTime, selectedInvoice.endTime).minutes > 0 || calculateTotalHours(selectedInvoice.startTime, selectedInvoice.endTime).hours > 0
+                            ? ` ${calculateTotalHours(selectedInvoice.startTime, selectedInvoice.endTime).minutes} phút`
+                            : ''}
+                    </span>
+                </div>
+
+                
+
+                {/* Nếu có giá tiền cho giờ chơi, hiển thị */}
+                <div className="flex justify-between">
+                    <span className="font-semibold">Tổng Tiền Giờ Chơi:</span> 
+                    <span>{formatCurrency(totalPriceForTime)} VND</span>
+                </div>
+            </div>
+
+            {/* Danh sách món ăn dưới dạng bảng */}
+            <h3 className="font-semibold mt-6 mb-2">Danh Sách Món Ăn</h3>
+            {orderItems && orderItems.orderItems && orderItems.orderItems.length > 0 ? (
+                <table className="min-w-full table-auto border-collapse">
+                    <thead>
+                        <tr>
+                            <th className="border-b px-4 py-2 text-left">Món</th>
+                            <th className="border-b px-4 py-2 text-left">Số Lượng</th>
+                            <th className="border-b px-4 py-2 text-left">Đơn Giá</th>
+                            <th className="border-b px-4 py-2 text-left">Tổng Tiền Món Ăn</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {orderItems.orderItems.map((item, index) => (
+                            <tr key={index}>
+                                <td className="border-b px-4 py-2">{getMenuNameById(item.menuId)}</td>
+                                <td className="border-b px-4 py-2">{item.quantity}</td>
+                                <td className="border-b px-4 py-2">{formatCurrency(getMenuPriceById(item.menuId))}</td>
+                                <td className="border-b px-4 py-2">{formatCurrency(item.totalPriceItem)} VND</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            ) : (
+                <p className="text-center">Không có món ăn nào trong hóa đơn.</p>
+            )}
+
+            {/* Tổng tiền thanh toán */}
+            
+                <div className="flex justify-between items-center font-bold mt-4">
+                    <p>Tổng Tiền Thanh Toán:</p>
+                    <p>
+                        {formatCurrency(
+                            totalPriceForTime + orderItems.orderItems.reduce((total, item) => total + item.totalPriceItem, 0)
+                        )} VND
+                    </p>
+                </div>
+            
+        </div>
+    </div>
+)}
+
+
+
+
+
+
+
+
 
                     {/* Xác nhận phương thức thanh toán của khách */}
                     {showSelectPayment && (
@@ -1112,32 +1198,7 @@ const StaffInvoices = () => {
                         </div>
                     )}
 
-
-{/* {showConfirmPrint && (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-        <div className="bg-white p-6 rounded shadow-lg w-full max-w-lg">
-            <h2 className="text-lg font-semibold mb-4 text-center">Xác Nhận In Hóa Đơn</h2>
-            
-           
-            <InvoicePrint invoice={selectedInvoice} />
-
-            <div className="mt-4">
-                <button onClick={handleConfirmInvoice} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700 mr-2">
-                    Xác Nhận
-                </button>
-                <button onClick={() => setShowConfirmPrint(false)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">
-                    Hủy
-                </button>
-            </div>
-        </div>
-    </div>
-)} */}
-
-
-
                     
-                    {/* {selectedInvoice && <InvoicePrint invoice={selectedInvoice} />} */}
-
 
                 </main>
             </div>

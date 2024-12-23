@@ -95,9 +95,9 @@ const TypeTable = () => {
     const handleAddType = async (e) => {
         e.preventDefault();
         try {
-            const existingType = types.find((type) => type.name === newType.name);
+            const existingType = types.find((type) => type.name.toLowerCase() === newType.name.toLowerCase());
             if (existingType) {
-                alert('Tên loại đã tồn tại');
+                alert('Tên loại đã tồn tại!');
                 return;
             }
     

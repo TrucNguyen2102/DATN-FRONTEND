@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 
-const AddStaffForm = ({ staffData, onClose }) => {
+const AddStaffForm = ({ staffData, onClose, onSuccess }) => {
     const [fullName, setFullName] = useState(staffData?.fullName || '');
     const [birthDay, setBirthDay] = useState(staffData?.birthDay || '');
     const [email, setEmail] = useState(staffData?.email || '');
@@ -15,6 +15,21 @@ const AddStaffForm = ({ staffData, onClose }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Kiểm tra định dạng email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            setError('Email không đúng định dạng!');
+            return;
+        }
+
+        // Kiểm tra định dạng số điện thoại
+        const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+        if (!phoneRegex.test(phone)) {
+            setError('Số điện thoại không đúng định dạng!');
+            return;
+        }
+
         setError('');
         setSuccess('');
 
@@ -35,15 +50,15 @@ const AddStaffForm = ({ staffData, onClose }) => {
             await axios({
                 method: method,
                 url: url,
-                // data: {
-                //     fullName,
-                //     birthDay,
-                //     email,
-                //     phone,
-                //     password: staffData ? undefined : password,
-                //     role: 'STAFF',
-                //     status: 'Đang hoạt động'
-                // },
+                data: {
+                    fullName,
+                    birthDay,
+                    email,
+                    phone,
+                    password: staffData ? undefined : password,
+                    role: 'STAFF',
+                    status: 'Đang hoạt động'
+                },
 
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -51,6 +66,18 @@ const AddStaffForm = ({ staffData, onClose }) => {
             });
 
             alert(staffData ? 'Nhân viên đã được cập nhật thành công.' : 'Nhân viên đã được thêm thành công.');
+
+            // Gọi API updateUpdatedAt sau khi thành công
+            if (staffData) {
+                await axios.put(`/api/users/${staffData.id}/updateAt`, {}, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                console.log('Cập nhật thời gian thành công');
+            }
+
+            onSuccess();
             onClose(); // Đóng form sau khi thêm/cập nhật thành công
         } catch (err) {
             alert('Có lỗi xảy ra khi thêm/cập nhật nhân viên.');

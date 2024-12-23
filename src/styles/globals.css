@@ -25,3 +25,74 @@ body {
     text-wrap: balance;
   }
 }
+
+
+/* global.css */
+/* Media query for print */
+@media print {
+  .invoice-container {
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.invoice-container h2, .invoice-container h3 {
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.invoice-container .flex {
+    margin-bottom: 12px;
+}
+
+.invoice-container .font-semibold {
+    font-weight: 600;
+}
+
+.invoice-container .space-y-4 {
+    margin-bottom: 20px;
+}
+
+.invoice-container .border-b {
+    border-bottom: 1px solid #ddd;
+}
+
+/* Chỉnh sửa bảng */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+}
+
+th {
+  background-color: #f3f4f6;
+}
+
+td {
+  border-bottom: 1px solid #ddd;
+}
+
+/* Tùy chỉnh màu sắc */
+thead tr {
+  background-color: #f8fafc;
+}
+
+tfoot {
+  font-weight: bold;
+}
+
+
+}
+
+
+
+
+
+

@@ -99,6 +99,8 @@ const TablePlay = () => {
                 await axios.post('/api/tables/add', tableData);
             }
 
+            alert("Thêm/Cập nhật bàn chơi thành công")
+
             setShowForm(false);
             fetchTables();
         } catch (error) {
@@ -262,6 +264,7 @@ const TablePlay = () => {
                                             className="border border-gray-300 rounded px-4 py-2 w-full" 
                                             value={newTable.typeId}
                                             onChange={e => setNewTable({ ...newTable, typeId: e.target.value })}
+                                            disabled={isEdit} // Vô hiệu hóa khi sửa
                                         >
                                             <option value="">Chọn Loại Bàn</option>
                                             {types.map(type => (

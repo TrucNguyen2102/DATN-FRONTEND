@@ -19,7 +19,7 @@ const AdminSidebar = () => {
         { href: "/admin/systems", label: "Tổng Quan Hệ Thống" },
         { href: "/admin/users", label: "Quản Lý Người Dùng" },
         // { href: "/admin/permissions", label: "Quản Lý Quyền Hạn" },
-        { href: "/admin/apis", label: "Quản Lý API" },
+        //{ href: "/admin/apis", label: "Quản Lý API" },
         // { href: "/admin/logs", label: "Xem Logs Hệ Thống" }
     ];
 

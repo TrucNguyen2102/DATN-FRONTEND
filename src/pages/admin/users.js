@@ -19,6 +19,8 @@ const AdminUsers = () => {
     const [showRoleForm, setShowRoleForm] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [role, setRole] = useState(editingUser?.role || 'MANAGER');
+    const [searchQuery, setSearchQuery] = useState('');
+
   
 
     // Lấy thông tin người dùng từ AuthContext
@@ -28,7 +30,7 @@ const AdminUsers = () => {
     // Thêm các state cho phân trang
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const pageSize = 5; // Số bản ghi mỗi trang
+    const pageSize = 4; // Số bản ghi mỗi trang
 
     // Lấy danh sách người dùng từ API
     const fetchUsers = async (page = 1, size = 4) => {
@@ -54,9 +56,15 @@ const AdminUsers = () => {
         setShowForm(!showForm);
     };
 
-    const handleSuccess = (newUser) => {
-        setUsers([...users, newUser]);
-        setShowForm(false);
+    // const handleSuccess = (newUser) => {
+    //     setUsers([...users, newUser]);
+    //     setShowForm(false);
+    // };
+
+    const handleSuccess = () => {
+        setShowForm(false); // Ẩn form
+        //fetchUsers(); // Cập nhật lại danh sách người dùng
+        fetchUsers(currentPage, pageSize);
     };
 
     // Xử lý chuyển trang
@@ -117,50 +125,17 @@ const AdminUsers = () => {
         }
     };
 
-    const handleEditUserRole = (user) => {
-        setEditingUser(user);
-        setShowRoleForm(true);
+    // const handleEditUserRole = (user) => {
+    //     setEditingUser(user);
+    //     setShowRoleForm(true);
+    // };
+
+
+    const handleEdit = (user) => {
+        setEditingUser(user); // Cập nhật state cho nhân viên hiện tại
+        setShowForm(true); // Mở form
     };
     
-    // const handleSaveRole = async (role) => {
-    //     if (editingUser) {
-    //         try {
-    //             // Cập nhật vai trò cho người dùng hiện tại
-    //             const response = await axios.put(
-    //                 `/api/users/admins/managers/update/${editingUser.id}`, 
-    //                 { role },
-    //                 {
-    //                     headers: {
-    //                         "Content-Type": "application/json",
-    //                         Authorization: `Bearer ${localStorage.getItem("token")}`,
-    //                     },
-    //                 }
-    //             );
-    //             console.log("Response:", response.data)
-
-    //             // Cập nhật thời gian updatedAt
-    //             await axios.put(`/api/users/${editingUser.id}/updateAt`, {}, {
-    //                 headers: {
-    //                     "Content-Type": "application/json",
-    //                     Authorization: `Bearer ${localStorage.getItem("token")}`,
-    //                 },
-    //             });
-                
-    //             // Reload the users list after update
-    //             fetchUsers(); 
-    //             alert("Cập nhật thành công.")
-    
-    //             // Đóng form thay đổi vai trò
-    //             setShowRoleForm(false);
-    //         } catch (error) {
-    //             console.error("Error updating user role:", error);
-    //         }
-    //     }
-    // };
-    
-
-
-
     return (
         <div className="bg-gray-100 min-h-screen flex flex-col">
             <AdminHeader/>
@@ -187,7 +162,7 @@ const AdminUsers = () => {
                     </div>
 
                     {/* {showForm && <AddManagerForm onSuccess={handleSuccess} />} */}
-                    {showForm && <AddManagerForm onClose={() => setShowForm(false)} onSuccess={handleSuccess} />}
+                    {showForm && <AddManagerForm managerData={editingUser} onClose={() => setShowForm(false)} onSuccess={handleSuccess} />}
 
 
                     <table className="min-w-full bg-white border border-gray-300 table-fixed">
@@ -208,26 +183,27 @@ const AdminUsers = () => {
                         
                         
                         <tbody>
-                            {users?.length > 0 ? (
+                            {Array.isArray(users) && users?.length > 0 ? (
                                 users.map(user => (
-                                    <tr key={user.id}>
-                                        <td className="py-2 px-4 border-b border-r text-center">{user.id}</td>
-                                        <td className="py-2 px-4 border-b border-r text-center">{user.fullName}</td>
-                                        <td className="py-2 px-4 border-b border-r text-center">{user.birthDay || "Chưa cập nhật"}</td>
-                                        <td className="py-2 px-4 border-b border-r text-center">{user.phone}</td>
-                                        <td className="py-2 px-4 border-b border-r text-center">{user.email}</td>
+                                    user ? (
+                                        <tr key={user.id}>
+                                        <td className="py-2 px-4 border-b border-r text-center">{user?.id}</td>
+                                        <td className="py-2 px-4 border-b border-r text-center">{user?.fullName}</td>
+                                        <td className="py-2 px-4 border-b border-r text-center">{user?.birthDay || "Chưa cập nhật"}</td>
+                                        <td className="py-2 px-4 border-b border-r text-center">{user?.phone}</td>
+                                        <td className="py-2 px-4 border-b border-r text-center">{user?.email}</td>
                                         <td className="py-2 px-4 border-b border-r text-center">
-                                            {user.status === "ACTIVE"? (
+                                            {user?.status === "ACTIVE"? (
                                                 <span className="w-3 h-3 rounded-full bg-green-500 inline-block"></span>
                                             ) : 
                                             
                                             (
                                                 <span className="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
                                             )}
-                                            <span className="ml-2">{user.status}</span>
+                                            <span className="ml-2">{user?.status}</span>
                                         </td>
                                         <td className="py-2 px-4 border-b border-r text-center">
-                                            {user.roles && user.roles.length > 0 ? (
+                                            {user?.roles && user.roles.length > 0 ? (
                                                 <ul>
                                                     {user.roles.map((role, index) => (
                                                         <li key={index}>{role}</li>
@@ -238,13 +214,13 @@ const AdminUsers = () => {
                                             )}
                                         </td>
                                         <td className="py-2 px-4 border-b border-r text-center">
-                                            {user.createdAt ? format(new Date(user.createdAt), 'dd/MM/yyyy HH:mm:ss') : "N/A"}
+                                            {user?.createdAt ? format(new Date(user.createdAt), 'dd/MM/yyyy HH:mm:ss') : "N/A"}
                                         </td>
                                         <td className="py-2 px-4 border-b border-r text-center">
-                                            {user.updatedAt ? format(new Date(user.updatedAt), 'dd/MM/yyyy HH:mm:ss') : "N/A"}
+                                            {user?.updatedAt ? format(new Date(user.updatedAt), 'dd/MM/yyyy HH:mm:ss') : "N/A"}
                                         </td>
                                         <td className="flex py-2 px-4 border text-center">
-                                            {(user.roles.includes("MANAGER") || user.roles.includes("ADMIN")) && (
+                                            {(user?.roles.includes("MANAGER") || user?.roles.includes("ADMIN")) && (
                                                 <>
                                                 {/* <button
                                                     onClick={() => handleUpdate(user)}
@@ -254,14 +230,18 @@ const AdminUsers = () => {
                                                 </button> */}
 
                                                 {/* Nút Cập nhật */}
-                                                <button
+                                                {/* <button
                                                     onClick={() => handleEditUserRole(user)}
                                                     className="bg-blue-400 text-white py-1 px-2 rounded ml-2 hover:bg-blue-500 transition duration-200"
                                                 >
                                                     <FaEdit className="text-white" /> Cập Nhật
-                                                </button>
+                                                </button> */}
 
-                                                {user.status === "BLOCKED" ? (
+                                            <button onClick={() => handleEdit(user)} className="bg-yellow-500 text-white py-1 px-2 rounded mr-2 hover:bg-yellow-700 transition duration-200 flex items-center gap-1">
+                                                <FaEdit className="text-white" /> Sửa 
+                                            </button>
+
+                                                {user?.status === "BLOCKED" ? (
                                                     <button
                                                     onClick={() => handleUnlock(user.id)}
                                                     className="bg-green-400 text-white py-1 px-2 rounded hover:bg-green-500 transition duration-200 ml-2"
@@ -281,6 +261,8 @@ const AdminUsers = () => {
                                             )}
                                         </td>
                                     </tr>
+                                    ) : null
+                                    
                                 ))
                             ) : (
                                 <tr>
@@ -292,14 +274,14 @@ const AdminUsers = () => {
                     </table>
 
                     {/* Hiển thị form chọn vai trò khi cần thiết */}
-                    {showRoleForm && (
+                    {/* {showRoleForm && (
                         <RoleForm 
                             // roleData={editingUser?.role} 
                             user={editingUser} // Truyền user đang chỉnh sửa
                             //onSave={handleSaveRole} 
                             onClose={() => setShowRoleForm(false)} 
                         />
-                    )}
+                    )} */}
 
                     
 

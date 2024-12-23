@@ -159,7 +159,11 @@ const StaffBooking = () => {
         return bookings.filter((booking) => {
             // So sánh tên khách hàng (hoặc thông tin khác) với từ khóa tìm kiếm
             const fullNameMatch = removeDiacritics(booking.fullName.toLowerCase()).includes(searchQuery);
-            return booking.status === status && fullNameMatch;
+
+            // So sánh số điện thoại với từ khóa tìm kiếm
+            const phoneMatch = booking.phone && booking.phone.includes(searchQuery);
+
+            return booking.status === status && (fullNameMatch || phoneMatch);
         });
     };
     
@@ -233,16 +237,42 @@ const StaffBooking = () => {
     //     }));
     // }
 
+    // const handleSearch = (status) => {
+    //     // Dữ liệu booking gốc
+    //     const originalBookings = filterBookingsByStatus(status); // Hàm lấy dữ liệu theo trạng thái
+    
+    //     // Nếu có từ khóa tìm kiếm, lọc dữ liệu
+    //     if (searchTerm[status]) {
+    //         const results = originalBookings.filter((booking) =>
+    //             booking.fullName.toLowerCase().includes(searchTerm[status].toLowerCase())
+               
+    //         );
+    //         setFilteredBookings((prev) => ({
+    //             ...prev,
+    //             [status]: results,
+    //         }));
+    //     } else {
+    //         // Nếu không có từ khóa tìm kiếm, hiển thị tất cả bookings
+    //         setFilteredBookings((prev) => ({
+    //             ...prev,
+    //             [status]: originalBookings,
+    //         }));
+    //     }
+    // };
+
+
     const handleSearch = (status) => {
         // Dữ liệu booking gốc
         const originalBookings = filterBookingsByStatus(status); // Hàm lấy dữ liệu theo trạng thái
     
         // Nếu có từ khóa tìm kiếm, lọc dữ liệu
         if (searchTerm[status]) {
+            const searchQuery = searchTerm[status].toLowerCase();
             const results = originalBookings.filter((booking) =>
-                booking.fullName.toLowerCase().includes(searchTerm[status].toLowerCase())
-               
+                removeDiacritics(booking.fullName.toLowerCase()).includes(searchQuery) ||
+                (booking.phone && booking.phone.includes(searchQuery))
             );
+    
             setFilteredBookings((prev) => ({
                 ...prev,
                 [status]: results,
@@ -255,6 +285,7 @@ const StaffBooking = () => {
             }));
         }
     };
+    
     
 
 

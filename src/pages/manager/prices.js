@@ -121,6 +121,8 @@ const PricesPage = () => {
                 const response = await axios.post('/api/tables/prices/add', priceData);
                 setPrices([...prices, response.data]); // Cập nhật danh sách giá sau khi thêm mới
             }
+
+            alert("Thêm/Cập nhật giá thành công")
     
             setNewPrice({ id: null, price: '', startDate: '', endDate: '' }); // Reset form
             setShowForm(false); // Ẩn form sau khi thêm/sửa

@@ -85,28 +85,33 @@ const MenusPage = () => {
         }));
     };
 
-    const handleAddMenu = async () => {
+    const handleAddMenu = async (e) => {
+        e.preventDefault();
         try {
             // Kiểm tra xem tên món đã tồn tại chưa
-            const existingMenu = menus.find((menu) => menu.itemName === newMenu.itemName);
+            const existingMenu = menus.find((menu) => menu.itemName.toLowerCase() === newMenu.itemName.toLowerCase());
             if (existingMenu) {
-                alert('Tên menu đã tồn tại');
+                alert('Tên menu đã tồn tại!');
                 return;
             }
     
             const response = await axios.post('/api/menus/add', newMenu);
             setMenus([...menus, response.data]); // Thêm menu mới vào danh sách
+
+            alert("Thêm menu thành công.")
     
             // Reset lại form
             setNewMenu({ id: null, itemName: '', price: '' });
             setShowForm(false); // Ẩn form sau khi hoàn thành
+            fetchMenus();
         } catch (error) {
             console.error("Lỗi khi thêm menu", error);
             setError("Có lỗi xảy ra khi thêm. Vui lòng thử lại.");
         }
     };
     
-    const handleUpdateMenu = async () => {
+    const handleUpdateMenu = async (e) => {
+        e.preventDefault();
         try {
             await axios.put(`/api/menus/update/${newMenu.id}`, newMenu);
             setMenus(menus.map(menu => (menu.id === newMenu.id ? newMenu : menu))); // Cập nhật menu trong danh sách
@@ -151,6 +156,7 @@ const MenusPage = () => {
                     try {
                         await axios.delete(`/api/menus/delete/${id}`);
                         setMenus(menus.filter(menu => menu.id !== id));
+                        alert("Xóa menu thành công.")
                     } catch (error) {
                         console.error("Lỗi khi xóa menu", error);
                     }
@@ -212,7 +218,8 @@ const MenusPage = () => {
                             <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
                                 <div className="bg-white p-6 rounded shadow-lg w-96">
                                 <h2 className="text-xl font-bold mb-4 text-center">{newMenu.id ? 'Sửa Menu' : 'Thêm Menu'}</h2>
-                                    <form onSubmit={handleAddOrUpdateMenu} className="mb-4">
+                                    {/* <form onSubmit={handleAddOrUpdateMenu} className="mb-4"> */}
+                                    <form onSubmit={isEditing ? handleUpdateMenu : handleAddMenu} className="mb-4">
                                         <div className="mb-4">
                                             <label className="block text-gray-700 font-bold">
                                                 Tên Món <span className="text-red-500">*</span>

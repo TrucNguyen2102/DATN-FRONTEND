@@ -88,6 +88,7 @@ const StaffsPage = () => {
     };
 
     const handleAddStaff = () => {
+        
         setShowForm(!showForm); // Chuyển đổi trạng thái hiển thị form
     };
 
@@ -150,7 +151,8 @@ const StaffsPage = () => {
 
     const handleSuccess = () => {
         setShowForm(false); // Ẩn form
-        fetchUsers(); // Cập nhật lại danh sách người dùng
+        //fetchUsers(); // Cập nhật lại danh sách người dùng
+        fetchStaffs(currentPage, pageSize);
     };
     
 
@@ -265,24 +267,7 @@ const StaffsPage = () => {
                     </table>
 
                     {/* phân trang */}
-                    {/* <div className="flex justify-center mt-4">
-                        <button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700"
-                        >
-                            Trước
-                        </button>
-                        <span className="px-4 py-2">{`Trang ${currentPage} / ${totalPages}`}</span>
-                        <button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-700"
-                        >
-                            Sau
-                        </button>
-                    </div> */}
-
+                
                             <div className="mt-4">
                                 <p className="text-sm">Trang {currentPage} / {totalPages}</p>
                                 <div className="flex justify-center">
