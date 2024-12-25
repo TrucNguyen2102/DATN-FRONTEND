@@ -291,7 +291,7 @@ const TablePlay = () => {
             <div className="flex flex-1">
                 <StaffSidebar className="w-1/4 bg-gray-200 p-4" />
                 <main className="flex-1 p-6">
-                    <h1 className="text-3xl font-semibold mb-8 text-center">Quản Lý Tình Trạng Bàn</h1>
+                    <h1 className="text-3xl font-semibold mb-8 text-center">Theo Dõi Tình Trạng Bàn</h1>
                     {error && <p className="text-red-500 text-center">{error}</p>}
                     
                     {loading ? <p>Đang tải...</p> : null}
@@ -388,7 +388,7 @@ const TablePlay = () => {
                                 <th className="py-2 px-4 border-b border-r w-1/5">Số Bàn</th>
                                 <th className="py-2 px-4 border-b border-r w-1/5">Trạng Thái Bàn</th>
                                 <th className="py-2 px-4 border-b border-r w-1/5">Loại Bàn</th>
-                                <th className="py-2 px-4 border-b border-r w-1/5">Hành Động</th>
+                                {/* <th className="py-2 px-4 border-b border-r w-1/5">Hành Động</th> */}
                             </tr>
                         </thead>
                         <tbody>
@@ -401,18 +401,14 @@ const TablePlay = () => {
                                         {/* {types.find(type => type.id === table.type.id)?.name || 'Chưa xác định'} */}
                                         {table.type.name}
                                     </td>
-                                    <td className="py-2 px-4 border flex justify-center items-center">
-                                        {/* <button onClick={() => handleViewTable(table)} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-700">
-                                            Xem
-                                        </button> */}
+                                    {/* <td className="py-2 px-4 border flex justify-center items-center">
+                                       
                                         <button onClick={() => handleEditTable(table)} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-700 flex items-center gap-1">
                                         <FaEdit className="text-white" />
                                             Sửa
                                         </button>
-                                        {/* <button onClick={() => handleDeleteTable(table.id)} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700 ml-2">
-                                            Xóa
-                                        </button> */}
-                                    </td>
+                                        
+                                    </td> */}
                                 </tr>
                             ))}
                         </tbody>

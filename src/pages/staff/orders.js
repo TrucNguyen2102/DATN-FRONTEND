@@ -89,6 +89,7 @@ const MenuManagement = () => {
         try {
             const response = await axios.get("/api/tables/all");
             setTables(response.data);
+            console.log("Danh sách bàn: ", response.data); 
         } catch (error) {
             console.error("Lỗi khi lấy danh sách bàn:", error);
         }
@@ -163,13 +164,14 @@ const MenuManagement = () => {
     // Sử dụng useEffect để gọi fetchInvoiceId
     useEffect(() => {
         const getInvoiceId = async () => {
+            if (!selectedTable) return;
             const invoiceId = await fetchInvoiceId(selectedTable);
             setInvoices(invoiceId); // Cập nhật state invoices
         };
     
-        if (selectedTable) {
+        // if (selectedTable) {
             getInvoiceId();
-        }
+        // }
     }, [selectedTable]);
 
     
@@ -181,9 +183,23 @@ const MenuManagement = () => {
             return;
         }
 
+        // Kiểm tra trạng thái bàn
+        const selectedTableData = tables.find((table) => table.id === parseInt(selectedTable));
+        if (!selectedTableData || selectedTableData.tableStatus !== "Đang Chơi") {
+            alert("Bạn chỉ có thể thêm món vào bàn đang chơi.");
+            return;
+        }
+
         const selectedItem = menuItems.find((item) => item.id === parseInt(selectedMenu));
         if (!selectedItem) {
             alert("Món không hợp lệ.");
+            return;
+        }
+
+        // Kiểm tra số lượng tối đa cho phép
+        const maxQuantity = 10; // Ví dụ: Giới hạn tối đa là 100
+        if (quantity > maxQuantity) {
+            alert(`Số lượng món vượt quá mức cho phép. Vui lòng chọn số lượng nhỏ hơn hoặc bằng ${maxQuantity}.`);
             return;
         }
 

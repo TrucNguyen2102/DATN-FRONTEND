@@ -166,7 +166,7 @@ const CustomerBookingTable = () => {
       }
     } catch (error) {
       alert('Bàn đã được đặt bởi người khác và đang chờ xác nhận. Vui lòng chọn bàn khác.');
-      console.error('Error confirming booking:', error);
+      console.error('Error confirming booking:', error);  
       
     }
   };

@@ -29,8 +29,33 @@ const RegisterPage = () => {
     return passwordRegex.test(password);
   };
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  const validatePhone = (phone) => {
+    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+    return phoneRegex.test(email);
+  }
+  // // Kiểm tra định dạng email
+  // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // if (!emailRegex.test(email)) {
+  //     setError('Email không đúng định dạng!');
+  //     return;
+  // }
+
+  // Kiểm tra định dạng số điện thoại
+  // const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+  // if (!phoneRegex.test(phone)) {
+  //     setError('Số điện thoại không đúng định dạng!');
+  //     return;
+  // }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    
 
     const { fullName, birthDay, phone, email, password, confirmPassword } = formData;
 
@@ -43,6 +68,16 @@ const RegisterPage = () => {
     // Kiểm tra độ mạnh của mật khẩu
     if (!validatePassword(password)) {
       setError('Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số.');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setError('Email bị sai định dạng.');
+      return;
+    }
+
+    if (!validatePhone(phone)) {
+      setError('Số điện thoại bị sai định dạng.');
       return;
     }
 

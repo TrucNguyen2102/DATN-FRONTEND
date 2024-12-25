@@ -10,6 +10,7 @@ const DirectBookingForm = () => {
   const [availableTables, setAvailableTables] = useState([]);
   const [selectedTables, setSelectedTables] = useState([]);
   const [errorMessage, setErrorMessage] = useState('');
+  
 
   useEffect(() => {
     // Hàm bất đồng bộ để gọi API
@@ -30,8 +31,15 @@ const DirectBookingForm = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Kiểm tra định dạng số điện thoại
+    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+    if (!phoneRegex.test(phone)) {
+      alert('Số điện thoại không đúng định dạng!');
+        return;
+    }
+
     if (!fullName || !phone || !selectedTables.length) {
-      setErrorMessage('Vui lòng điền đầy đủ thông tin!');
+      alert('Vui lòng điền đầy đủ thông tin!');
       return;
     }
 
@@ -53,7 +61,14 @@ const DirectBookingForm = () => {
         setSelectedTables([]);
       })
       .catch(error => {
-        setErrorMessage('Lỗi khi đặt bàn. Vui lòng thử lại!');
+        // setErrorMessage('Lỗi khi đặt bàn. Vui lòng thử lại!');
+        // console.error('Lỗi khi đặt bàn:', error);
+        if (error.response && error.response.data) {
+          // Lấy thông báo lỗi từ API
+          alert(error.response.data);
+        } else {
+          alert('Lỗi khi đặt bàn. Vui lòng thử lại!');
+        }
         console.error('Lỗi khi đặt bàn:', error);
       });
   };
@@ -116,7 +131,11 @@ const DirectBookingForm = () => {
                         onChange={(e) => {
                             const tableId = parseInt(e.target.value);
                             if (e.target.checked) {
-                            setSelectedTables([...selectedTables, tableId]);
+                              if (selectedTables.length >= 3) {
+                                alert('Bạn chỉ có thể chọn tối đa 3 bàn!');
+                                return;
+                              }
+                              setSelectedTables([...selectedTables, tableId]);
                             } else {
                             setSelectedTables(selectedTables.filter((id) => id !== tableId));
                             }
